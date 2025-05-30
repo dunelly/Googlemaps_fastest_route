@@ -399,7 +399,7 @@
       // Call backend to get optimized waypoint order
       try {
         console.log('Sending addresses to backend:', addresses);
-        const resp = await fetch('http://localhost:3001/optimize-route', {
+        const resp = await fetch('https://googlemaps-fastest-route-1.onrender.com/optimize-route', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ addresses })
