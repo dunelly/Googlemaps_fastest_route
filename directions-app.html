@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fastest Route Finder</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      background: #f4f6fa;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 500px;
+      margin: 60px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 36px 32px 28px 32px;
+    }
+    h1 {
+      text-align: center;
+      color: #2d3a4a;
+      margin-bottom: 28px;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
+    label {
+      display: block;
+      margin-top: 18px;
+      color: #34495e;
+      font-weight: 500;
+      font-size: 1.05rem;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 1rem;
+      margin-top: 8px;
+      resize: vertical;
+      background: #f9fafb;
+      transition: border 0.2s;
+    }
+    textarea:focus {
+      border: 1.5px solid #4f8cff;
+      outline: none;
+      background: #fff;
+    }
+    .file-upload-label {
+      margin-top: 18px;
+      color: #34495e;
+      font-weight: 500;
+      font-size: 1.05rem;
+      display: block;
+    }
+    .file-input {
+      margin-top: 8px;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+    .address-list-section {
+      margin-top: 18px;
+      margin-bottom: 18px;
+    }
+    .address-list-section label {
+      font-weight: 400;
+      color: #2d3a4a;
+      margin-bottom: 6px;
+    }
+    select, .address-checkbox {
+      margin-top: 8px;
+      margin-bottom: 8px;
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 1rem;
+      background: #f9fafb;
+    }
+    .address-checkbox {
+      width: auto;
+      margin-right: 8px;
+    }
+    button {
+      margin-top: 26px;
+      padding: 12px 0;
+      width: 100%;
+      background: linear-gradient(90deg, #4f8cff 0%, #38b6ff 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(79,140,255,0.08);
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #38b6ff 0%, #4f8cff 100%);
+      transform: translateY(-2px) scale(1.01);
+    }
+    .divider {
+      margin: 24px 0 18px 0;
+      border-top: 1px solid #e0e4ea;
+    }
+    @media (max-width: 600px) {
+      .container {
+        max-width: 98vw;
+        padding: 18px 6vw 18px 6vw;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+  <!-- SheetJS CDN for Excel parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Fastest Route Finder</h1>
+    <form id="routeForm">
+      <label class="file-upload-label">
+        Upload Excel/CSV file with addresses:
+        <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" />
+      </label>
+      <div id="messageArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:1rem;"></div>
+      <div id="debugArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:0.95rem;background:#fffbe7;color:#7a5d00;border:1.5px solid #ffe082;"></div>
+      <div id="addressListSection" class="address-list-section" style="display:none;">
+        <div id="excelAddressesCard" style="background:#f9fafb;border-radius:8px;padding:18px 14px 14px 14px;box-shadow:0 2px 8px rgba(44,62,80,0.06);margin-bottom:18px;">
+          <label for="customStartAddress" style="font-weight:600;">Start Address:</label>
+          <input type="text" id="customStartAddress" placeholder="(Optional) Enter custom start address" style="width:100%;margin-bottom:8px;" />
+          <select id="startAddress"></select>
+          <div id="middleAddresses" style="margin:18px 0 18px 0;">
+            <label style="font-weight:600;">Addresses in Route:</label>
+            <div style="max-height:420px;overflow-y:auto;border:1px solid #e0e4ea;border-radius:6px;background:#fff;scrollbar-width:thin;scrollbar-color:#4f8cff #f4f6fa;">
+              <ul id="middleAddressesList" style="list-style:none;padding:0;margin:10px 0 0 0;"></ul>
+            </div>
+          </div>
+          <label for="customEndAddress" style="font-weight:600;">End Address:</label>
+          <input type="text" id="customEndAddress" placeholder="(Optional) Enter custom end address" style="width:100%;margin-bottom:8px;" />
+          <select id="endAddress"></select>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <label id="manualEntryLabel">
+        Addresses (one per line, in any order):
+        <textarea id="addresses" rows="7" cols="50" required></textarea>
+      </label>
+      <button type="submit">Get Optimized Route</button>
+    </form>
+  </div>
+  <script>
+    // SheetJS Excel/CSV parsing and address selection logic
+    const excelFileInput = document.getElementById('excelFile');
+    const messageArea = document.getElementById('messageArea');
+    const addressListSection = document.getElementById('addressListSection');
+    const debugArea = document.getElementById('debugArea');
+    const startAddressSelect = document.getElementById('startAddress');
+    const endAddressSelect = document.getElementById('endAddress');
+    const middleAddressesList = document.getElementById('middleAddressesList');
+    const addressesTextarea = document.getElementById('addresses');
+    const manualEntryLabel = document.getElementById('manualEntryLabel');
+
+    let excelAddresses = [];
+
+    function showMessage(msg, type = "info") {
+      messageArea.textContent = msg;
+      messageArea.style.display = "";
+      messageArea.style.background = type === "error" ? "#ffeaea" : "#eafaf1";
+      messageArea.style.color = type === "error" ? "#b71c1c" : "#256029";
+      messageArea.style.border = type === "error" ? "1.5px solid #f44336" : "1.5px solid #4caf50";
+    }
+    function hideMessage() {
+      messageArea.style.display = "none";
+    }
+    function showDebug(headers, rows) {
+      debugArea.style.display = "";
+      let html = "<b>Detected columns:</b> " + headers.join(", ") + "<br><b>First 5 rows:</b><br><table style='border-collapse:collapse;width:100%;margin-top:4px;'>";
+      html += "<tr>" + headers.map(h => `<th style='border:1px solid #ffe082;padding:2px 6px;'>${h}</th>`).join("") + "</tr>";
+      for (let i = 0; i < Math.min(5, rows.length); ++i) {
+        html += "<tr>" + headers.map((_, j) => `<td style='border:1px solid #ffe082;padding:2px 6px;'>${rows[i][j] ?? ""}</td>`).join("") + "</tr>";
+      }
+      html += "</table>";
+      debugArea.innerHTML = html;
+    }
+    function hideDebug() {
+      debugArea.style.display = "none";
+      debugArea.innerHTML = "";
+    }
+
+    excelFileInput.addEventListener('change', function (e) {
+      hideMessage();
+      hideDebug();
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            showMessage('No sheets found in the file.', 'error');
+            console.error('No sheets found in workbook:', workbook);
+            return;
+          }
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          if (!rows.length) {
+            showMessage('No data found in the first sheet.', 'error');
+            console.error('Sheet is empty:', worksheet);
+            addressListSection.style.display = 'none';
+            manualEntryLabel.style.display = '';
+            addressesTextarea.required = true;
+            return;
+          }
+          const headers = rows[0].map(h => (typeof h === "string" ? h.trim() : ""));
+          // Prompt user to select address fields
+          let addressFieldPrompt = document.getElementById('addressFieldPrompt');
+          if (!addressFieldPrompt) {
+            addressFieldPrompt = document.createElement('div');
+            addressFieldPrompt.id = 'addressFieldPrompt';
+            addressFieldPrompt.style = 'margin:16px 0;padding:12px;background:#fffbe7;border:1.5px solid #ffe082;border-radius:8px;';
+            addressListSection.parentNode.insertBefore(addressFieldPrompt, addressListSection);
+          }
+          // Preset logic
+          let preset = null;
+          try {
+            preset = JSON.parse(localStorage.getItem('addressColPreset') || 'null');
+          } catch {}
+          addressFieldPrompt.innerHTML = `
+            <b>Select the column(s) to use for addresses:</b><br>
+            <label>Address:
+              <select id="addressColSelect">${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select>
+            </label>
+            <label style="margin-left:16px;">City (optional):
+              <select id="cityColSelect"><option value="">(none)</option>${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select>
+            </label>
+            <label style="margin-left:16px;">State (optional):
+              <select id="stateColSelect"><option value="">(none)</option>${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select>
+            </label>
+            <button id="confirmAddressCols" style="margin-left:16px;">Confirm</button>
+            <button id="clearPreset" style="margin-left:8px;">Clear Preset</button>
+          `;
+
+          // If preset exists, set dropdowns
+          if (preset && Array.isArray(preset) && preset.length === 3) {
+            document.getElementById('addressColSelect').selectedIndex = preset[0];
+            document.getElementById('cityColSelect').selectedIndex = preset[1] !== null ? preset[1]+1 : 0;
+            document.getElementById('stateColSelect').selectedIndex = preset[2] !== null ? preset[2]+1 : 0;
+          }
+
+          document.getElementById('confirmAddressCols').onclick = function() {
+            const addrIdx = parseInt(document.getElementById('addressColSelect').value, 10);
+            const cityIdx = document.getElementById('cityColSelect').value !== "" ? parseInt(document.getElementById('cityColSelect').value, 10) : null;
+            const stateIdx = document.getElementById('stateColSelect').value !== "" ? parseInt(document.getElementById('stateColSelect').value, 10) : null;
+            // Save preset
+            localStorage.setItem('addressColPreset', JSON.stringify([addrIdx, cityIdx, stateIdx]));
+            excelAddresses = rows.slice(1)
+              .filter(row => row[addrIdx])
+              .map(row => {
+                let addr = row[addrIdx];
+                if (cityIdx !== null && row[cityIdx]) addr += ', ' + row[cityIdx];
+                if (stateIdx !== null && row[stateIdx]) addr += ', ' + row[stateIdx];
+                return addr;
+              })
+              .filter(addr => typeof addr === 'string' && addr.trim().length > 0);
+            if (excelAddresses.length < 2) {
+              showMessage('At least two addresses are required in the file. Parsed addresses: ' + JSON.stringify(excelAddresses), 'error');
+              addressListSection.style.display = 'none';
+              manualEntryLabel.style.display = '';
+              addressesTextarea.required = true;
+              return;
+            }
+            hideDebug();
+            populateAddressSelection(excelAddresses);
+            addressListSection.style.display = '';
+            addressesTextarea.required = false;
+            manualEntryLabel.style.display = 'none';
+            showMessage('Addresses loaded from file. Select start/end and submit.', 'success');
+            addressFieldPrompt.innerHTML = '';
+          };
+
+          document.getElementById('clearPreset').onclick = function() {
+            localStorage.removeItem('addressColPreset');
+            showMessage('Preset cleared. Please select columns again.', 'info');
+          };
+          // Don't proceed until user confirms columns
+          return;
+          if (excelAddresses.length < 2) {
+            showMessage('At least two addresses are required in the file. Parsed addresses: ' + JSON.stringify(excelAddresses), 'error');
+            addressListSection.style.display = 'none';
+            manualEntryLabel.style.display = '';
+            addressesTextarea.required = true;
+            return;
+          }
+          hideDebug();
+          populateAddressSelection(excelAddresses);
+          addressListSection.style.display = '';
+          addressesTextarea.required = false;
+          manualEntryLabel.style.display = 'none';
+          showMessage('Addresses loaded from file. Select start/end and submit.', 'success');
+        } catch (err) {
+          showMessage('Error parsing file. See console for details.', 'error');
+          showDebug([], []);
+          console.error('Parsing error:', err);
+          addressListSection.style.display = 'none';
+          manualEntryLabel.style.display = '';
+          addressesTextarea.required = true;
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function populateAddressSelection(addresses) {
+      // Populate start and end selects
+      startAddressSelect.innerHTML = '';
+      endAddressSelect.innerHTML = '';
+      addresses.forEach((addr, i) => {
+        const opt1 = document.createElement('option');
+        opt1.value = addr;
+        opt1.textContent = addr;
+        startAddressSelect.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = addr;
+        opt2.textContent = addr;
+        endAddressSelect.appendChild(opt2);
+      });
+      // Default: first and last
+      startAddressSelect.selectedIndex = 0;
+      endAddressSelect.selectedIndex = addresses.length - 1;
+
+      // Populate middle addresses list
+      updateMiddleAddresses();
+
+      // Update middle addresses when start/end changes
+      startAddressSelect.onchange = updateMiddleAddresses;
+      endAddressSelect.onchange = updateMiddleAddresses;
+    }
+
+    function updateMiddleAddresses() {
+      const start = startAddressSelect.value;
+      const end = endAddressSelect.value;
+      middleAddressesList.innerHTML = '';
+      excelAddresses.forEach(addr => {
+        if (addr !== start && addr !== end) {
+          const li = document.createElement('li');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'address-checkbox';
+          checkbox.value = addr;
+          checkbox.checked = false;
+          li.appendChild(checkbox);
+          li.appendChild(document.createTextNode(addr));
+          middleAddressesList.appendChild(li);
+        }
+      });
+    }
+
+    // Form submission logic
+    document.getElementById('routeForm').onsubmit = async function(e) {
+      e.preventDefault();
+      let addresses = [];
+      let start, end, waypoints;
+      // Use Excel addresses if available and section is visible
+      if (excelAddresses.length && addressListSection.style.display !== 'none') {
+        const customStart = document.getElementById('customStartAddress').value.trim();
+        const customEnd = document.getElementById('customEndAddress').value.trim();
+        start = customStart.length > 0 ? customStart : startAddressSelect.value;
+        end = customEnd.length > 0 ? customEnd : endAddressSelect.value;
+        // Middle addresses: only checked in the list
+        waypoints = Array.from(middleAddressesList.querySelectorAll('input.address-checkbox:checked')).map(cb => cb.value);
+        addresses = [start, ...waypoints, end];
+      } else {
+        addresses = addressesTextarea.value
+          .split('\n')
+          .map(addr => addr.trim())
+          .filter(addr => addr.length > 0);
+        if (addresses.length < 2) {
+          alert('Please enter at least two addresses.');
+          return;
+        }
+        start = addresses[0];
+        end = addresses[addresses.length - 1];
+        waypoints = addresses.slice(1, -1);
+      }
+
+      if (waypoints.length === 0) {
+        // Only start and end, no waypoints
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(start)}&destination=${encodeURIComponent(end)}&travelmode=driving`;
+        window.open(url, '_blank');
+        return;
+      }
+
+      // Call backend to get optimized waypoint order
+      try {
+        console.log('Sending addresses to backend:', addresses);
+        const resp = await fetch('http://localhost:3001/optimize-route', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addresses })
+        });
+        console.log('Backend response status:', resp.status);
+        const data = await resp.json();
+        console.log('Backend response data:', data);
+        if (!data.order || !Array.isArray(data.order)) {
+          alert('Failed to optimize route.');
+          return;
+        }
+        const optimizedWaypoints = data.order.map(i => waypoints[i]);
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(start)}&destination=${encodeURIComponent(end)}&waypoints=${optimizedWaypoints.map(encodeURIComponent).join('|')}&travelmode=driving`;
+        window.open(url, '_blank');
+      } catch (err) {
+        alert('Could not reach backend for optimization.');
+        console.error('Fetch error:', err);
+      }
+    };
+
+    // If user clears file input, reset UI
+    excelFileInput.addEventListener('click', function(e) {
+      excelFileInput.value = '';
+      excelAddresses = [];
+      addressListSection.style.display = 'none';
+      manualEntryLabel.style.display = '';
+      addressesTextarea.required = true;
+      hideMessage();
+      hideDebug();
+    });
+  </script>
+</body>
+</html>
