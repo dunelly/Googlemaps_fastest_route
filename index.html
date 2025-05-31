@@ -228,9 +228,11 @@
 
           <div id="addressListSection" class="address-list-section" style="display:none;">
             <div id="excelAddressesCard" class="content-card">
-              <label for="customStartAddress" style="font-weight:600;">Start Address:</label>
-              <input type="text" id="customStartAddress" placeholder="(Optional) Enter custom start address" style="width:100%;margin-bottom:8px;" />
-              <select id="startAddress"></select>
+              <label for="customStartAddress" style="font-weight:600;display:flex;align-items:center;">
+                Start Address:
+                <span style="background:#ffe082;color:#7a5d00;font-size:0.95rem;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:10px;">Required First</span>
+              </label>
+              <input type="text" id="customStartAddress" placeholder="Enter starting address" style="width:100%;margin-bottom:8px;border:2px solid #ffe082;background:#fffde7;" />
               <div id="middleAddresses" style="margin:18px 0 18px 0;">
                 <label style="font-weight:600;">Addresses in Route:</label>
                 <div style="max-height:420px;overflow-y:auto;border:1px solid #e0e4ea;border-radius:6px;background:#fff;scrollbar-width:thin;scrollbar-color:#4f8cff #f4f6fa;">
@@ -240,7 +242,6 @@
               </div>
               <label for="customEndAddress" style="font-weight:600;">End Address:</label>
               <input type="text" id="customEndAddress" placeholder="(Optional) Enter custom end address" style="width:100%;margin-bottom:8px;" />
-              <select id="endAddress"></select>
             </div>
           </div>
           <div class="divider"></div>
@@ -263,8 +264,8 @@
     const messageArea = document.getElementById('messageArea');
     const addressListSection = document.getElementById('addressListSection');
     const debugArea = document.getElementById('debugArea');
-    const startAddressSelect = document.getElementById('startAddress');
-    const endAddressSelect = document.getElementById('endAddress');
+    // const startAddressSelect = document.getElementById('startAddress');
+    // const endAddressSelect = document.getElementById('endAddress');
     const middleAddressesList = document.getElementById('middleAddressesList');
     const addressesTextarea = document.getElementById('addresses');
     const manualEntryLabel = document.getElementById('manualEntryLabel');
@@ -502,29 +503,14 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
     
     function populateAddressSelection(itemsToDisplay) {
       console.log('[DEBUG] populateAddressSelection called. itemsToDisplay.length:', itemsToDisplay.length);
-      startAddressSelect.innerHTML = '';
-      endAddressSelect.innerHTML = '';
-      
-      const ph1 = document.createElement('option'); ph1.value = ''; ph1.textContent = '-- Select Start --'; startAddressSelect.appendChild(ph1);
-      const ph2 = document.createElement('option'); ph2.value = ''; ph2.textContent = '-- Select End --'; endAddressSelect.appendChild(ph2);
-
-      itemsToDisplay.forEach((item) => {
-        let dText = item.address;
-        if (item.name) dText = `${item.name} - ${dText}`;
-        if (item.auctionDateFormatted) dText += ` (Auction: ${item.auctionDateFormatted})`;
-        const opt = document.createElement('option'); opt.value = item.address; opt.textContent = dText;
-        startAddressSelect.appendChild(opt.cloneNode(true));
-        endAddressSelect.appendChild(opt);
-      });
-      updateMiddleAddresses(); // Uses currentlyDisplayedItems implicitly if not passed
-      startAddressSelect.onchange = updateMiddleAddresses;
-      endAddressSelect.onchange = updateMiddleAddresses;
-      console.log('[DEBUG] populateAddressSelection finished. startAddressSelect.options:', startAddressSelect.options.length, 'endAddressSelect.options:', endAddressSelect.options.length);
+      updateMiddleAddresses(); // Only update middle addresses now
     }
 
     function updateMiddleAddresses() { // Operates on currentlyDisplayedItems
-      const startAddr = startAddressSelect.value;
-      const endAddr = endAddressSelect.value;
+      const customStartAddressInput = document.getElementById('customStartAddress');
+      const customEndAddressInput = document.getElementById('customEndAddress');
+      const startAddr = customStartAddressInput ? customStartAddressInput.value.trim() : '';
+      const endAddr = customEndAddressInput ? customEndAddressInput.value.trim() : '';
       middleAddressesList.innerHTML = '';
 
       currentlyDisplayedItems.forEach(item => {
@@ -541,14 +527,29 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
         }
       });
     }
+    // Update middle addresses when custom start/end address fields change
+    // Save start address to localStorage on input and update middle addresses
+    document.getElementById('customStartAddress').addEventListener('input', function(e) {
+      localStorage.setItem('savedStartAddress', e.target.value.trim());
+      updateMiddleAddresses();
+    });
+    // On page load, restore start address from localStorage if available
+    window.addEventListener('DOMContentLoaded', function() {
+      const saved = localStorage.getItem('savedStartAddress');
+      if (saved) {
+        document.getElementById('customStartAddress').value = saved;
+      }
+      updateMiddleAddresses();
+    });
+    document.getElementById('customEndAddress').addEventListener('input', updateMiddleAddresses);
     document.getElementById('routeForm').onsubmit = async function(e) {
   console.log('ROUTE FORM SUBMITTED');
   e.preventDefault();
   showMessage('Optimizing route...', 'info');
 
   let addresses = [];
-  const startAddr = document.getElementById('customStartAddress').value.trim() || document.getElementById('startAddress').value;
-  let endAddr = document.getElementById('customEndAddress').value.trim() || document.getElementById('endAddress').value;
+  const startAddr = document.getElementById('customStartAddress').value.trim();
+  let endAddr = document.getElementById('customEndAddress').value.trim();
 
   const middleCheckboxes = document.querySelectorAll('#middleAddressesList input[type="checkbox"]:checked');
   const middleAddrs = Array.from(middleCheckboxes).map(cb => cb.value);
@@ -570,6 +571,11 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
     addresses = addressesTextarea.value.trim().split('\n').map(a => a.trim()).filter(a => a);
   }
 
+  if (!startAddr) {
+    showMessage('Please enter a starting address before proceeding.', 'error');
+    document.getElementById('customStartAddress').focus();
+    return;
+  }
   if (addresses.length < 2) {
     showMessage('Please select or enter at least two addresses.', 'error');
     return;
@@ -642,47 +648,6 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
     // Re-pasting the functions that need to be aware of currentlyDisplayedItems or allExcelItems
     // (Many were already correct or handled by passing the list as an argument)
 
-    function populateAddressSelection(itemsToDisplay) {
-      console.log('[DEBUG] populateAddressSelection called. itemsToDisplay.length:', itemsToDisplay.length);
-      startAddressSelect.innerHTML = '';
-      endAddressSelect.innerHTML = '';
-      
-      const ph1 = document.createElement('option'); ph1.value = ''; ph1.textContent = '-- Select Start --'; startAddressSelect.appendChild(ph1);
-      const ph2 = document.createElement('option'); ph2.value = ''; ph2.textContent = '-- Select End --'; endAddressSelect.appendChild(ph2);
-
-      itemsToDisplay.forEach((item) => {
-        let dText = item.address;
-        if (item.name) dText = `${item.name} - ${dText}`;
-        if (item.auctionDateFormatted) dText += ` (Auction: ${item.auctionDateFormatted})`;
-        const opt = document.createElement('option'); opt.value = item.address; opt.textContent = dText;
-        startAddressSelect.appendChild(opt.cloneNode(true));
-        endAddressSelect.appendChild(opt);
-      });
-      updateMiddleAddresses(); // Uses currentlyDisplayedItems implicitly if not passed
-      startAddressSelect.onchange = updateMiddleAddresses;
-      endAddressSelect.onchange = updateMiddleAddresses;
-      console.log('[DEBUG] populateAddressSelection finished. startAddressSelect.options:', startAddressSelect.options.length, 'endAddressSelect.options:', endAddressSelect.options.length);
-    }
-
-    function updateMiddleAddresses() { // Operates on currentlyDisplayedItems
-      const startAddr = startAddressSelect.value;
-      const endAddr = endAddressSelect.value;
-      middleAddressesList.innerHTML = '';
-
-      currentlyDisplayedItems.forEach(item => {
-        if (item.address !== startAddr && item.address !== endAddr) {
-          const li = document.createElement('li');
-          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'address-checkbox'; cb.value = item.address; cb.checked = false;
-          li.appendChild(cb);
-          let dText = item.address;
-          if (item.name) dText = `<b>${item.name}</b> - ${dText}`;
-          if (item.auctionDateFormatted) dText += ` <span style="color:#0077b6;">(Auction: ${item.auctionDateFormatted})</span>`;
-          const span = document.createElement('span'); span.innerHTML = ' ' + dText;
-          li.appendChild(span);
-          middleAddressesList.appendChild(li);
-        }
-      });
-    }
     
     // Ensure excelFileInput click resets all relevant lists
     excelFileInput.addEventListener('click', function(e) {
