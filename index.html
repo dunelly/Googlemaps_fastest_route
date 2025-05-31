@@ -206,7 +206,35 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  <style>
+    /* Replace rectangle (box) icon with a custom SVG */
+    .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Crect x='4' y='4' width='18' height='18' rx='3' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E") !important;
+      background-size: 22px 22px !important;
+      background-repeat: no-repeat !important;
+      background-position: center !important;
+      background-color: #fff !important;
+    }
+    .leaflet-draw-toolbar .leaflet-draw-draw-rectangle span {
+      opacity: 0 !important;
+      background: none !important;
+    }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <style>
+    /* Replace polygon (pentagon) icon with a lasso SVG */
+    .leaflet-draw-toolbar .leaflet-draw-draw-polygon {
+      background-image: url("data:image/svg+xml,%3Csvg width='26' height='26' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 19 Q4 13 8 8 Q13 2 19 7 Q24 12 18 18 Q13 23 7 19 Z' fill='none' stroke='%23333' stroke-width='2.2'/%3E%3Ccircle cx='7' cy='19' r='2' fill='white' stroke='%23333' stroke-width='1.2'/%3E%3C/svg%3E") !important;
+      background-size: 22px 22px !important;
+      background-repeat: no-repeat !important;
+      background-position: center !important;
+      background-color: #fff !important;
+    }
+    .leaflet-draw-toolbar .leaflet-draw-draw-polygon span {
+      opacity: 0 !important;
+      background: none !important;
+    }
+  </style>
 </head>
 <body>
   <div class="page-wrapper">
@@ -255,7 +283,15 @@
       <!-- selected-addresses-section removed for redundancy -->
     </div>
     <div class="right-panel">
-      <div id="map"></div>
+      <div id="drawInstruction" style="background:#fffbe7;color:#7a5d00;border:1.5px solid #ffe082;padding:10px 16px;margin:18px 18px 0 18px;border-radius:8px;font-size:1.08rem;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.3em;">🖊️</span>
+        <span>
+          Use the <b>box button</b> in the toolbar on the left side of the map to draw a shape and select addresses.<br>
+          <span id="drawTooltip" style="background:#ffe082;color:#7a5d00;padding:2px 8px;border-radius:6px;font-size:0.98em;display:none;margin-left:8px;">Click here to start drawing!</span>
+        </span>
+      </div>
+      <div id="map" style="position:relative;"></div>
+      <div id="drawArrowOverlay" style="display:none;position:absolute;z-index:1000;pointer-events:none;"></div>
     </div>
   </div>
   <script>
@@ -691,12 +727,12 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
         console.log("initializeBasicMap: FeatureGroup added to map");
 
         const drawControl = new L.Control.Draw({
-          edit: { featureGroup: drawnItems },
+          edit: false,
           draw: {
             polygon: true,
             polyline: false,
             rectangle: true,
-            circle: true,
+            circle: false,
             marker: false,
             circlemarker: false
           }
@@ -760,16 +796,83 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
     }
 
     if (window.L && map) {
+      // --- Show onboarding tooltip for draw button on first load ---
+      window.addEventListener('DOMContentLoaded', function() {
+        try {
+          if (!localStorage.getItem('drawButtonTooltipShown')) {
+            setTimeout(function() {
+              // Try to find the draw button (rectangle icon) and highlight it
+              const leafletControls = document.querySelectorAll('.leaflet-draw-toolbar .leaflet-draw-draw-rectangle');
+              if (leafletControls.length > 0) {
+                leafletControls[0].style.boxShadow = '0 0 0 4px #ffe082, 0 0 12px #7a5d00';
+                leafletControls[0].style.transition = 'box-shadow 0.5s';
+                leafletControls[0].setAttribute('title', 'Draw a shape to select addresses');
+                document.getElementById('drawTooltip').style.display = 'inline-block';
+
+                // Position an arrow overlay pointing to the button
+                const btnRect = leafletControls[0].getBoundingClientRect();
+                const mapRect = document.getElementById('map').getBoundingClientRect();
+                const overlay = document.getElementById('drawArrowOverlay');
+                // Calculate arrow start (right of button) and end (left of button)
+                const arrowStartX = btnRect.right - mapRect.left + 10;
+                const arrowStartY = btnRect.top - mapRect.top + btnRect.height / 2;
+                const arrowEndX = btnRect.left - mapRect.left - 30;
+                const arrowEndY = arrowStartY + 10;
+                overlay.innerHTML = `<svg width="120" height="60" style="overflow:visible;">
+                  <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                      <polygon points="0 0, 10 3.5, 0 7" fill="#7a5d00"/>
+                    </marker>
+                  </defs>
+                  <line x1="100" y1="30" x2="10" y2="40" stroke="#7a5d00" stroke-width="4" marker-end="url(#arrowhead)" />
+                </svg>`;
+                overlay.style.display = 'block';
+                overlay.style.left = (btnRect.right - mapRect.left + 10) + 'px';
+                overlay.style.top = (btnRect.top - mapRect.top - 10) + 'px';
+                overlay.style.width = '120px';
+                overlay.style.height = '60px';
+
+                setTimeout(function() {
+                  leafletControls[0].style.boxShadow = '';
+                  document.getElementById('drawTooltip').style.display = 'none';
+                  overlay.style.display = 'none';
+                  localStorage.setItem('drawButtonTooltipShown', '1');
+                }, 6000);
+              }
+            }, 1200); // Wait for map controls to render
+          }
+        } catch (e) {}
+      });
       // --- Custom Clear All Button Control ---
       L.Control.ClearButton = L.Control.extend({
+        options: { position: 'topleft' },
         onAdd: function(map) {
-          const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-          container.innerHTML = '<button id="clearAllMapSelections" title="Clear Drawn Shapes & Selections" style="padding:4px 10px;font-size:1rem;cursor:pointer;">Clear All</button>';
-          container.style.backgroundColor = 'white';
-          container.style.padding = '5px';
+          // Create a button styled like Leaflet.draw tools
+          const container = L.DomUtil.create('div', 'leaflet-draw-toolbar leaflet-bar');
+          const btn = L.DomUtil.create('a', 'leaflet-draw-toolbar-button leaflet-draw-clear-all', container);
+          btn.id = 'clearAllMapSelections';
+          btn.href = '#';
+          btn.title = 'Clear all drawn shapes and selections';
+          btn.setAttribute('role', 'button');
+          btn.setAttribute('aria-label', 'Clear all drawn shapes and selections');
+          // Use text "CLEAR" instead of icon
+          btn.innerHTML = '<span style="font-weight:700;font-size:1.08em;letter-spacing:1px;">CLEAR</span>';
+          btn.style.width = '48px';
+          btn.style.height = '34px';
+          btn.style.background = '#fff';
+          btn.style.border = 'none';
+          btn.style.marginTop = '6px';
+          btn.style.display = 'flex';
+          btn.style.alignItems = 'center';
+          btn.style.justifyContent = 'center';
+          btn.style.boxShadow = '0 1px 4px rgba(44,62,80,0.08)';
+          btn.style.cursor = 'pointer';
+          btn.onmouseover = function() { btn.style.background = '#f4f6fa'; };
+          btn.onmouseout = function() { btn.style.background = '#fff'; };
           L.DomEvent.disableClickPropagation(container);
           L.DomEvent.disableScrollPropagation(container);
-          container.onclick = function() {
+          btn.onclick = function(e) {
+            e.preventDefault();
             handleClearSelections();
             showMessage('Selections and drawn shapes cleared.', 'info');
           };
@@ -780,7 +883,7 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
       L.control.clearButton = function(opts) {
         return new L.Control.ClearButton(opts);
       };
-      L.control.clearButton({ position: 'topright' }).addTo(map);
+      L.control.clearButton({ position: 'topleft' }).addTo(map);
 
       // --- Centralized clear logic ---
       function handleClearSelections() {

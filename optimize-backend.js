@@ -14,7 +14,7 @@ app.use(express.json());
 app.post('/optimize-route', async (req, res) => {
   const { addresses } = req.body;
   if (!addresses || !Array.isArray(addresses) || addresses.length < 2) {
-    return res.status(400).json({ error: 'At least two addresses required.' });
+    return res.status(400).json({ error: 'Starting addresses required.' });
   }
   const start = addresses[0];
   const end = addresses[addresses.length - 1];
