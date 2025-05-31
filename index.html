@@ -266,8 +266,9 @@
                 <div style="max-height:420px;overflow-y:auto;border:1px solid #e0e4ea;border-radius:6px;background:#fff;scrollbar-width:thin;scrollbar-color:#4f8cff #f4f6fa;">
                   <ul id="middleAddressesList" style="list-style:none;padding:0;margin:10px 0 0 0;"></ul>
                 </div>
-                <button type="button" id="copyDrawnSelectionBtn" style="display:none; margin-top: 10px; background-color: #6c757d; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Copy Selected Addresses</button>
-              </div>
+                <button type="button" id="copySelectedBtn" style="display:none; margin-top: 10px; background-color: #6c757d; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Copy Addresses</button>
+                <button type="button" id="markVisitedBtn" style="display:none; margin-top: 10px; background-color: #28a745; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Mark Visited</button>
+                              </div>
               <label for="customEndAddress" style="font-weight:600;">End Address:</label>
               <input type="text" id="customEndAddress" placeholder="(Optional) Enter custom end address" style="width:100%;margin-bottom:8px;" />
             </div>
@@ -307,7 +308,7 @@
     const manualEntryLabel = document.getElementById('manualEntryLabel');
     const filterSection = document.getElementById('filterSection');
     const auctionDateFilterSelect = document.getElementById('auctionDateFilter');
-    const copyBtn = document.getElementById('copyDrawnSelectionBtn');
+    const markVisitedBtn = document.getElementById('markVisitedBtn');
 
     let allExcelItems = []; // Holds all successfully parsed items from Excel
     let currentlyDisplayedItems = []; // Holds items after filtering, used for UI population
@@ -550,6 +551,7 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
       middleAddressesList.innerHTML = '';
 
       currentlyDisplayedItems.forEach(item => {
+    const isVisited = item.visited === true;
         if (item.address !== startAddr && item.address !== endAddr) {
           const li = document.createElement('li');
           const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'address-checkbox'; cb.value = item.address; cb.checked = false;
@@ -557,7 +559,12 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
           let dText = item.address;
           if (item.name) dText = `<b>${item.name}</b> - ${dText}`;
           if (item.auctionDateFormatted) dText += ` <span style="color:#0077b6;">(Auction: ${item.auctionDateFormatted})</span>`;
-          const span = document.createElement('span'); span.innerHTML = ' ' + dText;
+          const span = document.createElement('span');
+span.innerHTML = ' ' + dText;
+if (isVisited) {
+    span.style.color = '#888';
+    span.style.textDecoration = 'line-through';
+}
           li.appendChild(span);
           middleAddressesList.appendChild(li);
         }
@@ -635,6 +642,7 @@ const result = await response.json();
 console.log('Backend response received:', result);
 console.log('Original addresses sent to backend:', addresses);
 
+let optimizedFullRoute;
 let optimizedCoordinates = [];
 if (result.order && Array.isArray(result.order)) {
   const waypoints = addresses.slice(1, -1);
@@ -644,27 +652,12 @@ if (result.order && Array.isArray(result.order)) {
 
   console.log('Constructed optimizedFullRoute:', optimizedFullRoute);
 
-  // Geocode optimized route
-  optimizedCoordinates = await geocodeAddresses(optimizedFullRoute);
-
-  // Draw polyline on Leaflet map
-  if (optimizedCoordinates.length > 1) {
-    const latLngs = optimizedCoordinates.map(item => [item.lat, item.lng]);
-    if (window.routePolyline) {
-      map.removeLayer(window.routePolyline);
-    }
-    window.routePolyline = L.polyline(latLngs, { color: 'blue', weight: 5 }).addTo(map);
-    map.fitBounds(window.routePolyline.getBounds());
-    console.log('Route polyline drawn on map.');
-  } else {
-    console.warn('Not enough coordinates to draw route.');
-  }
 }
     const waypoints = addresses.slice(1, -1);
     console.log('Waypoints extracted:', waypoints);
     console.log('Order from backend (result.order):', result.order);
 
-    let optimizedFullRoute = [addresses[0]];
+    optimizedFullRoute = [addresses[0]];
     if (result.order && Array.isArray(result.order)) {
       result.order.forEach(idx => {
         console.log('Processing waypoint index from backend:', idx, 'Corresponding waypoint:', waypoints[idx]);
@@ -719,7 +712,7 @@ if (result.order && Array.isArray(result.order)) {
       excelAddresses = []; 
       addressListSection.style.display = 'none';
       filterSection.style.display = 'none';
-      auctionDateFilterSelect.innerHTML = '';
+      auctionDateFilterSelect.innerHTML = '<option value="all">All Dates</option>';
       manualEntryLabel.style.display = '';
       addressesTextarea.required = true;
       hideMessage();
@@ -961,6 +954,7 @@ if (result.order && Array.isArray(result.order)) {
           });
         }
         if (copyBtn) copyBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
+if (markVisitedBtn) markVisitedBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
         if (selectedItemsInShape.length > 0) {
           showMessage(`${selectedItemsInShape.length} addresses selected.`, 'success');
         }
@@ -968,29 +962,54 @@ if (result.order && Array.isArray(result.order)) {
 
       map.on('draw:deleted', function() {
         handleClearSelections();
+if (markVisitedBtn) markVisitedBtn.style.display = 'none';
         showMessage('Drawn shapes deleted and selections cleared.', 'info');
       });
 
       // Copy Selected Addresses button logic
-      if (copyBtn) {
-        copyBtn.addEventListener('click', function() {
-          const addressesToCopy = [];
-          const listItems = middleAddressesList.getElementsByTagName('li');
-          for (let item of listItems) {
+let copyBtn;
+let markVisitedBtn;
+
+document.addEventListener('DOMContentLoaded', function() {
+    markVisitedBtn.addEventListener('click', function() {
+        const listItems = middleAddressesList.getElementsByTagName('li');
+        for (let item of listItems) {
             const checkbox = item.querySelector('input[type="checkbox"]');
-            if (checkbox && checkbox.checked) {
-              addressesToCopy.push(checkbox.value);
+            const span = item.querySelector('span');
+            if (checkbox && checkbox.checked && span) {
+                const address = checkbox.value;
+                const matchedItem = allExcelItems.find(i => i.address === address);
+                if (matchedItem) {
+                    matchedItem.visited = true;
+                    span.style.color = '#888';
+                    span.style.textDecoration = 'line-through';
+                }
             }
-          }
-          if (addressesToCopy.length > 0) {
-            navigator.clipboard.writeText(addressesToCopy.join('\n'))
-              .then(() => showMessage('Selected addresses copied to clipboard!', 'success'))
-              .catch(err => showMessage('Failed to copy addresses: ' + err, 'error'));
-          } else {
-            showMessage('No addresses to copy.', 'info');
-          }
+        }
+        showMessage('Selected addresses marked as visited.', 'success');
+    });
+    copyBtn = document.getElementById('copySelectedBtn');
+    markVisitedBtn = document.getElementById('markVisitedBtn');
+        if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+            const addressesToCopy = [];
+            const listItems = middleAddressesList.getElementsByTagName('li');
+            for (let item of listItems) {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    addressesToCopy.push(checkbox.value);
+                }
+            }
+            if (addressesToCopy.length > 0) {
+                navigator.clipboard.writeText(addressesToCopy.join('\n'))
+                    .then(() => showMessage('Selected addresses copied to clipboard!', 'success'))
+                    .catch(err => showMessage('Failed to copy addresses: ' + err, 'error'));
+            } else {
+                showMessage('No addresses to copy.', 'info');
+            }
         });
-      }
+    }
+});
     }
   </script>
 </body>
