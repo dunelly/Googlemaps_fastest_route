@@ -631,9 +631,35 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
       throw new Error(`HTTP error ${response.status}: ${errorData.error} - ${JSON.stringify(errorData.details)}`);
     }
 
-    const result = await response.json();
-    console.log('Backend response received:', result);
-    console.log('Original addresses sent to backend:', addresses);
+const result = await response.json();
+console.log('Backend response received:', result);
+console.log('Original addresses sent to backend:', addresses);
+
+let optimizedCoordinates = [];
+if (result.order && Array.isArray(result.order)) {
+  const waypoints = addresses.slice(1, -1);
+  optimizedFullRoute = [addresses[0]];
+  result.order.forEach(idx => optimizedFullRoute.push(waypoints[idx]));
+  optimizedFullRoute.push(addresses[addresses.length - 1]);
+
+  console.log('Constructed optimizedFullRoute:', optimizedFullRoute);
+
+  // Geocode optimized route
+  optimizedCoordinates = await geocodeAddresses(optimizedFullRoute);
+
+  // Draw polyline on Leaflet map
+  if (optimizedCoordinates.length > 1) {
+    const latLngs = optimizedCoordinates.map(item => [item.lat, item.lng]);
+    if (window.routePolyline) {
+      map.removeLayer(window.routePolyline);
+    }
+    window.routePolyline = L.polyline(latLngs, { color: 'blue', weight: 5 }).addTo(map);
+    map.fitBounds(window.routePolyline.getBounds());
+    console.log('Route polyline drawn on map.');
+  } else {
+    console.warn('Not enough coordinates to draw route.');
+  }
+}
     const waypoints = addresses.slice(1, -1);
     console.log('Waypoints extracted:', waypoints);
     console.log('Order from backend (result.order):', result.order);
