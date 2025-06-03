@@ -121,22 +121,64 @@
       margin-top: 24px;
       padding: 13px 0;
       width: 100%;
-      background: linear-gradient(90deg, #4f8cff 0%, #38b6ff 100%);
+      background: #1a355b;
       color: #fff;
       border: none;
-      border-radius: 8px;
-      font-size: 1.13rem;
-      font-weight: 600;
+      border-radius: 7px;
+      font-size: 1.15rem;
+      font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(79,140,255,0.08);
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+      transition: background 0.18s, transform 0.1s, box-shadow 0.18s;
       font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
       letter-spacing: 0.01em;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6em;
+      user-select: none;
     }
-    button:hover {
-      background: linear-gradient(90deg, #38b6ff 0%, #4f8cff 100%);
-      transform: translateY(-2px) scale(1.01);
-      box-shadow: 0 4px 16px rgba(79,140,255,0.12);
+    button:hover, button:focus {
+      background: #254075;
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 4px 16px rgba(44,62,80,0.13);
+    }
+    .add-address-btn {
+      background: #217a3c;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.07rem;
+      border-radius: 7px;
+      box-shadow: 0 2px 8px rgba(33,122,60,0.09);
+      margin-top: 0;
+      margin-bottom: 8px;
+      padding: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+      transition: background 0.18s, box-shadow 0.18s;
+    }
+    .add-address-btn:hover, .add-address-btn:focus {
+      background: #17632e;
+      box-shadow: 0 4px 14px rgba(33,122,60,0.13);
+    }
+    .add-address-btn svg {
+      width: 1.2em;
+      height: 1.2em;
+      vertical-align: middle;
+      margin-right: 0.2em;
+      fill: #fff;
+      display: inline-block;
+    }
+    .optimize-btn svg {
+      width: 1.2em;
+      height: 1.2em;
+      vertical-align: middle;
+      margin-right: 0.2em;
+      fill: #fff;
+      display: inline-block;
     }
     .secondary-btn {
       background: #f4f6fa;
@@ -267,22 +309,16 @@
         <form id="routeForm">
           <!-- Step 1: Choose Input Method -->
           <div style="margin-bottom:22px;">
-            <h2 style="font-size:1.15rem;margin-bottom:8px;">How do you want to add addresses?</h2>
+            <h2 style="font-size:1.15rem;margin-bottom:8px;">Add Addresses</h2>
             <div style="font-size:1.04em; margin-bottom: 8px;">
-              <b>Option 1:</b> Upload a file<br>
-              <b>Option 2:</b> Enter manually
+              Upload file or enter manually
             </div>
           </div>
           <!-- Step 2: Excel/CSV Upload -->
           <div style="background:#f6faff;border-radius:8px;padding:18px 16px 12px 16px;margin-bottom:18px;">
             <h3 style="font-size:1.08rem;margin-bottom:6px;">Upload File</h3>
-            <div style="margin-bottom:10px; color:#34495e;">
-              <b>Upload your Excel/CSV file.</b><br>
-              Follow the prompts to select address columns.<br>
-              Select your start and end address (optional), then click <b>Get Optimized Route</b>.
-            </div>
             <label class="file-upload-label" style="margin-top:10px;">
-              <span style="font-weight:600;">Upload Excel/CSV file:</span>
+              <span style="font-weight:600;">Excel/CSV file:</span>
               <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" />
             </label>
             <div id="messageArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:1rem;"></div>
@@ -295,38 +331,36 @@
               <div id="excelAddressesCard" class="content-card">
                 <label for="customStartAddress" style="font-weight:600;display:flex;align-items:center;">
                   Start Address:
-                  <span style="background:#ffe082;color:#7a5d00;font-size:0.95rem;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:10px;">Required First</span>
+                  <span style="background:#ffe082;color:#7a5d00;font-size:0.95rem;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:10px;">Required</span>
                 </label>
-                <input type="text" id="customStartAddress" placeholder="Enter starting address from your file" style="width:100%;margin-bottom:8px;border:2px solid #ffe082;background:#fffde7;" />
+                <input type="text" id="customStartAddress" placeholder="Start address" style="width:100%;margin-bottom:8px;border:2px solid #ffe082;background:#fffde7;" />
                 <div id="middleAddresses" style="margin:18px 0 18px 0;">
-                  <label style="font-weight:600;">Addresses from your file (check to include in route):</label>
+                  <label style="font-weight:600;">Addresses from file:</label>
                   <div style="max-height:420px;overflow-y:auto;border:1px solid #e0e4ea;border-radius:6px;background:#fff;scrollbar-width:thin;scrollbar-color:#4f8cff #f4f6fa;">
                     <ul id="middleAddressesList" style="list-style:none;padding:0;margin:10px 0 0 0;"></ul>
                   </div>
-                  <button type="button" id="copySelectedBtn" style="display:none; margin-top: 10px; background-color: #6c757d; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Copy Addresses</button>
-                  <button type="button" id="markVisitedBtn" style="display:none; margin-top: 10px; background-color: #28a745; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Mark Visited</button>
+                  <button type="button" id="copySelectedBtn" style="display:none; margin-top: 10px; background-color: #6c757d; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Copy</button>
+                  <button type="button" id="markVisitedBtn" style="display:none; margin-top: 10px; background-color: #28a745; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Visited</button>
                 </div>
                 <label for="customEndAddress" style="font-weight:600;">End Address (optional):</label>
-                <input type="text" id="customEndAddress" placeholder="(Optional) Enter custom end address" style="width:100%;margin-bottom:8px;" />
+                <input type="text" id="customEndAddress" placeholder="End address (optional)" style="width:100%;margin-bottom:8px;" />
               </div>
             </div>
           </div>
           <!-- Step 3: Manual Entry -->
-          <div id="manualEntrySection" class="content-card" style="margin-top:8px;background:#f9f6ff;">
-            <h3 style="font-size:1.08rem;margin-bottom:6px;">Manual Entry</h3>
-            <div style="margin-bottom:10px; color:#34495e;">
-              <b>Enter your starting address.</b><br>
-              Enter each stop on a new line.<br>
-              Click <b>Get Optimized Route</b>.
-            </div>
-            <label for="manualStartAddress" style="font-weight:600;">Starting Address:</label>
-            <input type="text" id="manualStartAddress" placeholder="Enter starting address" style="width:100%;margin-bottom:8px;" />
-            <label id="manualEntryLabel">
-              Addresses (one per line):
-              <textarea id="addresses" rows="7" cols="50" required></textarea>
-            </label>
+          <div id="manualEntrySection" class="content-card" style="margin-top:8px;">
+            <label for="manualStartAddress" style="font-weight:600;">Start Address:</label>
+            <input type="text" id="manualStartAddress" placeholder="Start address" style="width:100%;margin-bottom:8px;" />
+            <div id="manualAddressesList" style="margin-bottom:8px;"></div>
+            <button type="button" id="addManualAddressBtn" class="add-address-btn" style="margin-bottom:8px;">
+              <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" stroke="white" stroke-width="2" fill="none"/><rect x="9" y="5" width="2" height="10" fill="white"/><rect x="5" y="9" width="10" height="2" fill="white"/></svg>
+              Add Address
+            </button>
           </div>
-          <button type="submit" style="margin-top:22px;">Get Optimized Route</button>
+          <button type="submit" class="optimize-btn" style="margin-top:22px;">
+            <svg viewBox="0 0 20 20"><path d="M4 10h12M12 6l4 4-4 4" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Get Optimized Route
+          </button>
         </form>
       </div>
       <!-- selected-addresses-section removed for redundancy -->
@@ -352,11 +386,87 @@
     // const startAddressSelect = document.getElementById('startAddress');
     // const endAddressSelect = document.getElementById('endAddress');
     const middleAddressesList = document.getElementById('middleAddressesList');
-    const addressesTextarea = document.getElementById('addresses');
-    const manualEntryLabel = document.getElementById('manualEntryLabel');
+    // Manual entry dynamic address fields
+    const manualAddressesList = document.getElementById('manualAddressesList');
+    const addManualAddressBtn = document.getElementById('addManualAddressBtn');
+
+    // Make copyBtn and markVisitedBtn accessible globally
+    let copyBtn = null;
+    let markVisitedBtn = null;
+    // Simple vertical stack for manual address fields
+    function addManualAddressField(value = "") {
+      const div = document.createElement('div');
+      div.style.display = "flex";
+      div.style.alignItems = "center";
+      div.style.marginBottom = "6px";
+      div.style.background = "none";
+      div.style.border = "none";
+      div.style.padding = "0";
+      div.style.boxShadow = "none";
+      div.style.gap = "4px";
+
+      // Address input
+      const input = document.createElement('input');
+      input.type = "text";
+      input.placeholder = "Address";
+      input.value = value;
+      input.style.flex = "1 1 0";
+      input.style.minWidth = "0";
+      input.style.marginRight = "4px";
+      input.style.padding = "8px 10px";
+      input.style.fontSize = "0.97rem";
+      input.style.borderRadius = "6px";
+      input.style.border = "1.2px solid #b3c6e6";
+      input.required = true;
+
+      // Remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.type = "button";
+      removeBtn.textContent = "✕";
+      removeBtn.title = "Remove";
+      removeBtn.style.background = "#f4f6fa";
+      removeBtn.style.color = "#b30000";
+      removeBtn.style.border = "none";
+      removeBtn.style.borderRadius = "50%";
+      removeBtn.style.width = "18px";
+      removeBtn.style.height = "18px";
+      removeBtn.style.fontSize = "0.85em";
+      removeBtn.style.padding = "0";
+      removeBtn.style.display = "flex";
+      removeBtn.style.alignItems = "center";
+      removeBtn.style.justifyContent = "center";
+      removeBtn.style.cursor = "pointer";
+      removeBtn.style.transition = "background 0.2s";
+      removeBtn.onmouseover = () => removeBtn.style.background = "#ffeaea";
+      removeBtn.onmouseout = () => removeBtn.style.background = "#f4f6fa";
+      removeBtn.onclick = () => div.remove();
+
+      div.appendChild(input);
+      div.appendChild(removeBtn);
+      manualAddressesList.appendChild(div);
+    }
+    addManualAddressBtn.onclick = () => addManualAddressField();
+    // Add one address field by default
+    addManualAddressField();
+
+    // Helper to set required only if manual entry section is visible
+    function updateManualAddressRequired() {
+      const manualSection = document.getElementById('manualEntrySection');
+      const visible = manualSection && manualSection.style.display !== 'none';
+      const manualInputs = document.querySelectorAll('#manualAddressesList input[type="text"]');
+      manualInputs.forEach(i => i.required = !!visible);
+    }
+    // Call on page load and whenever manual section is shown/hidden
+    window.addEventListener('DOMContentLoaded', updateManualAddressRequired);
+    // Also call after adding/removing fields
+    manualAddressesList.addEventListener('DOMNodeInserted', updateManualAddressRequired);
+    manualAddressesList.addEventListener('DOMNodeRemoved', updateManualAddressRequired);
+
+    const addressesTextarea = null;
+    const manualEntryLabel = null;
     const filterSection = document.getElementById('filterSection');
     const auctionDateFilterSelect = document.getElementById('auctionDateFilter');
-    const markVisitedBtn = document.getElementById('markVisitedBtn');
+    markVisitedBtn = document.getElementById('markVisitedBtn');
 
     let allExcelItems = []; // Holds all successfully parsed items from Excel
     let currentlyDisplayedItems = []; // Holds items after filtering, used for UI population
@@ -426,6 +536,8 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
       console.log('File input CHANGED');
       hideMessage(); hideDebug();
       const file = e.target.files[0]; if (!file) return;
+      document.getElementById('manualEntrySection').style.display = 'none';
+      updateManualAddressRequired();
       const reader = new FileReader();
       reader.onload = function (evt) {
         console.log('File reader ONLOAD');
@@ -483,13 +595,25 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
 
           document.getElementById('confirmAddressCols').onclick = function() {
             try {
-              console.log("CONFIRM BUTTON CLICKED - HANDLER STARTED");
-              const addrIdx = parseInt(document.getElementById('addressColSelect').value, 10);
-              const cityIdx = document.getElementById('cityColSelect').value !== "" ? parseInt(document.getElementById('cityColSelect').value, 10) : null;
-              const stateIdx = document.getElementById('stateColSelect').value !== "" ? parseInt(document.getElementById('stateColSelect').value, 10) : null;
-              const firstNameIdx = document.getElementById('firstNameColSelect').value !== "" ? parseInt(document.getElementById('firstNameColSelect').value, 10) : null;
-              const lastNameIdx = document.getElementById('lastNameColSelect').value !== "" ? parseInt(document.getElementById('lastNameColSelect').value, 10) : null;
-              const auctionDateIdx = document.getElementById('auctionDateColSelect').value !== "" ? parseInt(document.getElementById('auctionDateColSelect').value, 10) : null;
+              // Read all select values first, with null checks
+              const addressColSelect = document.getElementById('addressColSelect');
+              const cityColSelect = document.getElementById('cityColSelect');
+              const stateColSelect = document.getElementById('stateColSelect');
+              const firstNameColSelect = document.getElementById('firstNameColSelect');
+              const lastNameColSelect = document.getElementById('lastNameColSelect');
+              const auctionDateColSelect = document.getElementById('auctionDateColSelect');
+
+              if (!addressColSelect) throw new Error("Address column select not found.");
+
+              const addrIdx = parseInt(addressColSelect.value, 10);
+              const cityIdx = cityColSelect && cityColSelect.value !== "" ? parseInt(cityColSelect.value, 10) : null;
+              const stateIdx = stateColSelect && stateColSelect.value !== "" ? parseInt(stateColSelect.value, 10) : null;
+              const firstNameIdx = firstNameColSelect && firstNameColSelect.value !== "" ? parseInt(firstNameColSelect.value, 10) : null;
+              const lastNameIdx = lastNameColSelect && lastNameColSelect.value !== "" ? parseInt(lastNameColSelect.value, 10) : null;
+              const auctionDateIdx = auctionDateColSelect && auctionDateColSelect.value !== "" ? parseInt(auctionDateColSelect.value, 10) : null;
+
+              // Now safe to remove the prompt
+              if (addressFieldPrompt && addressFieldPrompt.parentNode) addressFieldPrompt.remove();
 
               localStorage.setItem('addressColPreset', JSON.stringify([addrIdx, cityIdx, stateIdx, firstNameIdx, lastNameIdx, auctionDateIdx]));
 
@@ -534,11 +658,9 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
                 populateAddressSelection(currentlyDisplayedItems);
                 addressListSection.style.display = '';
                 console.log('[DEBUG] addressListSection.style.display set to blank. Computed:', getComputedStyle(addressListSection).display, 'offsetHeight:', addressListSection.offsetHeight);
-                addressesTextarea.required = false; 
-                manualEntryLabel.style.display = 'none';
+                if (addressesTextarea) addressesTextarea.required = false; 
+                if (manualEntryLabel) manualEntryLabel.style.display = 'none';
                 showMessage('Addresses loaded.', 'success');
-                console.log('Confirm button clicked. Hiding addressFieldPrompt (from timeout).');
-                addressFieldPrompt.style.display = 'none'; 
 
                 if (currentlyDisplayedItems.length > 0) {
                   showMessage('Geocoding addresses...', 'info');
@@ -658,21 +780,17 @@ if (isVisited) {
     }
   }
 
-  // Manual entry mode: use manualStartAddr + textarea
-  if (!startAddr && manualStartAddr && addressesTextarea.value.trim() !== "") {
-    const manualAddresses = addressesTextarea.value.trim().split('\n').map(a => a.trim()).filter(a => a);
+  // Manual entry mode: use manualStartAddr + dynamic fields
+  if (!startAddr && manualStartAddr) {
+    const manualInputs = document.querySelectorAll('#manualAddressesList input[type="text"]');
+    const manualAddresses = Array.from(manualInputs).map(i => i.value.trim()).filter(a => a);
     if (manualAddresses.length > 0) {
       addresses = [manualStartAddr, ...manualAddresses];
     }
   }
 
-  // Fallback to textarea if no addresses from selections and no manualStartAddr
-  if (addresses.length < 2 && addressesTextarea.value.trim() !== "") {
-    addresses = addressesTextarea.value.trim().split('\n').map(a => a.trim()).filter(a => a);
-  }
-
   if (addresses.length < 2) {
-    showMessage('Please enter a starting address and at least one more address (either select or paste in the box).', 'error');
+    showMessage('Please enter a starting address and at least one more address (either select or add in the boxes).', 'error');
     return;
   }
 
@@ -765,8 +883,10 @@ if (result.order && Array.isArray(result.order)) {
       addressListSection.style.display = 'none';
       filterSection.style.display = 'none';
       auctionDateFilterSelect.innerHTML = '<option value="all">All Dates</option>';
-      manualEntryLabel.style.display = '';
-      addressesTextarea.required = true;
+      if (manualEntryLabel) manualEntryLabel.style.display = '';
+      if (addressesTextarea) addressesTextarea.required = true;
+      document.getElementById('manualEntrySection').style.display = '';
+      updateManualAddressRequired();
       hideMessage();
       hideDebug();
       // let prompt = document.getElementById('addressFieldPrompt');
@@ -962,7 +1082,7 @@ if (result.order && Array.isArray(result.order)) {
         if (drawnItems) {
           drawnItems.clearLayers();
         }
-        if (copyBtn) copyBtn.style.display = 'none';
+        if (typeof copyBtn !== "undefined" && copyBtn) copyBtn.style.display = 'none';
         populateAddressSelection(currentlyDisplayedItems);
         console.log("handleClearSelections: Selections cleared and address list repopulated.");
       }
@@ -1030,8 +1150,8 @@ if (result.order && Array.isArray(result.order)) {
             middleAddressesListUI.appendChild(li);
           });
         }
-        if (copyBtn) copyBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
-        if (markVisitedBtn) markVisitedBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
+        if (typeof copyBtn !== "undefined" && copyBtn) copyBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
+        if (typeof markVisitedBtn !== "undefined" && markVisitedBtn) markVisitedBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
         if (selectedItemsInShape.length > 0) {
           showMessage(`${selectedItemsInShape.length} addresses selected.`, 'success');
         }
@@ -1047,8 +1167,8 @@ if (result.order && Array.isArray(result.order)) {
 
       // Copy Selected Addresses button logic
 document.addEventListener('DOMContentLoaded', function() {
-    let copyBtn = document.getElementById('copySelectedBtn');
-    let markVisitedBtn = document.getElementById('markVisitedBtn');
+    copyBtn = document.getElementById('copySelectedBtn');
+    markVisitedBtn = document.getElementById('markVisitedBtn');
 
     if (markVisitedBtn) {
         markVisitedBtn.addEventListener('click', function() {
