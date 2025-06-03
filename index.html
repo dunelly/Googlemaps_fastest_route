@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fastest Route Finder</title>
+  <title>Smash Routes</title>
   <style>
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
-      background: #f4f6fa;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f7f9fb;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     }
     body {
       min-height: 100vh;
@@ -41,17 +41,19 @@
       max-width: 100%;
       margin: 0;
       background: #fff;
-      border-radius: 0 0 12px 0;
-      box-shadow: none;
-      padding: 36px 32px 28px 32px;
+      border-radius: 0 0 16px 0;
+      box-shadow: 0 2px 16px rgba(44,62,80,0.06);
+      padding: 40px 36px 32px 36px;
       flex: 1 0 auto;
     }
     h1 {
       text-align: center;
-      color: #2d3a4a;
-      margin-bottom: 28px;
-      font-size: 2rem;
+      color: #1a2330;
+      margin-bottom: 32px;
+      font-size: 2.8rem;
+      font-weight: 800;
       letter-spacing: 1px;
+      font-family: 'Montserrat', 'Inter', 'Segoe UI', Arial, sans-serif;
     }
     label {
       display: block;
@@ -60,21 +62,25 @@
       font-weight: 500;
       font-size: 1.05rem;
     }
-    textarea {
+    textarea, input[type="text"], select {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
+      padding: 12px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
       font-size: 1rem;
       margin-top: 8px;
+      margin-bottom: 8px;
       resize: vertical;
       background: #f9fafb;
-      transition: border 0.2s;
+      transition: border 0.2s, box-shadow 0.2s;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      box-sizing: border-box;
     }
-    textarea:focus {
+    textarea:focus, input[type="text"]:focus, select:focus {
       border: 1.5px solid #4f8cff;
       outline: none;
       background: #fff;
+      box-shadow: 0 0 0 2px #e3f0ff;
     }
     .file-upload-label {
       margin-top: 18px;
@@ -112,22 +118,38 @@
       margin-right: 8px;
     }
     button {
-      margin-top: 26px;
-      padding: 12px 0;
+      margin-top: 24px;
+      padding: 13px 0;
       width: 100%;
       background: linear-gradient(90deg, #4f8cff 0%, #38b6ff 100%);
       color: #fff;
       border: none;
-      border-radius: 6px;
-      font-size: 1.1rem;
+      border-radius: 8px;
+      font-size: 1.13rem;
       font-weight: 600;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(79,140,255,0.08);
-      transition: background 0.2s, transform 0.1s;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 0.01em;
     }
     button:hover {
       background: linear-gradient(90deg, #38b6ff 0%, #4f8cff 100%);
       transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 4px 16px rgba(79,140,255,0.12);
+    }
+    .secondary-btn {
+      background: #f4f6fa;
+      color: #4f8cff;
+      border: 1.5px solid #b3c6e6;
+      box-shadow: none;
+      margin-top: 10px;
+      margin-bottom: 0;
+    }
+    .secondary-btn:hover {
+      background: #eaf1fb;
+      color: #217a3c;
+      border-color: #4f8cff;
     }
     .divider {
       margin: 24px 0 18px 0;
@@ -159,11 +181,11 @@
     }
     .content-card {
       background: #fff;
-      border-radius: 8px;
-      padding: 18px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(44,62,80,0.08);
-      border: 1px solid #e0e4ea;
+      border-radius: 12px;
+      padding: 22px 22px 18px 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 2px 12px rgba(44,62,80,0.06);
+      border: 1.5px solid #e6eaf2;
     }
     #filterSection {
         margin-bottom: 18px;
@@ -206,6 +228,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700,800&display=swap" rel="stylesheet">
   <style>
     /* Replace rectangle (box) icon with a custom SVG */
     .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
@@ -240,45 +263,70 @@
   <div class="page-wrapper">
     <div class="left-panel">
       <div class="container">
-        <h1>Fastest Route Finder</h1>
+        <h1>Smash Routes</h1>
         <form id="routeForm">
-          <label class="file-upload-label">
-            Upload Excel/CSV file with addresses:
-            <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" />
-          </label>
-          <div id="messageArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:1rem;"></div>
-          <div id="debugArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:0.95rem;background:#fffbe7;color:#7a5d00;border:1.5px solid #ffe082;"></div>
-          
-          <div id="filterSection" class="content-card" style="display:none;">
-            <label for="auctionDateFilter">Filter by Auction Date:</label>
-            <select id="auctionDateFilter"></select>
-          </div>
-
-          <div id="addressListSection" class="address-list-section" style="display:none;">
-            <div id="excelAddressesCard" class="content-card">
-              <label for="customStartAddress" style="font-weight:600;display:flex;align-items:center;">
-                Start Address:
-                <span style="background:#ffe082;color:#7a5d00;font-size:0.95rem;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:10px;">Required First</span>
-              </label>
-              <input type="text" id="customStartAddress" placeholder="Enter starting address" style="width:100%;margin-bottom:8px;border:2px solid #ffe082;background:#fffde7;" />
-              <div id="middleAddresses" style="margin:18px 0 18px 0;">
-                <label style="font-weight:600;">Addresses in Route:</label>
-                <div style="max-height:420px;overflow-y:auto;border:1px solid #e0e4ea;border-radius:6px;background:#fff;scrollbar-width:thin;scrollbar-color:#4f8cff #f4f6fa;">
-                  <ul id="middleAddressesList" style="list-style:none;padding:0;margin:10px 0 0 0;"></ul>
-                </div>
-                <button type="button" id="copySelectedBtn" style="display:none; margin-top: 10px; background-color: #6c757d; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Copy Addresses</button>
-                <button type="button" id="markVisitedBtn" style="display:none; margin-top: 10px; background-color: #28a745; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Mark Visited</button>
-                              </div>
-              <label for="customEndAddress" style="font-weight:600;">End Address:</label>
-              <input type="text" id="customEndAddress" placeholder="(Optional) Enter custom end address" style="width:100%;margin-bottom:8px;" />
+          <!-- Step 1: Choose Input Method -->
+          <div style="margin-bottom:22px;">
+            <h2 style="font-size:1.15rem;margin-bottom:8px;">How do you want to add addresses?</h2>
+            <div style="font-size:1.04em; margin-bottom: 8px;">
+              <b>Option 1:</b> Upload a file<br>
+              <b>Option 2:</b> Enter manually
             </div>
           </div>
-          <div class="divider"></div>
-          <label id="manualEntryLabel">
-            Addresses (one per line, in any order):
-            <textarea id="addresses" rows="7" cols="50" required></textarea>
-          </label>
-          <button type="submit">Get Optimized Route</button>
+          <!-- Step 2: Excel/CSV Upload -->
+          <div style="background:#f6faff;border-radius:8px;padding:18px 16px 12px 16px;margin-bottom:18px;">
+            <h3 style="font-size:1.08rem;margin-bottom:6px;">Upload File</h3>
+            <div style="margin-bottom:10px; color:#34495e;">
+              <b>Upload your Excel/CSV file.</b><br>
+              Follow the prompts to select address columns.<br>
+              Select your start and end address (optional), then click <b>Get Optimized Route</b>.
+            </div>
+            <label class="file-upload-label" style="margin-top:10px;">
+              <span style="font-weight:600;">Upload Excel/CSV file:</span>
+              <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" />
+            </label>
+            <div id="messageArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:1rem;"></div>
+            <div id="debugArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:0.95rem;background:#fffbe7;color:#7a5d00;border:1.5px solid #ffe082;"></div>
+            <div id="filterSection" class="content-card" style="display:none;">
+              <label for="auctionDateFilter">Filter by Auction Date:</label>
+              <select id="auctionDateFilter"></select>
+            </div>
+            <div id="addressListSection" class="address-list-section" style="display:none;">
+              <div id="excelAddressesCard" class="content-card">
+                <label for="customStartAddress" style="font-weight:600;display:flex;align-items:center;">
+                  Start Address:
+                  <span style="background:#ffe082;color:#7a5d00;font-size:0.95rem;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:10px;">Required First</span>
+                </label>
+                <input type="text" id="customStartAddress" placeholder="Enter starting address from your file" style="width:100%;margin-bottom:8px;border:2px solid #ffe082;background:#fffde7;" />
+                <div id="middleAddresses" style="margin:18px 0 18px 0;">
+                  <label style="font-weight:600;">Addresses from your file (check to include in route):</label>
+                  <div style="max-height:420px;overflow-y:auto;border:1px solid #e0e4ea;border-radius:6px;background:#fff;scrollbar-width:thin;scrollbar-color:#4f8cff #f4f6fa;">
+                    <ul id="middleAddressesList" style="list-style:none;padding:0;margin:10px 0 0 0;"></ul>
+                  </div>
+                  <button type="button" id="copySelectedBtn" style="display:none; margin-top: 10px; background-color: #6c757d; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Copy Addresses</button>
+                  <button type="button" id="markVisitedBtn" style="display:none; margin-top: 10px; background-color: #28a745; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">Mark Visited</button>
+                </div>
+                <label for="customEndAddress" style="font-weight:600;">End Address (optional):</label>
+                <input type="text" id="customEndAddress" placeholder="(Optional) Enter custom end address" style="width:100%;margin-bottom:8px;" />
+              </div>
+            </div>
+          </div>
+          <!-- Step 3: Manual Entry -->
+          <div id="manualEntrySection" class="content-card" style="margin-top:8px;background:#f9f6ff;">
+            <h3 style="font-size:1.08rem;margin-bottom:6px;">Manual Entry</h3>
+            <div style="margin-bottom:10px; color:#34495e;">
+              <b>Enter your starting address.</b><br>
+              Enter each stop on a new line.<br>
+              Click <b>Get Optimized Route</b>.
+            </div>
+            <label for="manualStartAddress" style="font-weight:600;">Starting Address:</label>
+            <input type="text" id="manualStartAddress" placeholder="Enter starting address" style="width:100%;margin-bottom:8px;" />
+            <label id="manualEntryLabel">
+              Addresses (one per line):
+              <textarea id="addresses" rows="7" cols="50" required></textarea>
+            </label>
+          </div>
+          <button type="submit" style="margin-top:22px;">Get Optimized Route</button>
         </form>
       </div>
       <!-- selected-addresses-section removed for redundancy -->
@@ -593,6 +641,7 @@ if (isVisited) {
   let addresses = [];
   const startAddr = document.getElementById('customStartAddress').value.trim();
   let endAddr = document.getElementById('customEndAddress').value.trim();
+  const manualStartAddr = document.getElementById('manualStartAddress').value.trim();
 
   const middleCheckboxes = document.querySelectorAll('#middleAddressesList input[type="checkbox"]:checked');
   const middleAddrs = Array.from(middleCheckboxes).map(cb => cb.value);
@@ -609,18 +658,21 @@ if (isVisited) {
     }
   }
 
-  // Fallback to textarea if no addresses from selections
+  // Manual entry mode: use manualStartAddr + textarea
+  if (!startAddr && manualStartAddr && addressesTextarea.value.trim() !== "") {
+    const manualAddresses = addressesTextarea.value.trim().split('\n').map(a => a.trim()).filter(a => a);
+    if (manualAddresses.length > 0) {
+      addresses = [manualStartAddr, ...manualAddresses];
+    }
+  }
+
+  // Fallback to textarea if no addresses from selections and no manualStartAddr
   if (addresses.length < 2 && addressesTextarea.value.trim() !== "") {
     addresses = addressesTextarea.value.trim().split('\n').map(a => a.trim()).filter(a => a);
   }
 
-  if (!startAddr) {
-    showMessage('Please enter a starting address before proceeding.', 'error');
-    document.getElementById('customStartAddress').focus();
-    return;
-  }
   if (addresses.length < 2) {
-    showMessage('Please select or enter at least two addresses.', 'error');
+    showMessage('Please enter a starting address and at least one more address (either select or paste in the box).', 'error');
     return;
   }
 
@@ -729,6 +781,7 @@ if (result.order && Array.isArray(result.order)) {
     // MAP AND DRAWING LOGIC (ensure it uses currentlyDisplayedItems for context if needed)
     let map;
     let drawnItems;
+    let drawControl; // Make drawControl accessible globally
     function initializeBasicMap() {
       console.log("initializeBasicMap: Starting");
       try {
@@ -745,7 +798,7 @@ if (result.order && Array.isArray(result.order)) {
         map.addLayer(drawnItems);
         console.log("initializeBasicMap: FeatureGroup added to map");
 
-        const drawControl = new L.Control.Draw({
+        drawControl = new L.Control.Draw({
           edit: false,
           draw: {
             polygon: true,
@@ -914,36 +967,60 @@ if (result.order && Array.isArray(result.order)) {
         console.log("handleClearSelections: Selections cleared and address list repopulated.");
       }
 
+      // Restore default draw control behavior (no duplicate controls)
       map.on(L.Draw.Event.CREATED, function (event) {
+        drawnItems.clearLayers();
         const drawnLayer = event.layer;
-        drawnItems.clearLayers(); 
         drawnItems.addLayer(drawnLayer);
-        
-        const selectedItemsInShape = []; 
+
+        // Explicitly disable drawing mode after drawing (rectangle or polygon)
+        if (
+          drawControl &&
+          drawControl._toolbars &&
+          drawControl._toolbars.draw &&
+          drawControl._toolbars.draw._modes
+        ) {
+          if (
+            event.layerType === 'rectangle' &&
+            drawControl._toolbars.draw._modes.rectangle &&
+            drawControl._toolbars.draw._modes.rectangle.handler
+          ) {
+            drawControl._toolbars.draw._modes.rectangle.handler.disable();
+          }
+          if (
+            event.layerType === 'polygon' &&
+            drawControl._toolbars.draw._modes.polygon &&
+            drawControl._toolbars.draw._modes.polygon.handler
+          ) {
+            drawControl._toolbars.draw._modes.polygon.handler.disable();
+          }
+        }
+
+        const selectedItemsInShape = [];
 
         if (addressMarkersLayer) {
           addressMarkersLayer.eachLayer(function (marker) {
             if (marker.customData) {
-                const markerLatLng = marker.getLatLng();
-                let isInside = false;
-                if (drawnLayer instanceof L.Circle) isInside = markerLatLng.distanceTo(drawnLayer.getLatLng()) <= drawnLayer.getRadius();
-                else if (drawnLayer.getBounds) isInside = drawnLayer.getBounds().contains(markerLatLng);
+              const markerLatLng = marker.getLatLng();
+              let isInside = false;
+              if (drawnLayer instanceof L.Circle) isInside = markerLatLng.distanceTo(drawnLayer.getLatLng()) <= drawnLayer.getRadius();
+              else if (drawnLayer.getBounds) isInside = drawnLayer.getBounds().contains(markerLatLng);
 
-                if (isInside) {
-                    selectedItemsInShape.push(marker.customData);
-                }
+              if (isInside) {
+                selectedItemsInShape.push(marker.customData);
+              }
             }
           });
         }
-        
+
         const middleAddressesListUI = document.getElementById('middleAddressesList');
         if (middleAddressesListUI) {
-          middleAddressesListUI.innerHTML = ''; 
+          middleAddressesListUI.innerHTML = '';
           selectedItemsInShape.forEach(item => {
             const li = document.createElement('li');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox'; checkbox.className = 'address-checkbox';
-            checkbox.value = item.address; checkbox.checked = true; 
+            checkbox.value = item.address; checkbox.checked = true;
             li.appendChild(checkbox);
             let dText = item.address;
             if (item.name) dText = `<b>${item.name}</b> - ${dText}`;
@@ -954,43 +1031,46 @@ if (result.order && Array.isArray(result.order)) {
           });
         }
         if (copyBtn) copyBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
-if (markVisitedBtn) markVisitedBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
+        if (markVisitedBtn) markVisitedBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
         if (selectedItemsInShape.length > 0) {
           showMessage(`${selectedItemsInShape.length} addresses selected.`, 'success');
         }
       });
 
+      // Remove any map click handler that clears drawn shapes (if present)
+      // Only clear shapes when user clicks the CLEAR button or deletes the shape
       map.on('draw:deleted', function() {
         handleClearSelections();
-if (markVisitedBtn) markVisitedBtn.style.display = 'none';
+        if (markVisitedBtn) markVisitedBtn.style.display = 'none';
         showMessage('Drawn shapes deleted and selections cleared.', 'info');
       });
 
       // Copy Selected Addresses button logic
-let copyBtn;
-let markVisitedBtn;
-
 document.addEventListener('DOMContentLoaded', function() {
-    markVisitedBtn.addEventListener('click', function() {
-        const listItems = middleAddressesList.getElementsByTagName('li');
-        for (let item of listItems) {
-            const checkbox = item.querySelector('input[type="checkbox"]');
-            const span = item.querySelector('span');
-            if (checkbox && checkbox.checked && span) {
-                const address = checkbox.value;
-                const matchedItem = allExcelItems.find(i => i.address === address);
-                if (matchedItem) {
-                    matchedItem.visited = true;
-                    span.style.color = '#888';
-                    span.style.textDecoration = 'line-through';
+    let copyBtn = document.getElementById('copySelectedBtn');
+    let markVisitedBtn = document.getElementById('markVisitedBtn');
+
+    if (markVisitedBtn) {
+        markVisitedBtn.addEventListener('click', function() {
+            const listItems = middleAddressesList.getElementsByTagName('li');
+            for (let item of listItems) {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const span = item.querySelector('span');
+                if (checkbox && checkbox.checked && span) {
+                    const address = checkbox.value;
+                    const matchedItem = allExcelItems.find(i => i.address === address);
+                    if (matchedItem) {
+                        matchedItem.visited = true;
+                        span.style.color = '#888';
+                        span.style.textDecoration = 'line-through';
+                    }
                 }
             }
-        }
-        showMessage('Selected addresses marked as visited.', 'success');
-    });
-    copyBtn = document.getElementById('copySelectedBtn');
-    markVisitedBtn = document.getElementById('markVisitedBtn');
-        if (copyBtn) {
+            showMessage('Selected addresses marked as visited.', 'success');
+        });
+    }
+
+    if (copyBtn) {
         copyBtn.addEventListener('click', function() {
             const addressesToCopy = [];
             const listItems = middleAddressesList.getElementsByTagName('li');
