@@ -378,14 +378,21 @@
   </script>
 </head>
 <body>
-  <!-- Modern FirebaseUI Auth Card (always visible for now) -->
-  <div id="firebaseui-auth-card" style="display:flex;justify-content:center;align-items:center;">
-    <div style="width:100%;max-width:410px;margin:24px auto 24px auto;padding:32px 28px 24px 28px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(44,62,80,0.13);border:1.5px solid #e6eaf2;">
-      <div style="text-align:center;margin-bottom:18px;">
-        <span style="font-size:1.5rem;font-weight:700;color:#1a2330;">Welcome</span>
-        <div style="font-size:1.05rem;color:#4f8cff;margin-top:4px;">Sign in to continue</div>
+  <!-- Subtle FirebaseUI Auth Card and Sign In Button -->
+  <div id="subtle-login-bar" style="position:fixed;top:18px;right:24px;z-index:10001;">
+    <button id="show-login-btn" style="padding:7px 18px;font-size:1rem;background:#4f8cff;color:#fff;border:none;border-radius:7px;box-shadow:0 2px 8px rgba(44,62,80,0.10);font-weight:600;cursor:pointer;display:inline-block;">Sign In</button>
+    <div id="user-info" style="display:none;margin-top:0;padding:7px 18px;background:#eaf1fb;border-radius:7px;box-shadow:0 2px 8px rgba(44,62,80,0.10);font-size:1rem;">
+      <span id="user-email" style="font-weight:600;"></span>
+      <button id="logout-btn" style="margin-left:12px;padding:5px 14px;">Logout</button>
+    </div>
+  </div>
+  <div id="firebaseui-auth-card" style="display:none;position:fixed;top:60px;right:24px;z-index:10002;">
+    <div style="width:320px;padding:18px 14px 14px 14px;background:#fff;border-radius:14px;box-shadow:0 6px 32px rgba(44,62,80,0.18);border:1.5px solid #e6eaf2;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <span style="font-size:1.1rem;font-weight:700;color:#1a2330;">Sign in</span>
       </div>
       <div id="firebaseui-auth-container"></div>
+      <button id="close-login-btn" style="margin-top:10px;width:100%;background:#f4f6fa;color:#4f8cff;border:1.5px solid #b3c6e6;border-radius:7px;padding:7px 0;font-size:1rem;font-weight:600;cursor:pointer;">Cancel</button>
     </div>
   </div>
   <div id="user-info" style="display:none;max-width:410px;margin:0 auto 24px auto;padding:16px 24px;background:#eaf1fb;border-radius:12px;">
@@ -484,13 +491,6 @@
       <!-- selected-addresses-section removed for redundancy -->
     </div>
     <div class="right-panel">
-      <div id="drawInstruction" style="background:#fffbe7;color:#7a5d00;border:1.5px solid #ffe082;padding:10px 16px;margin:18px 18px 0 18px;border-radius:8px;font-size:1.08rem;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:1.3em;">🖊️</span>
-        <span>
-          Use the <b>box button</b> in the toolbar on the left side of the map to draw a shape and select addresses.<br>
-          <span id="drawTooltip" style="background:#ffe082;color:#7a5d00;padding:2px 8px;border-radius:6px;font-size:0.98em;display:none;margin-left:8px;">Click here to start drawing!</span>
-        </span>
-      </div>
       <div id="map" style="position:relative;"></div>
       <div id="drawArrowOverlay" style="display:none;position:absolute;z-index:1000;pointer-events:none;"></div>
     </div>
@@ -1639,7 +1639,9 @@ document.addEventListener('DOMContentLoaded', function() {
         credentialHelper: firebaseui.auth.CredentialHelper.NONE,
         callbacks: {
           signInSuccessWithAuthResult: function(authResult, redirectUrl) {
-            // Prevent redirect
+            // Hide login card after successful login
+            var authCard = document.getElementById('firebaseui-auth-card');
+            if (authCard) authCard.style.display = 'none';
             return false;
           }
         }
@@ -1648,30 +1650,50 @@ document.addEventListener('DOMContentLoaded', function() {
       // Initialize the FirebaseUI Widget using Firebase.
       var ui = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(firebase.auth());
 
+      // Elements
+      var authCard = document.getElementById('firebaseui-auth-card');
+      var authContainer = document.getElementById('firebaseui-auth-container');
+      var showLoginBtn = document.getElementById('show-login-btn');
+      var closeLoginBtn = document.getElementById('close-login-btn');
+      var userInfo = document.getElementById('user-info');
+      var userEmail = document.getElementById('user-email');
+      var logoutBtn = document.getElementById('logout-btn');
+
+      // Show login card on button click
+      if (showLoginBtn) {
+        showLoginBtn.addEventListener('click', function() {
+          if (authCard) {
+            authCard.style.display = 'block';
+            if (authContainer) ui.start('#firebaseui-auth-container', uiConfig);
+          }
+        });
+      }
+      // Hide login card on cancel
+      if (closeLoginBtn) {
+        closeLoginBtn.addEventListener('click', function() {
+          if (authCard) authCard.style.display = 'none';
+        });
+      }
+
       // Listen for auth state changes
       firebase.auth().onAuthStateChanged(function(user) {
-        var authCard = document.getElementById('firebaseui-auth-card');
-        var authContainer = document.getElementById('firebaseui-auth-container');
-        var userInfo = document.getElementById('user-info');
-        var userEmail = document.getElementById('user-email');
-        var logoutBtn = document.getElementById('logout-btn');
+        // Always hide login card on state change
+        if (authCard) authCard.style.display = 'none';
         if (user) {
           // User is signed in
-          if (authCard) authCard.style.display = 'none';
+          if (showLoginBtn) showLoginBtn.style.display = 'none';
           if (userInfo) {
-            userInfo.style.display = 'block';
+            userInfo.style.display = 'inline-block';
             if (userEmail) userEmail.textContent = user.email || '';
           }
         } else {
           // User is signed out
-          if (authCard) authCard.style.display = 'flex';
+          if (showLoginBtn) showLoginBtn.style.display = 'inline-block';
           if (userInfo) userInfo.style.display = 'none';
-          if (authContainer) ui.start('#firebaseui-auth-container', uiConfig);
         }
       });
 
       // Logout button handler
-      var logoutBtn = document.getElementById('logout-btn');
       if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
           firebase.auth().signOut();
