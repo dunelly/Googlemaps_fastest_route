@@ -45,6 +45,9 @@
       box-shadow: 0 2px 16px rgba(44,62,80,0.06);
       padding: 40px 36px 32px 36px;
       flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
     h1 {
       text-align: center;
@@ -61,6 +64,37 @@
       color: #34495e;
       font-weight: 500;
       font-size: 1.05rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(44,62,80,0.10);
+      padding: 28px 24px 22px 24px;
+      margin-bottom: 18px;
+      border: 1.5px solid #e6eaf2;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transition: box-shadow 0.18s;
+    }
+    .card:hover, .card:focus-within {
+      box-shadow: 0 6px 32px rgba(44,62,80,0.13);
+      border-color: #b3c6e6;
+    }
+    .card-header {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: #1a2330;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+    .card-section {
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
     textarea, input[type="text"], select {
       width: 100%;
@@ -171,6 +205,27 @@
       margin-right: 0.2em;
       fill: #fff;
       display: inline-block;
+    }
+    /* Small red X for remove button in single entry */
+    .remove-address-btn {
+      color: #e53935 !important;
+      background: none !important;
+      border: none !important;
+      font-size: 1.1em !important;
+      width: 22px !important;
+      height: 22px !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      line-height: 22px !important;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .remove-address-btn:hover {
+      background: #ffeaea !important;
     }
     .optimize-btn svg {
       width: 1.2em;
@@ -344,6 +399,14 @@
                 <span style="font-weight:600;">Excel/CSV file:</span>
                 <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" />
               </label>
+              <div style="margin-top:18px;">
+                <label for="googleSheetUrl" style="font-weight:600;">Or paste a Google Sheets URL:</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" id="googleSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1;"/>
+                  <button type="button" id="loadGoogleSheetBtn" style="width:auto;padding:8px 18px;font-size:1rem;background:#1967d2;">Load</button>
+                </div>
+                <div id="googleSheetError" style="color:#e53935;font-size:0.98em;margin-top:4px;display:none;"></div>
+              </div>
               <div id="messageArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:1rem;"></div>
               <div id="debugArea" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:0.95rem;background:#fffbe7;color:#7a5d00;border:1.5px solid #ffe082;"></div>
               <div id="filterSection" class="content-card" style="display:none;">
@@ -516,21 +579,12 @@
       input.style.border = "1.2px solid #b3c6e6";
       input.required = true;
 
-      // Remove button - Material Design Icon Button (conceptual, needs Material Icons font and SVG/icon)
-      // For now, a small text button or a styled '✕'
+      // Remove button - Small red X
       const removeBtn = document.createElement('button');
       removeBtn.type = "button";
-      removeBtn.textContent = "✕"; // Or use a Material Icon like <span class="material-icons">delete</span>
+      removeBtn.textContent = "✕";
       removeBtn.title = "Remove";
-      removeBtn.classList.add('material-button', 'material-button-text'); // Use text button style
-      removeBtn.style.color = 'var(--material-text-secondary-on-surface)'; // Grey for less emphasis
-      removeBtn.style.minWidth = 'auto'; // Allow it to be small
-      removeBtn.style.width = '32px'; 
-      removeBtn.style.height = '32px';
-      removeBtn.style.padding = '0';
-      removeBtn.style.borderRadius = '50%'; // Circular for icon-like button
-      removeBtn.style.fontSize = '1rem';
-      removeBtn.style.lineHeight = '32px'; // Center the '✕'
+      removeBtn.classList.add('remove-address-btn');
       removeBtn.style.marginLeft = '8px'; // Space from input
       removeBtn.onclick = () => div.remove();
 
@@ -633,6 +687,156 @@ function showMessage(msg, type = "info") {
 function hideMessage() { /* ... (implementation unchanged) ... */ }
     function showDebug(headers, rows) { /* ... (implementation unchanged) ... */ }
     function hideDebug() { /* ... (implementation unchanged) ... */ }
+
+    // --- Google Sheets Integration ---
+    document.addEventListener('DOMContentLoaded', function() {
+      const loadBtn = document.getElementById('loadGoogleSheetBtn');
+      const urlInput = document.getElementById('googleSheetUrl');
+      const errorDiv = document.getElementById('googleSheetError');
+      if (loadBtn && urlInput) {
+        loadBtn.addEventListener('click', async function() {
+          errorDiv.style.display = 'none';
+          errorDiv.textContent = '';
+          const url = urlInput.value.trim();
+          const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+          if (!match) {
+            errorDiv.textContent = 'Invalid Google Sheets URL.';
+            errorDiv.style.display = 'block';
+            return;
+          }
+          const sheetId = match[1];
+          // Use the backend proxy endpoint for the first sheet
+          const csvUrl = `https://googlemaps-fastest-route-1.onrender.com/fetch-google-sheet-csv?sheetId=${sheetId}`;
+          try {
+            const resp = await fetch(csvUrl);
+            if (!resp.ok) throw new Error('Could not fetch Google Sheet. Make sure it is shared as "Anyone with the link can view".');
+            const csvText = await resp.text();
+            // Parse CSV using XLSX
+            const workbook = XLSX.read(csvText, { type: "string" });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'MM/DD/YYYY' });
+            if (!rows.length) throw new Error('No data found in Google Sheet.');
+            // Simulate Excel upload flow
+            let firstDataRow = 0;
+            while (firstDataRow < rows.length && rows[firstDataRow].every(cell => !cell || String(cell).trim() === "")) firstDataRow++;
+            if (firstDataRow >= rows.length) throw new Error('No header row found.');
+            const headers = rows[firstDataRow].map(h => String(h || "EmptyHeader").trim());
+            const dataRows = rows.slice(firstDataRow + 1).filter(row => row.some(cell => cell && String(cell).trim() !== ""));
+            // Patch: Normalize "Foreclosure date" to "Auction Date" for compatibility
+            const normalizedHeaders = headers.map(h => h.toLowerCase().includes('foreclosure') ? 'Auction Date' : h);
+
+            // Show the column mapping prompt (reuse Excel logic)
+            let addressFieldPrompt = document.getElementById('addressFieldPrompt');
+            if (!addressFieldPrompt) {
+              addressFieldPrompt = document.createElement('div');
+              addressFieldPrompt.id = 'addressFieldPrompt';
+              addressFieldPrompt.style = 'margin:16px 0;padding:12px;background:#fffbe7;border:1.5px solid #ffe082;border-radius:8px;';
+              addressFieldPrompt.style.display = 'block';
+              filterSection.parentNode.insertBefore(addressFieldPrompt, filterSection);
+            } else {
+              addressFieldPrompt.style.display = 'block';
+            }
+            let preset = null; try { preset = JSON.parse(localStorage.getItem('addressColPreset') || 'null'); } catch {}
+            addressFieldPrompt.innerHTML = `
+              <b>Select columns:</b><br>
+              <label>Address: <select id="addressColSelect">${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select></label>
+              <label>City (opt): <select id="cityColSelect"><option value="">(none)</option>${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select></label>
+              <label>State (opt): <select id="stateColSelect"><option value="">(none)</option>${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select></label><br>
+              <label>First Name (opt): <select id="firstNameColSelect"><option value="">(none)</option>${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select></label>
+              <label>Last Name (opt): <select id="lastNameColSelect"><option value="">(none)</option>${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select></label><br>
+              <label>Auction Date (opt): <select id="auctionDateColSelect"><option value="">(none)</option>${headers.map((h,i)=>`<option value="${i}">${h}</option>`)}</select></label>
+              <div style="margin-top: 16px;">
+                <button type="button" id="confirmAddressCols" class="material-button material-button-contained">Confirm</button> 
+                <button type="button" id="clearPreset" class="material-button material-button-text" style="margin-left: 8px;">Clear Preset</button>
+              </div>
+            `;
+            if (preset && Array.isArray(preset) && preset.length === 6) { // Now 6 values
+              document.getElementById('addressColSelect').value = preset[0];
+              if(preset[1] !== null) document.getElementById('cityColSelect').value = preset[1];
+              if(preset[2] !== null) document.getElementById('stateColSelect').value = preset[2];
+              if(preset[3] !== null) document.getElementById('firstNameColSelect').value = preset[3];
+              if(preset[4] !== null) document.getElementById('lastNameColSelect').value = preset[4];
+              if(preset[5] !== null) document.getElementById('auctionDateColSelect').value = preset[5];
+            }
+            document.getElementById('confirmAddressCols').onclick = function() {
+              try {
+                // Read all select values first, with null checks
+                const addressColSelect = document.getElementById('addressColSelect');
+                const cityColSelect = document.getElementById('cityColSelect');
+                const stateColSelect = document.getElementById('stateColSelect');
+                const firstNameColSelect = document.getElementById('firstNameColSelect');
+                const lastNameColSelect = document.getElementById('lastNameColSelect');
+                const auctionDateColSelect = document.getElementById('auctionDateColSelect');
+
+                if (!addressColSelect) throw new Error("Address column select not found.");
+
+                const addrIdx = parseInt(addressColSelect.value, 10);
+                const cityIdx = cityColSelect && cityColSelect.value !== "" ? parseInt(cityColSelect.value, 10) : null;
+                const stateIdx = stateColSelect && stateColSelect.value !== "" ? parseInt(stateColSelect.value, 10) : null;
+                const firstNameIdx = firstNameColSelect && firstNameColSelect.value !== "" ? parseInt(firstNameColSelect.value, 10) : null;
+                const lastNameIdx = lastNameColSelect && lastNameColSelect.value !== "" ? parseInt(lastNameColSelect.value, 10) : null;
+                const auctionDateIdx = auctionDateColSelect && auctionDateColSelect.value !== "" ? parseInt(auctionDateColSelect.value, 10) : null;
+
+                // Now safe to remove the prompt
+                if (addressFieldPrompt && addressFieldPrompt.parentNode) addressFieldPrompt.remove();
+
+                localStorage.setItem('addressColPreset', JSON.stringify([addrIdx, cityIdx, stateIdx, firstNameIdx, lastNameIdx, auctionDateIdx]));
+
+                const filteredRows = dataRows.filter(row => row[addrIdx] && String(row[addrIdx]).trim() !== "");
+                const mappedItems = filteredRows.map(row => {
+                  let fullAddress = String(row[addrIdx] || "").trim();
+                  if (cityIdx !== null && row[cityIdx]) fullAddress += ', ' + String(row[cityIdx]).trim();
+                  if (stateIdx !== null && row[stateIdx]) fullAddress += ', ' + String(row[stateIdx]).trim();
+                  
+                  let fullName = null;
+                  const firstName = firstNameIdx !== null && row[firstNameIdx] ? String(row[firstNameIdx]).trim() : null;
+                  const lastName = lastNameIdx !== null && row[lastNameIdx] ? String(row[lastNameIdx]).trim() : null;
+                  if (firstName && lastName) fullName = `${firstName} ${lastName}`;
+                  else if (firstName) fullName = firstName;
+                  else if (lastName) fullName = lastName;
+
+                  const rawDate = auctionDateIdx !== null && row[auctionDateIdx] ? row[auctionDateIdx] : null;
+                  return {
+                    address: fullAddress, name: fullName,
+                    auctionDateRaw: rawDate, auctionDateFormatted: formatDate(rawDate),
+                    lat: null, lng: null
+                  };
+                });
+                allExcelItems = mappedItems.filter(item => item.address.length > 0);
+                currentlyDisplayedItems = [...allExcelItems]; // Initially display all
+
+                if (currentlyDisplayedItems.length < 1) { 
+                  showMessage('No valid addresses found.', 'error'); return;
+                }
+                setTimeout(function() {
+                  hideDebug();
+                  populateAuctionDateFilter(currentlyDisplayedItems);
+                  filterSection.style.display = '';
+                  populateAddressSelection(currentlyDisplayedItems);
+                  addressListSection.style.display = '';
+                  showMessage('Addresses loaded from Google Sheets.', 'success');
+                  if (currentlyDisplayedItems.length > 0) {
+                    showMessage('Geocoding addresses...', 'info');
+                    geocodeAddresses(currentlyDisplayedItems)
+                      .then(geocodedItems => {
+                        allExcelItems = geocodedItems;
+                        currentlyDisplayedItems = [...allExcelItems];
+                        applyAuctionDateMultiSelectFilter();
+                      })
+                      .catch(err => showMessage('Geocoding error: ' + err, 'error'));
+                  }
+                }, 0);
+              } catch (err) { showMessage('Error processing columns: ' + err, 'error'); }
+            };
+            document.getElementById('clearPreset').onclick = () => { localStorage.removeItem('addressColPreset'); showMessage('Preset cleared.', 'info'); };
+          } catch (err) {
+            errorDiv.textContent = err.message;
+            errorDiv.style.display = 'block';
+          }
+        });
+      }
+    });
 
     excelFileInput.addEventListener('change', function (e) {
       console.log('File input CHANGED');
@@ -781,7 +985,7 @@ function hideMessage() { /* ... (implementation unchanged) ... */ }
                     .then(geocodedItems => {
                       allExcelItems = geocodedItems; // Update allExcelItems with geocoded data
                       currentlyDisplayedItems = [...allExcelItems]; // Reset displayed to all (geocoded)
-                      applyAuctionDateFilter(); // Re-apply filter if any, then update UI
+                      applyAuctionDateMultiSelectFilter(); // Re-apply filter if any, then update UI
                     })
                     .catch(err => showMessage('Geocoding error: ' + err, 'error'));
                 }

@@ -38,6 +38,32 @@ app.post('/optimize-route', async (req, res) => {
   }
 });
 
+// --- Google Sheets CSV Proxy Endpoint ---
+app.get('/fetch-google-sheet-csv', async (req, res) => {
+  try {
+    const { sheetId } = req.query;
+    if (!sheetId || !/^[a-zA-Z0-9-_]+$/.test(sheetId)) {
+      return res.status(400).json({ error: 'Invalid or missing sheetId' });
+    }
+    // Only allow Google Sheets IDs
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+
+    // Fetch CSV from Google
+    const response = await fetch(csvUrl);
+    if (!response.ok) {
+      return res.status(500).json({ error: 'Failed to fetch Google Sheet. Make sure it is shared as "Anyone with the link can view".' });
+    }
+    const csv = await response.text();
+
+    // Set CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', 'text/csv');
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Route optimizer backend running on port ${PORT}`);
 });
