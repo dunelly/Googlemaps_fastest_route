@@ -355,8 +355,43 @@
       background: none !important;
     }
   </style>
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <!-- FirebaseUI for Auth -->
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.2/firebase-ui-auth.css" />
+  <script src="https://www.gstatic.com/firebasejs/ui/6.0.2/firebase-ui-auth.js"></script>
+  <!-- Firebase config and initialization -->
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQqCkBqmHRiX04Xtydb2v0IjxpssxzpQQ",
+      authDomain: "smash-routes.firebaseapp.com",
+      projectId: "smash-routes",
+      storageBucket: "smash-routes.appspot.com",
+      messagingSenderId: "972794327507",
+      appId: "1:972794327507:web:1898851dc74ea32e58ff26",
+      measurementId: "G-6LW1NP9XHG"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
+  <!-- Modern FirebaseUI Auth Card (always visible for now) -->
+  <div id="firebaseui-auth-card" style="display:flex;justify-content:center;align-items:center;">
+    <div style="width:100%;max-width:410px;margin:24px auto 24px auto;padding:32px 28px 24px 28px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(44,62,80,0.13);border:1.5px solid #e6eaf2;">
+      <div style="text-align:center;margin-bottom:18px;">
+        <span style="font-size:1.5rem;font-weight:700;color:#1a2330;">Welcome</span>
+        <div style="font-size:1.05rem;color:#4f8cff;margin-top:4px;">Sign in to continue</div>
+      </div>
+      <div id="firebaseui-auth-container"></div>
+    </div>
+  </div>
+  <div id="user-info" style="display:none;max-width:410px;margin:0 auto 24px auto;padding:16px 24px;background:#eaf1fb;border-radius:12px;">
+    <span id="user-email" style="font-weight:600;"></span>
+    <button id="logout-btn" style="margin-left:18px;padding:6px 16px;">Logout</button>
+  </div>
   <div class="page-wrapper">
     <div class="left-panel">
       <div class="container">
@@ -1590,6 +1625,59 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
     }
+  </script>
+  <script>
+    // --- FirebaseUI Auth Integration ---
+    document.addEventListener('DOMContentLoaded', function() {
+      // FirebaseUI config
+      var uiConfig = {
+        signInFlow: "popup",
+        signInOptions: [
+          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+          firebase.auth.EmailAuthProvider.PROVIDER_ID
+        ],
+        credentialHelper: firebaseui.auth.CredentialHelper.NONE,
+        callbacks: {
+          signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+            // Prevent redirect
+            return false;
+          }
+        }
+      };
+
+      // Initialize the FirebaseUI Widget using Firebase.
+      var ui = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(firebase.auth());
+
+      // Listen for auth state changes
+      firebase.auth().onAuthStateChanged(function(user) {
+        var authCard = document.getElementById('firebaseui-auth-card');
+        var authContainer = document.getElementById('firebaseui-auth-container');
+        var userInfo = document.getElementById('user-info');
+        var userEmail = document.getElementById('user-email');
+        var logoutBtn = document.getElementById('logout-btn');
+        if (user) {
+          // User is signed in
+          if (authCard) authCard.style.display = 'none';
+          if (userInfo) {
+            userInfo.style.display = 'block';
+            if (userEmail) userEmail.textContent = user.email || '';
+          }
+        } else {
+          // User is signed out
+          if (authCard) authCard.style.display = 'flex';
+          if (userInfo) userInfo.style.display = 'none';
+          if (authContainer) ui.start('#firebaseui-auth-container', uiConfig);
+        }
+      });
+
+      // Logout button handler
+      var logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+          firebase.auth().signOut();
+        });
+      }
+    });
   </script>
 </body>
 </html>
