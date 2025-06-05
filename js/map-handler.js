@@ -102,10 +102,45 @@ function initializeDrawingFeatures() {
       });
     }
     
+    // Also populate Single Entry destinations
+    const destinationFields = document.getElementById('destinationFields');
+    if (destinationFields && selectedItemsInShape.length > 0) {
+      // Clear existing destination fields
+      if (typeof clearAllDestinationFields === 'function') {
+        clearAllDestinationFields();
+      }
+      
+      // Add each selected address as a destination field
+      selectedItemsInShape.forEach((item, index) => {
+        if (index === 0) {
+          // Fill the first field
+          const firstField = destinationFields.querySelector('.destination-field');
+          if (firstField) {
+            firstField.value = item.address;
+          }
+        } else {
+          // Add new fields for remaining addresses
+          if (typeof addNewDestinationFieldAboveButton === 'function') {
+            addNewDestinationFieldAboveButton();
+            const allFields = destinationFields.querySelectorAll('.destination-field');
+            const newField = allFields[allFields.length - 1];
+            if (newField) {
+              newField.value = item.address;
+            }
+          }
+        }
+      });
+      
+      // Switch to Single Entry tab
+      if (typeof switchTab === 'function') {
+        switchTab('singleEntry');
+      }
+    }
+    
     if (copyBtn) copyBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
     if (markVisitedBtn) markVisitedBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
     if (selectedItemsInShape.length > 0) {
-      showMessage(`${selectedItemsInShape.length} addresses selected.`, 'success');
+      showMessage(`${selectedItemsInShape.length} addresses selected and added to destinations.`, 'success');
     }
   });
 

@@ -19,11 +19,11 @@ function createMarkerPopupContent(item, lastVisitFormatted, visitCount) {
   }
   popupHtml += `</div>`;
 
-  // Add Mark as Visited button
+  // Add Visited Today button
   popupHtml += `<div style="margin-top: 10px; display: flex; gap: 8px;">`;
   popupHtml += `<button onclick="markVisitedFromMap('${item.address.replace(/'/g, "\\'")}'); return false;" 
                  style="flex: 1; padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;">
-                 ✅ Mark Visited
+                 ✅ Visited Today
                </button>`;
 
   // Add Notes button

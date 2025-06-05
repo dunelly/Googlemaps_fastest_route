@@ -1,0 +1,373 @@
+/* Excel Data Table Styling - Clean and Professional Interface */
+
+/* Container and Layout */
+.excel-data-panel {
+  max-width: 100%;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 20px;
+}
+
+/* Summary Section */
+.data-summary {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.summary-stats {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.summary-stats strong {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Main Action Button - Properly Sized */
+.show-selected-btn {
+  background: #007bff !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 10px 16px !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: auto !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.show-selected-btn:hover {
+  background: #0056b3 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.show-selected-btn:disabled {
+  background: #6c757d !important;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Selection Info */
+.selection-info {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+/* Filter Controls Section */
+.filter-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+/* Filter Inputs - Properly Sized */
+.filter-select, .filter-input {
+  padding: 8px 12px !important;
+  border: 1px solid #ced4da !important;
+  border-radius: 4px !important;
+  font-size: 0.9rem !important;
+  background: white !important;
+  transition: border-color 0.2s ease;
+  width: 100% !important;
+  margin: 0 !important;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.filter-select:focus, .filter-input:focus {
+  border-color: #007bff !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1) !important;
+}
+
+.filter-select[multiple] {
+  height: auto;
+  min-height: 38px;
+  max-height: 100px;
+}
+
+/* Action Buttons - Consistent Sizing */
+.clear-filters-btn, .delete-selected-btn {
+  padding: 8px 16px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto !important;
+  height: 38px !important;
+  margin: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.clear-filters-btn {
+  background: #6c757d !important;
+  color: white !important;
+}
+
+.clear-filters-btn:hover {
+  background: #5a6268 !important;
+}
+
+.delete-selected-btn {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+.delete-selected-btn:hover {
+  background: #c82333 !important;
+}
+
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.data-table th {
+  background: #f8f9fa;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f1f3f4;
+  vertical-align: middle;
+}
+
+.data-table tr:hover {
+  background: #f8f9fa;
+}
+
+.data-table tr.selected {
+  background: #e3f2fd !important;
+  border-left: 3px solid #2196f3;
+}
+
+/* Sortable Headers */
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.data-table th.sortable:hover {
+  background: #e9ecef;
+}
+
+.data-table th.sortable::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border: 4px solid transparent;
+  opacity: 0.3;
+}
+
+.data-table th.sort-asc::after {
+  border-bottom-color: #495057;
+  opacity: 1;
+}
+
+.data-table th.sort-desc::after {
+  border-top-color: #495057;
+  opacity: 1;
+}
+
+/* Checkboxes */
+.row-checkbox {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  cursor: pointer;
+}
+
+/* Table Container */
+.table-container {
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-controls {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .summary-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .show-selected-btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+  
+  .data-table {
+    font-size: 0.8rem;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 8px 4px;
+  }
+}
+
+/* Button Group for Action Buttons */
+.filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+/* Loading States */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Visual Hierarchy */
+.data-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.data-table tbody tr:nth-child(even):hover {
+  background: #f0f0f0;
+}
+
+.data-table tbody tr:nth-child(even).selected {
+  background: #e3f2fd !important;
+}
+
+/* Delete Button Styling */
+.delete-row-btn {
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px !important;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  color: #dc3545;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+}
+
+.delete-row-btn:hover {
+  background: #f8f9fa !important;
+  transform: scale(1.1);
+  color: #c82333;
+}
+
+/* Drag Selection Styles */
+.data-table tbody tr {
+  user-select: none; /* Prevent text selection during drag */
+}
+
+.data-table tbody tr.drag-selecting {
+  background: #e3f2fd !important;
+  border-left: 3px solid #2196f3;
+}
+
+/* Improve cursor feedback for drag selection */
+.data-table tbody {
+  cursor: default;
+}
+
+.data-table tbody tr:hover {
+  cursor: pointer;
+}

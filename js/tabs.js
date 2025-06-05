@@ -170,3 +170,22 @@ function connectClearButtons() {
     });
   });
 }
+
+// Global function to switch tabs programmatically
+function switchTab(tabName) {
+  if (tabName === 'singleEntry' || tabName === 0) {
+    const tab = document.getElementById('singleEntryTab');
+    if (tab) tab.click();
+  } else if (tabName === 'pasteList' || tabName === 1) {
+    const tab = document.getElementById('pasteListTab');
+    if (tab) tab.click();
+  } else if (tabName === 'uploadFile' || tabName === 2) {
+    const tab = document.getElementById('uploadFileTab');
+    if (tab) tab.click();
+  }
+}
+
+// Make functions globally available
+window.switchTab = switchTab;
+window.addNewDestinationFieldAboveButton = addNewDestinationFieldAboveButton;
+window.clearAllDestinationFields = clearAllDestinationFields;

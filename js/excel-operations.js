@@ -13,8 +13,8 @@ async function loadExcelAddresses(excelId) {
     console.log('[excel-operations] Excel data found:', excelData.fileName, 'addresses:', excelData.addressCount);
     
     // Use existing global variables and functions
-    window.allExcelItems = excelData.processedData;
-    window.currentlyDisplayedItems = [...excelData.processedData];
+    updateAllExcelItems(excelData.processedData);
+    updateCurrentlyDisplayedItems([...excelData.processedData]);
     
     console.log('[excel-operations] Set global variables, total items:', window.currentlyDisplayedItems.length);
     
@@ -54,8 +54,8 @@ async function loadExcelAddresses(excelId) {
       if (typeof geocodeAddresses === 'function') {
         try {
           const geocodedItems = await geocodeAddresses(window.currentlyDisplayedItems);
-          window.allExcelItems = geocodedItems;
-          window.currentlyDisplayedItems = [...geocodedItems];
+          updateAllExcelItems(geocodedItems);
+          updateCurrentlyDisplayedItems([...geocodedItems]);
           
           // Display all markers after geocoding
           if (typeof displayAddressMarkers === 'function') {
@@ -223,6 +223,9 @@ function viewExcelData(excelId) {
     const dataTitle = document.getElementById('excelDataTitle');
     
     if (!dataPanel) return;
+    
+    // Store current Excel file ID for deletion functionality
+    window.currentExcelFileId = excelId;
     
     // Update title
     if (dataTitle) {

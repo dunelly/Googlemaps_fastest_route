@@ -201,17 +201,52 @@ function updateMiddleAddresses() {
 function initializeAddressFieldListeners() {
   const customStartAddress = document.getElementById('customStartAddress');
   const customEndAddress = document.getElementById('customEndAddress');
+  const manualStartAddress = document.getElementById('manualStartAddress');
   
   if (customStartAddress) {
     customStartAddress.addEventListener('input', function(e) {
-      localStorage.setItem('savedStartAddress', e.target.value.trim());
+      const address = e.target.value.trim();
+      localStorage.setItem('savedStartAddress', address);
       updateMiddleAddresses();
+      
+      // Save to recent addresses list
+      if (address) {
+        saveToRecentAddresses(address);
+      }
+      
+      // Also update the manual start address field
+      if (manualStartAddress && !manualStartAddress.value.trim()) {
+        manualStartAddress.value = address;
+      }
     });
 
     // Restore start address from localStorage if available
     const saved = localStorage.getItem('savedStartAddress');
     if (saved) {
       customStartAddress.value = saved;
+    }
+  }
+
+  if (manualStartAddress) {
+    manualStartAddress.addEventListener('input', function(e) {
+      const address = e.target.value.trim();
+      localStorage.setItem('savedStartAddress', address);
+      
+      // Save to recent addresses list
+      if (address) {
+        saveToRecentAddresses(address);
+      }
+      
+      // Also update the custom start address field
+      if (customStartAddress && !customStartAddress.value.trim()) {
+        customStartAddress.value = address;
+      }
+    });
+
+    // Restore start address from localStorage if available
+    const saved = localStorage.getItem('savedStartAddress');
+    if (saved) {
+      manualStartAddress.value = saved;
     }
   }
 
@@ -222,5 +257,71 @@ function initializeAddressFieldListeners() {
   updateMiddleAddresses();
 }
 
+// Save address to recent addresses list
+function saveToRecentAddresses(address) {
+  if (!address || address.length < 5) return; // Only save meaningful addresses
+  
+  let recentAddresses = JSON.parse(localStorage.getItem('recentStartAddresses') || '[]');
+  
+  // Remove if already exists (to move to top)
+  recentAddresses = recentAddresses.filter(addr => addr.toLowerCase() !== address.toLowerCase());
+  
+  // Add to beginning
+  recentAddresses.unshift(address);
+  
+  // Keep only last 5 addresses
+  recentAddresses = recentAddresses.slice(0, 5);
+  
+  localStorage.setItem('recentStartAddresses', JSON.stringify(recentAddresses));
+  
+  // Update autocomplete dropdown
+  updateAddressAutocomplete();
+}
+
+// Get recent addresses
+function getRecentAddresses() {
+  return JSON.parse(localStorage.getItem('recentStartAddresses') || '[]');
+}
+
+// Add datalist for autocomplete to start address fields
+function addAddressAutocomplete() {
+  const manualStartAddress = document.getElementById('manualStartAddress');
+  const customStartAddress = document.getElementById('customStartAddress');
+  
+  // Create datalist element
+  const datalist = document.createElement('datalist');
+  datalist.id = 'recentAddresses';
+  document.body.appendChild(datalist);
+  
+  // Add datalist to input fields
+  if (manualStartAddress) {
+    manualStartAddress.setAttribute('list', 'recentAddresses');
+  }
+  if (customStartAddress) {
+    customStartAddress.setAttribute('list', 'recentAddresses');
+  }
+  
+  // Update datalist options
+  updateAddressAutocomplete();
+}
+
+// Update datalist with recent addresses
+function updateAddressAutocomplete() {
+  const datalist = document.getElementById('recentAddresses');
+  if (!datalist) return;
+  
+  const recentAddresses = getRecentAddresses();
+  datalist.innerHTML = '';
+  
+  recentAddresses.forEach(address => {
+    const option = document.createElement('option');
+    option.value = address;
+    datalist.appendChild(option);
+  });
+}
+
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeAddressFieldListeners);
+document.addEventListener('DOMContentLoaded', function() {
+  initializeAddressFieldListeners();
+  addAddressAutocomplete();
+});

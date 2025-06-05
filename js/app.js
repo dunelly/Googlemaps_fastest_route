@@ -5,6 +5,23 @@ console.log("Main app.js script started");
 let allExcelItems = []; // Holds all successfully parsed items from Excel
 let currentlyDisplayedItems = []; // Holds items after filtering, used for UI population
 
+// Helper functions to update global variables properly
+function updateAllExcelItems(newItems) {
+  allExcelItems = newItems;
+  window.allExcelItems = allExcelItems;
+}
+
+function updateCurrentlyDisplayedItems(newItems) {
+  currentlyDisplayedItems = newItems;
+  window.currentlyDisplayedItems = currentlyDisplayedItems;
+}
+
+// Make global variables accessible
+window.allExcelItems = allExcelItems;
+window.currentlyDisplayedItems = currentlyDisplayedItems;
+window.updateAllExcelItems = updateAllExcelItems;
+window.updateCurrentlyDisplayedItems = updateCurrentlyDisplayedItems;
+
 // DOM element references (initialized in DOM ready handler)
 let singleEntryTab, pasteListTab, uploadFileTab;
 let singleEntryContent, pasteListContent, uploadFileContent;

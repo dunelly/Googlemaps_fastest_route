@@ -182,8 +182,9 @@ function processColumnMapping(headers, dataRows, addressFieldPrompt) {
       };
     });
 
-    allExcelItems = mappedItems.filter(item => item.address.length > 0);
-    currentlyDisplayedItems = [...allExcelItems];
+    const filteredItems = mappedItems.filter(item => item.address.length > 0);
+    updateAllExcelItems(filteredItems);
+    updateCurrentlyDisplayedItems([...filteredItems]);
 
     if (currentlyDisplayedItems.length < 1) { 
       showMessage('No valid addresses found.', 'error'); 
@@ -314,8 +315,35 @@ function applyAuctionDateMultiSelectFilter() {
     currentlyDisplayedItems = allExcelItems.filter(item => selected.includes(item.auctionDateFormatted));
   }
   populateAddressSelection(currentlyDisplayedItems);
-  if (typeof displayAddressMarkers === 'function') {
-    displayAddressMarkers(currentlyDisplayedItems);
+  
+  // Instead of showing on map immediately, open View Data interface for filtering
+  openViewDataAfterUpload();
+}
+
+// Open View Data interface for the most recently uploaded Excel file
+function openViewDataAfterUpload() {
+  // Find the most recent Excel file (should be the one we just uploaded)
+  if (window.savedExcelFiles && Object.keys(window.savedExcelFiles).length > 0) {
+    const excelFiles = Object.values(window.savedExcelFiles);
+    // Sort by upload date to get the most recent
+    const mostRecent = excelFiles.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate))[0];
+    
+    if (mostRecent && typeof viewExcelData === 'function') {
+      console.log('[excel-handler] Opening View Data for uploaded file:', mostRecent.fileName);
+      viewExcelData(mostRecent.id);
+    } else {
+      console.warn('[excel-handler] No recent Excel file found or viewExcelData function not available');
+      // Fallback to showing on map
+      if (typeof displayAddressMarkers === 'function') {
+        displayAddressMarkers(currentlyDisplayedItems);
+      }
+    }
+  } else {
+    console.warn('[excel-handler] No saved Excel files found');
+    // Fallback to showing on map
+    if (typeof displayAddressMarkers === 'function') {
+      displayAddressMarkers(currentlyDisplayedItems);
+    }
   }
 }
 

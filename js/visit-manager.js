@@ -156,7 +156,7 @@ async function markSelectedAddressesAsVisited() {
   }
   
   window.currentAddress = null;
-  showMessage(`${successCount} addresses marked as visited`, 'success');
+  showMessage(`${successCount} addresses marked as visited today`, 'success');
   
   // Refresh the map and address list
   if (typeof updateMapMarkers === 'function') {
@@ -254,7 +254,7 @@ async function markAddressAsVisited() {
       updateMiddleAddresses();
     }
     
-    showMessage(`Visit recorded for ${window.currentAddress}`, 'success');
+    showMessage(`Checked in at ${window.currentAddress}`, 'success');
     
     return updatedVisitData;
     

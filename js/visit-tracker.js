@@ -147,7 +147,7 @@ async function markSelectedAddressesAsVisited() {
   }
   
   window.currentAddress = null;
-  showMessage(`${successCount} addresses marked as visited`, 'success');
+  showMessage(`${successCount} addresses marked as visited today`, 'success');
   
   // Refresh the map and address list
   updateMapMarkers();
@@ -227,7 +227,7 @@ async function markAddressAsVisited() {
     updateVisitDisplay();
     updateMapMarkers();
     
-    showMessage(`Visit recorded for ${window.currentAddress}`, 'success');
+    showMessage(`Checked in at ${window.currentAddress}`, 'success');
     
     return updatedVisitData;
     
@@ -320,10 +320,18 @@ function getLastVisitFormatted(address) {
 // Update map markers based on visit data
 function updateMapMarkers() {
   console.log('[visit-tracker] updateMapMarkers called');
+  console.log('[visit-tracker] window.currentlyDisplayedItems:', window.currentlyDisplayedItems);
+  console.log('[visit-tracker] window.currentlyDisplayedItems length:', window.currentlyDisplayedItems ? window.currentlyDisplayedItems.length : 'undefined');
+  
   // This will trigger the map to refresh with new colors
-  if (typeof displayAddressMarkers === 'function' && typeof currentlyDisplayedItems !== 'undefined') {
-    console.log('[visit-tracker] Refreshing map markers');
-    displayAddressMarkers(currentlyDisplayedItems);
+  if (typeof displayAddressMarkers === 'function' && window.currentlyDisplayedItems && window.currentlyDisplayedItems.length > 0) {
+    console.log('[visit-tracker] Refreshing map markers with', window.currentlyDisplayedItems.length, 'items');
+    displayAddressMarkers(window.currentlyDisplayedItems);
+  } else {
+    console.warn('[visit-tracker] Cannot refresh markers - missing displayAddressMarkers function or no items to display');
+    console.log('[visit-tracker] displayAddressMarkers function available:', typeof displayAddressMarkers === 'function');
+    console.log('[visit-tracker] currentlyDisplayedItems available:', !!window.currentlyDisplayedItems);
+    console.log('[visit-tracker] currentlyDisplayedItems length:', window.currentlyDisplayedItems ? window.currentlyDisplayedItems.length : 'N/A');
   }
 }
 
