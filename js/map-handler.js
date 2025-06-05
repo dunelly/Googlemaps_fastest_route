@@ -1,51 +1,8 @@
-// Map and Drawing Functionality Module
+// Map and Drawing Functionality Module  
+// Note: map, drawnItems, drawControl are declared in map-core.js
+// Note: addressMarkersLayer is declared in map-markers.js
 
-let map;
-let drawnItems;
-let drawControl;
-let addressMarkersLayer = null;
-
-function initializeMapSystem() {
-  initializeBasicMap();
-  initializeDrawingFeatures();
-  initializeGeocoding();
-}
-
-function initializeBasicMap() {
-  console.log("initializeBasicMap: Starting");
-  try {
-    map = L.map('map').setView([29.7604, -95.3698], 10);
-    console.log("initializeBasicMap: L.map created");
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-    console.log("initializeBasicMap: TileLayer added");
-
-    drawnItems = new L.FeatureGroup();
-    console.log("initializeBasicMap: FeatureGroup created");
-    map.addLayer(drawnItems);
-    console.log("initializeBasicMap: FeatureGroup added to map");
-
-    drawControl = new L.Control.Draw({
-      edit: false,
-      draw: {
-        polygon: true,
-        polyline: false,
-        rectangle: true,
-        circle: false,
-        marker: false,
-        circlemarker: false
-      }
-    });
-    console.log("initializeBasicMap: DrawControl options defined");
-    map.addControl(drawControl);
-    console.log("initializeBasicMap: DrawControl added to map");
-  } catch (error) {
-    console.error("initializeBasicMap: ERROR during initialization!", error);
-  }
-  console.log("initializeBasicMap: Finished (or error caught)");
-}
+// Map initialization is handled by map-core.js
 
 function initializeDrawingFeatures() {
   if (!map || !window.L) return;
@@ -109,8 +66,8 @@ function initializeDrawingFeatures() {
 
     const selectedItemsInShape = [];
 
-    if (addressMarkersLayer) {
-      addressMarkersLayer.eachLayer(function (marker) {
+    if (window.addressMarkersArray && window.addressMarkersArray.length > 0) {
+      window.addressMarkersArray.forEach(function (marker) {
         if (marker.customData) {
           const markerLatLng = marker.getLatLng();
           let isInside = false;
@@ -208,65 +165,22 @@ function initializeDrawingFeatures() {
   });
 }
 
-function handleClearSelections() {
-  if (drawnItems) {
-    drawnItems.clearLayers();
-  }
-  if (copyBtn) copyBtn.style.display = 'none';
-  populateAddressSelection(currentlyDisplayedItems);
-  console.log("handleClearSelections: Selections cleared and address list repopulated.");
-}
+// Note: handleClearSelections, initializeGeocoding, and geocodeAddresses are handled by map-core.js
 
-function initializeGeocoding() {
-  // Geocoding functionality is already implemented in the excel-handler
-  // This function is here for completeness and future geocoding features
-}
-
-async function geocodeAddresses(itemsArray) {
-  const apiKey = "AIzaSyAq-_o7JolKDWy943Q-dejkoqzPvJKIV2k"; 
-  const cache = JSON.parse(localStorage.getItem("geocodeCache") || "{}");
-  
-  for (const item of itemsArray) {
-    if (typeof item.lat === 'number' && typeof item.lng === 'number' && item.lat !== null && item.lng !== null) continue;
-    
-    const addressToGeocode = item.address;
-    if (cache[addressToGeocode]) {
-      item.lat = cache[addressToGeocode].lat;
-      item.lng = cache[addressToGeocode].lng;
-      continue;
-    }
-    
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressToGeocode)}&key=${apiKey}`;
-    try {
-      const resp = await fetch(url);
-      const data = await resp.json();
-      if (data.status === "OK" && data.results && data.results[0]) {
-        const loc = data.results[0].geometry.location;
-        item.lat = loc.lat;
-        item.lng = loc.lng;
-        cache[addressToGeocode] = { lat: loc.lat, lng: loc.lng };
-      } else {
-        item.lat = null;
-        item.lng = null;
-        console.warn('Failed geocode:', addressToGeocode, data.status);
-      }
-    } catch (err) {
-      item.lat = null;
-      item.lng = null;
-      console.error('Fetch error geocoding:', addressToGeocode, err);
-    }
-    await new Promise(res => setTimeout(res, 60));
-  }
-  
-  localStorage.setItem("geocodeCache", JSON.stringify(cache));
-  return itemsArray; 
-}
-
+// Display address markers on map - restored to original functionality
 function displayAddressMarkers(itemsToDisplayOnMap) {
-  if (!map) return;
-  if (addressMarkersLayer) map.removeLayer(addressMarkersLayer);
+  if (!window.map) return;
   
-  const markers = [];
+  // Clear existing markers
+  if (window.addressMarkersArray && window.addressMarkersArray.length > 0) {
+    window.addressMarkersArray.forEach(marker => {
+      if (marker && typeof marker.remove === 'function') {
+        marker.remove();
+      }
+    });
+    window.addressMarkersArray = [];
+  }
+  
   let plottedCount = 0;
   
   itemsToDisplayOnMap.forEach(item => {
@@ -274,114 +188,78 @@ function displayAddressMarkers(itemsToDisplayOnMap) {
       // Get visit data for color coding
       let daysSince = null;
       let visitCount = 0;
+      let lastVisitFormatted = 'Never visited';
+      
       if (typeof getDaysSinceLastVisit === 'function') {
         daysSince = getDaysSinceLastVisit(item.address);
       }
       if (typeof getVisitCount === 'function') {
         visitCount = getVisitCount(item.address);
       }
-      
-      // Choose marker color based on visit recency
-      let markerColor = 'blue'; // Default
-      if (daysSince !== null) {
-        if (daysSince === 0) markerColor = 'lightblue';
-        else if (daysSince <= 3) markerColor = 'blue';
-        else if (daysSince <= 7) markerColor = 'darkblue';
-        else if (daysSince <= 14) markerColor = 'navy';
-        else markerColor = 'black';
+      if (typeof getLastVisitFormatted === 'function') {
+        lastVisitFormatted = getLastVisitFormatted(item.address);
       }
       
-      // Create custom icon with color
-      const customIcon = L.icon({
-        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${markerColor === 'lightblue' ? 'blue' : markerColor === 'navy' ? 'violet' : markerColor === 'black' ? 'black' : 'blue'}.png`,
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      });
+      // Get marker color and description
+      const colorData = window.getMarkerColor ? window.getMarkerColor(daysSince, visitCount) : 
+        { color: '#2E86AB', description: 'Never visited' };
       
-      const marker = L.marker([item.lat, item.lng], { icon: customIcon });
+      console.log(`[map-markers] Address: ${item.address}, daysSince: ${daysSince}, visitCount: ${visitCount}, color: ${colorData.color} (${colorData.description})`);
       
-      // Create popup content with visit info and note button
-      let popupHtml = `<div style="min-width: 200px;">`;
-      if (item.name) popupHtml += `<strong>${item.name}</strong><br>`;
-      popupHtml += `<strong>${item.address}</strong>`;
-      if (item.auctionDateFormatted) popupHtml += `<br><span style="color:#0077b6;">(${item.auctionDateFormatted})</span>`;
+      // Create custom icon
+      const customIcon = window.createCustomMarkerIcon ? window.createCustomMarkerIcon(colorData.color) :
+        L.divIcon({
+          html: `<div style="background-color: ${colorData.color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+          className: 'custom-marker',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
       
-      // Add visit info
-      if (visitCount > 0) {
-        const dayText = daysSince === 0 ? 'today' : daysSince === null ? 'unknown' : `${daysSince} day${daysSince === 1 ? '' : 's'} ago`;
-        popupHtml += `<br><small style="color:#666;">Visited ${visitCount} time${visitCount === 1 ? '' : 's'} • Last: ${dayText}</small>`;
-      } else {
-        popupHtml += `<br><small style="color:#666;">Never visited</small>`;
-      }
+      // Create marker
+      const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(window.map);
       
-      popupHtml += `<br><button onclick="openNotesFromMap('${item.address.replace(/'/g, "\\'")}'); return false;" 
-                     style="margin-top: 8px; padding: 4px 8px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
-                     📝 Add/View Note
-                   </button></div>`;
+      // Create popup content
+      const popupHtml = window.createMarkerPopupContent ? 
+        window.createMarkerPopupContent(item, lastVisitFormatted, visitCount) :
+        `<strong>${item.address}</strong><br>Visit Status: ${lastVisitFormatted}`;
       
       marker.bindPopup(popupHtml);
       marker.customData = item;
       
-      // Add click handler for notes
-      marker.on('click', function() {
-        // Popup will show automatically, but we can add additional functionality here if needed
-      });
-      
-      markers.push(marker);
+      // Add to tracking array
+      if (!window.addressMarkersArray) {
+        window.addressMarkersArray = [];
+      }
+      window.addressMarkersArray.push(marker);
       plottedCount++;
     }
   });
   
   if (plottedCount > 0) {
-    addressMarkersLayer = L.layerGroup(markers).addTo(map);
     const notPlotted = itemsToDisplayOnMap.length - plottedCount;
-    showMessage(`${plottedCount} plotted. ${notPlotted > 0 ? notPlotted + ' not geocoded.' : ''}`, notPlotted > 0 ? 'warning' : 'success');
+    if (typeof showMessage === 'function') {
+      showMessage(`${plottedCount} plotted. ${notPlotted > 0 ? notPlotted + ' not geocoded.' : ''}`, notPlotted > 0 ? 'warning' : 'success');
+    }
   } else {
-    showMessage('No coordinates to plot.', 'warning');
+    if (typeof showMessage === 'function') {
+      showMessage('No coordinates to plot.', 'warning');
+    }
   }
 }
 
-// Global function to open notes from map markers
-window.openNotesFromMap = function(address) {
-  // Check if notes manager is available
-  if (typeof openNotesOverlay === 'function') {
-    openNotesOverlay(address);
-  } else {
-    showMessage('Please sign in to add notes', 'warning');
-  }
-};
-
 // Function to highlight address on map when clicked in list
 function highlightAddressOnMap(address) {
-  if (!addressMarkersLayer) return;
+  if (!window.addressMarkersArray || window.addressMarkersArray.length === 0) return;
   
-  addressMarkersLayer.eachLayer(function(marker) {
+  window.addressMarkersArray.forEach(function(marker) {
     if (marker.customData && marker.customData.address === address) {
       // Pan to marker and open popup
-      map.setView(marker.getLatLng(), Math.max(map.getZoom(), 15));
+      window.map.setView(marker.getLatLng(), 15);
       marker.openPopup();
-      
-      // Add temporary highlight effect
-      const originalIcon = marker.getIcon();
-      marker.setIcon(L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      }));
-      
-      // Reset icon after 3 seconds
-      setTimeout(() => {
-        marker.setIcon(originalIcon);
-      }, 3000);
     }
   });
 }
 
-// Make highlight function globally available
+// Make functions globally available
+window.displayAddressMarkers = displayAddressMarkers;
 window.highlightAddressOnMap = highlightAddressOnMap;

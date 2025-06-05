@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/clean-interface.css">
+  <link rel="stylesheet" href="css/excel-history.css">
   
   <script>
     // Firebase configuration
@@ -44,7 +45,8 @@
     <button id="show-login-btn" class="tab-button">Sign In</button>
     <div id="user-info" style="display:none;">
       <span id="user-email" style="font-weight:600;"></span>
-      <button id="logout-btn" style="margin-left:12px;padding:5px 14px;">Logout</button>
+      <button id="excel-history-btn" style="margin-left:8px;padding:5px 8px;font-size:1.1rem;" title="Excel History">📊</button>
+      <button id="logout-btn" style="margin-left:8px;padding:5px 14px;">Logout</button>
     </div>
   </div>
   
@@ -145,7 +147,7 @@
                   </div>
                   <div style="margin-top: 8px;">
                     <button type="button" id="copySelectedBtn" class="secondary-btn">Copy Selected</button>
-                    <button type="button" id="markVisitedBtn" class="secondary-btn">Mark as Visited</button>
+                    <button type="button" id="markSelectedVisitedBtn" class="secondary-btn">Mark as Visited</button>
                   </div>
                 </div>
                 
@@ -179,6 +181,36 @@
     <div id="debugArea"></div>
     <div id="googleSheetError"></div>
     <div id="drawTooltip"></div>
+  </div>
+
+  <!-- Excel History Slide-out Panels -->
+  <div id="excelHistoryOverlay" class="excel-history-overlay">
+    <div id="excelHistoryPanel" class="excel-history-panel">
+      <div class="panel-header">
+        <h3>📊 Excel History</h3>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="deleteAllExcelBtn" class="delete-all-btn" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer;" title="Delete All Excel Files">🗑️ Delete All</button>
+          <button id="closeExcelHistoryBtn" class="close-btn">×</button>
+        </div>
+      </div>
+      <div class="panel-content">
+        <div id="excelHistoryList" class="excel-history-list">
+          <!-- Excel files will be populated here -->
+        </div>
+      </div>
+    </div>
+    
+    <div id="excelDataPanel" class="excel-data-panel">
+      <div class="panel-header">
+        <h3 id="excelDataTitle">📋 Excel Data</h3>
+        <button id="closeExcelDataBtn" class="close-btn">×</button>
+      </div>
+      <div class="panel-content">
+        <div id="excelDataContent" class="excel-data-content">
+          <!-- Full data view will be populated here -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Notes Overlay -->
@@ -221,14 +253,22 @@
 
   <!-- Our JavaScript Modules - Load in dependency order -->
   <script src="js/firebase-utils.js"></script>
+  <script src="js/firebase-auth.js"></script>
   <script src="js/app.js"></script>
   <script src="js/tabs.js"></script>
   <script src="js/address-manager.js"></script>
   <script src="js/route-optimizer.js"></script>
   <script src="js/excel-handler.js"></script>
+  <script src="js/map-core.js"></script>
+  <script src="js/map-drawing.js"></script>
+  <script src="js/map-markers.js"></script>
   <script src="js/map-handler.js"></script>
-  <script src="js/firebase-auth.js"></script>
-  <script src="js/visit-tracker.js"></script>
+  <script src="js/visit-display.js"></script>
+  <script src="js/visit-manager.js"></script>
+  <script src="js/address-list-renderer.js"></script>
   <script src="js/notes-manager.js"></script>
+  <script src="js/excel-data-table.js"></script>
+  <script src="js/excel-operations.js"></script>
+  <script src="js/excel-history.js"></script>
 </body>
 </html>

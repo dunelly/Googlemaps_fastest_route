@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notes Overlay Address Switching Test</title>
+    <style>
+        .test-button {
+            margin: 10px;
+            padding: 10px 20px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #3367D6;
+        }
+        .test-results {
+            margin: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h2>Notes Overlay Address Switching Test</h2>
+    
+    <div>
+        <h3>Test Scenario:</h3>
+        <p>1. Open notes overlay for first address</p>
+        <p>2. Click on different addresses (map markers or address list)</p>
+        <p>3. Notes overlay should update to show the new address WITHOUT closing/reopening</p>
+    </div>
+    
+    <div>
+        <h3>Test Functions:</h3>
+        <button class="test-button" onclick="testOpenNotes('123 Main St')">Open Notes: 123 Main St</button>
+        <button class="test-button" onclick="testSwitchNotes('456 Oak Ave')">Switch to: 456 Oak Ave</button>
+        <button class="test-button" onclick="testSwitchNotes('789 Pine Rd')">Switch to: 789 Pine Rd</button>
+        <button class="test-button" onclick="testOpenFromMap('321 Elm Dr')">Click Map Marker: 321 Elm Dr</button>
+    </div>
+    
+    <div id="testResults" class="test-results">
+        <h4>Test Results:</h4>
+        <p>Open your main app (index.html) and:</p>
+        <ol>
+            <li>Sign in to enable notes functionality</li>
+            <li>Upload an Excel file or add addresses manually</li>
+            <li>Click on any address in the list to open notes overlay</li>
+            <li>With notes overlay open, click on different addresses</li>
+            <li>The overlay should update content smoothly without closing</li>
+        </ol>
+        
+        <h4>Expected Behavior:</h4>
+        <ul>
+            <li>✅ Clicking address when overlay closed → Opens overlay</li>
+            <li>✅ Clicking different address when overlay open → Updates content smoothly</li>
+            <li>✅ Map marker clicks → Same smooth switching behavior</li>
+            <li>✅ Address list clicks → Same smooth switching behavior</li>
+            <li>✅ Current address updates globally (window.currentAddress)</li>
+        </ul>
+    </div>
+
+    <script>
+        // Mock test functions to demonstrate the concept
+        function testOpenNotes(address) {
+            console.log('🔵 Testing openNotesOverlay for:', address);
+            updateResults(`🔵 Would open notes overlay for: ${address}`);
+        }
+        
+        function testSwitchNotes(address) {
+            console.log('🔄 Testing switchNotesToAddress for:', address);
+            updateResults(`🔄 Would switch notes overlay to: ${address}`);
+        }
+        
+        function testOpenFromMap(address) {
+            console.log('🗺️ Testing openNotesFromMap for:', address);
+            updateResults(`🗺️ Would handle map marker click for: ${address}`);
+        }
+        
+        function updateResults(message) {
+            const results = document.getElementById('testResults');
+            results.innerHTML += `<p style="color: #0066cc; font-family: monospace;">${message}</p>`;
+        }
+        
+        // Show the updated functionality
+        updateResults('✅ Notes overlay address switching implemented!');
+        updateResults('✅ Enhanced openNotesOverlay() function');
+        updateResults('✅ Added switchNotesToAddress() function');
+        updateResults('✅ Updated map markers and address list click handlers');
+        updateResults('✅ Global window.currentAddress management');
+    </script>
+</body>
+</html>

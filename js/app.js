@@ -189,3 +189,7 @@ function initializeDOMReferences() {
   copyBtn = document.getElementById('copySelectedBtn');
   markVisitedBtn = document.getElementById('markVisitedBtn');
 }
+
+// Make essential functions globally available
+window.showMessage = showMessage;
+window.hideMessage = hideMessage;

@@ -1,8 +1,10 @@
 // Notes Management Module for Firebase Firestore
 
-let currentUser = null;
+let notesCurrentUser = null;
 let currentAddress = null;
 let userNotes = {};
+// Make userNotes globally available for address list integration
+window.userNotes = userNotes;
 // Visit tracking is now handled in visit-tracker.js
 
 // Initialize notes functionality
@@ -15,7 +17,7 @@ function initializeNotesManager() {
   
   // Listen for auth state changes
   firebase.auth().onAuthStateChanged(function(user) {
-    currentUser = user;
+    notesCurrentUser = user;
     if (user) {
       loadUserNotes(user.uid);
     } else {
@@ -92,19 +94,58 @@ function setupNoteIconHandlers() {
 
 // Open notes overlay for specific address
 function openNotesOverlay(address) {
-  if (!currentUser) {
+  if (!notesCurrentUser) {
     showMessage('Please sign in to add notes', 'warning');
     return;
   }
   
+  // Check if overlay is already open
+  const overlay = document.getElementById('notesOverlay');
+  const isAlreadyOpen = overlay && overlay.classList.contains('open');
+  
   currentAddress = address;
   window.currentAddress = address; // Make globally available for visit-tracker
+  
+  // Update overlay content for the new address
+  updateNotesOverlayContent(address);
+  
+  // Show overlay if not already open
+  if (overlay && !isAlreadyOpen) {
+    overlay.classList.add('open');
+    setTimeout(() => {
+      document.getElementById('noteTextarea').focus();
+    }, 300);
+  } else if (isAlreadyOpen) {
+    // If already open, just focus the textarea
+    setTimeout(() => {
+      document.getElementById('noteTextarea').focus();
+    }, 100);
+  }
+  
+  updateCharacterCount();
+  
+  // Call visit display update from visit-tracker
+  if (typeof updateVisitDisplay === 'function') {
+    updateVisitDisplay();
+  }
+}
+
+// Update notes overlay content for a specific address
+function updateNotesOverlayContent(address) {
   const addressHash = generateAddressHash(address);
   const existingNote = userNotes[addressHash];
   
-  // Update overlay content
-  document.getElementById('notesAddressText').textContent = address;
-  document.getElementById('noteTextarea').value = existingNote ? existingNote.note : '';
+  // Update address display
+  const addressText = document.getElementById('notesAddressText');
+  if (addressText) {
+    addressText.textContent = address;
+  }
+  
+  // Update note textarea
+  const textarea = document.getElementById('noteTextarea');
+  if (textarea) {
+    textarea.value = existingNote ? existingNote.note : '';
+  }
   
   // Update timestamp
   const timestamp = document.getElementById('noteTimestamp');
@@ -118,22 +159,6 @@ function openNotesOverlay(address) {
   const deleteBtn = document.getElementById('deleteNoteBtn');
   if (deleteBtn) {
     deleteBtn.style.display = existingNote ? 'block' : 'none';
-  }
-  
-  // Show overlay
-  const overlay = document.getElementById('notesOverlay');
-  if (overlay) {
-    overlay.classList.add('open');
-    setTimeout(() => {
-      document.getElementById('noteTextarea').focus();
-    }, 300);
-  }
-  
-  updateCharacterCount();
-  
-  // Call visit display update from visit-tracker
-  if (typeof updateVisitDisplay === 'function') {
-    updateVisitDisplay();
   }
 }
 
@@ -149,7 +174,7 @@ function closeNotesOverlay() {
 
 // Save note to Firestore
 async function saveNote() {
-  if (!currentUser || !currentAddress) return;
+  if (!notesCurrentUser || !currentAddress) return;
   
   const noteText = document.getElementById('noteTextarea').value.trim();
   const addressHash = generateAddressHash(currentAddress);
@@ -166,6 +191,7 @@ async function saveNote() {
       // Save note using Firebase utils
       await FirebaseUtils.saveUserData('addressNotes', addressHash, noteData);
       userNotes[addressHash] = noteData;
+      window.userNotes = userNotes; // Sync with global
       showMessage('Note saved successfully', 'success');
     } else {
       // Delete note if empty
@@ -180,18 +206,25 @@ async function saveNote() {
   }
   
   updateNoteIcons();
+  
+  // Refresh address list to show updated note icons
+  if (typeof updateMiddleAddresses === 'function') {
+    updateMiddleAddresses();
+  }
+  
   closeNotesOverlay();
 }
 
 // Delete note from Firestore
 async function deleteNote() {
-  if (!currentUser || !currentAddress) return;
+  if (!notesCurrentUser || !currentAddress) return;
   
   const addressHash = generateAddressHash(currentAddress);
   
   try {
     await FirebaseUtils.deleteUserData('addressNotes', addressHash);
     delete userNotes[addressHash];
+    window.userNotes = userNotes; // Sync with global
     showMessage('Note deleted successfully', 'success');
     
   } catch (error) {
@@ -201,6 +234,12 @@ async function deleteNote() {
   }
   
   updateNoteIcons();
+  
+  // Refresh address list to show updated note icons
+  if (typeof updateMiddleAddresses === 'function') {
+    updateMiddleAddresses();
+  }
+  
   closeNotesOverlay();
 }
 
@@ -208,7 +247,15 @@ async function deleteNote() {
 async function loadUserNotes(userId) {
   try {
     userNotes = await FirebaseUtils.loadUserData('addressNotes');
+    window.userNotes = userNotes; // Sync with global
     updateNoteIcons();
+    
+    console.log('[notes-manager] Loaded notes for user:', userId);
+    
+    // Refresh address list if it exists
+    if (typeof updateMiddleAddresses === 'function') {
+      updateMiddleAddresses();
+    }
     
   } catch (error) {
     console.error('Error loading notes:', error);
@@ -262,6 +309,30 @@ function updateCharacterCount() {
 }
 
 // Visit tracking functionality is now handled in visit-tracker.js
+
+// Function to switch notes to a new address (if overlay is open)
+function switchNotesToAddress(address) {
+  const overlay = document.getElementById('notesOverlay');
+  if (overlay && overlay.classList.contains('open')) {
+    // Update the overlay content without closing/reopening
+    currentAddress = address;
+    window.currentAddress = address;
+    updateNotesOverlayContent(address);
+    updateCharacterCount();
+    
+    // Update visit display if available
+    if (typeof updateVisitDisplay === 'function') {
+      updateVisitDisplay();
+    }
+    
+    console.log('[notes-manager] Switched notes overlay to address:', address);
+  }
+}
+
+// Make functions globally available
+window.openNotesOverlay = openNotesOverlay;
+window.switchNotesToAddress = switchNotesToAddress;
+window.updateNotesOverlayContent = updateNotesOverlayContent;
 
 // Initialize when DOM is loaded
 if (document.readyState === 'loading') {

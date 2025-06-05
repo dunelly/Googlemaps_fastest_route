@@ -1,47 +1,56 @@
-// Visit Tracking Module - Handles visit recording and display
-// Note: userVisits is declared in visit-manager.js and made globally available
+// Visit Manager Module - Core visit recording and tracking functionality
 
-let visitTrackerCurrentUser = null;
+let userVisits = {};
+let visitManagerCurrentUser = null;
+
+// Make userVisits globally available for display modules
+window.userVisits = userVisits;
+
+// Generate consistent hash for address
+function generateAddressHash(address) {
+  return address.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 
 // Initialize visit tracking
 function initializeVisitTracker() {
-  console.log('[visit-tracker] Initializing visit tracker');
+  console.log('[visit-manager] Initializing visit tracker');
   
   // Set up visit button event listener
   setupVisitTracking();
   
   // Listen for auth state changes
   firebase.auth().onAuthStateChanged(function(user) {
-    visitTrackerCurrentUser = user;
-    console.log('[visit-tracker] Auth state changed, user:', !!user);
+    visitManagerCurrentUser = user;
+    console.log('[visit-manager] Auth state changed, user:', !!user);
     if (user) {
       loadUserVisits(user.uid);
     } else {
-      window.userVisits = {};
+      userVisits = {};
+      window.userVisits = userVisits;
     }
   });
 }
 
 // Set up visit tracking functionality
 function setupVisitTracking() {
-  console.log('[visit-tracker] Setting up visit tracking...');
+  console.log('[visit-manager] Setting up visit tracking...');
   
   // Function to attach event listener with retry
   function attachEventListener(buttonId, handler, description) {
     const button = document.getElementById(buttonId);
     if (button) {
-      console.log(`[visit-tracker] Found ${description} button, attaching listener`);
+      console.log(`[visit-manager] Found ${description} button, attaching listener`);
       button.addEventListener('click', handler);
       return true;
     } else {
-      console.warn(`[visit-tracker] ${description} button not found: ${buttonId}`);
+      console.warn(`[visit-manager] ${description} button not found: ${buttonId}`);
       return false;
     }
   }
   
   // Handle single address visits (from notes overlay)
   const singleHandler = async function() {
-    console.log('[visit-tracker] Single address mark visited button clicked');
+    console.log('[visit-manager] Single address mark visited button clicked');
     
     if (window.currentAddress) {
       try {
@@ -57,7 +66,7 @@ function setupVisitTracking() {
   
   // Handle bulk address visits (from address list)
   const bulkHandler = async function() {
-    console.log('[visit-tracker] Bulk mark visited button clicked');
+    console.log('[visit-manager] Bulk mark visited button clicked');
     try {
       await markSelectedAddressesAsVisited();
     } catch (error) {
@@ -72,7 +81,7 @@ function setupVisitTracking() {
   
   // If buttons not found, set up observers to try again later
   if (!singleAttached || !bulkAttached) {
-    console.log('[visit-tracker] Some buttons not found, setting up observer...');
+    console.log('[visit-manager] Some buttons not found, setting up observer...');
     
     // Set up mutation observer to watch for dynamic button creation
     const observer = new MutationObserver(function(mutations) {
@@ -113,7 +122,7 @@ function setupVisitTracking() {
 // Mark selected addresses as visited (bulk mode)
 async function markSelectedAddressesAsVisited() {
   const middleAddressesList = document.getElementById('middleAddressesList');
-  if (!middleAddressesList || !visitTrackerCurrentUser) {
+  if (!middleAddressesList || !visitManagerCurrentUser) {
     showMessage('Please sign in to track visits', 'warning');
     return;
   }
@@ -133,7 +142,7 @@ async function markSelectedAddressesAsVisited() {
     return;
   }
   
-  console.log('[visit-tracker] Marking', checkedAddresses.length, 'addresses as visited');
+  console.log('[visit-manager] Marking', checkedAddresses.length, 'addresses as visited');
   
   let successCount = 0;
   for (const address of checkedAddresses) {
@@ -150,7 +159,9 @@ async function markSelectedAddressesAsVisited() {
   showMessage(`${successCount} addresses marked as visited`, 'success');
   
   // Refresh the map and address list
-  updateMapMarkers();
+  if (typeof updateMapMarkers === 'function') {
+    updateMapMarkers();
+  }
   if (typeof updateMiddleAddresses === 'function') {
     updateMiddleAddresses();
   }
@@ -159,11 +170,18 @@ async function markSelectedAddressesAsVisited() {
 // Load user visits data
 async function loadUserVisits(userId) {
   try {
-    console.log('[visit-tracker] Loading user visits for:', userId);
-    window.userVisits = await FirebaseUtils.loadUserData('addressVisits');
-    console.log('[visit-tracker] Loaded', Object.keys(window.userVisits || {}).length, 'visit records');
-    updateVisitDisplay();
-    updateMapMarkers();
+    console.log('[visit-manager] Loading user visits for:', userId);
+    userVisits = await FirebaseUtils.loadUserData('addressVisits');
+    window.userVisits = userVisits; // Sync with global
+    console.log('[visit-manager] Loaded', Object.keys(userVisits).length, 'visit records');
+    
+    // Update displays
+    if (typeof updateVisitDisplay === 'function') {
+      updateVisitDisplay();
+    }
+    if (typeof updateMapMarkers === 'function') {
+      updateMapMarkers();
+    }
     
   } catch (error) {
     console.error('Error loading visits:', error);
@@ -173,11 +191,11 @@ async function loadUserVisits(userId) {
 
 // Mark address as visited
 async function markAddressAsVisited() {
-  console.log('[visit-tracker] markAddressAsVisited called');
-  console.log('[visit-tracker] currentUser:', !!visitTrackerCurrentUser);
-  console.log('[visit-tracker] window.currentAddress:', window.currentAddress);
+  console.log('[visit-manager] markAddressAsVisited called');
+  console.log('[visit-manager] currentUser:', !!visitManagerCurrentUser);
+  console.log('[visit-manager] window.currentAddress:', window.currentAddress);
   
-  if (!visitTrackerCurrentUser) {
+  if (!visitManagerCurrentUser) {
     throw new Error('User not signed in');
   }
   
@@ -188,22 +206,21 @@ async function markAddressAsVisited() {
   const addressHash = generateAddressHash(window.currentAddress);
   const now = new Date().toISOString();
   
-  console.log('[visit-tracker] Marking visit for address:', window.currentAddress, 'hash:', addressHash);
+  console.log('[visit-manager] Marking visit for address:', window.currentAddress, 'hash:', addressHash);
   
   try {
     // Get existing visit data or create new
-    const existingVisit = window.userVisits[addressHash] || {
+    const existingVisit = userVisits[addressHash] || {
       address: window.currentAddress,
       visitCount: 0,
       visitHistory: []
     };
     
-    console.log('[visit-tracker] Existing visit data:', existingVisit);
+    console.log('[visit-manager] Existing visit data:', existingVisit);
     
     // Add new visit
     const newVisit = {
-      date: now,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      date: now
     };
     
     const updatedVisitData = {
@@ -213,125 +230,42 @@ async function markAddressAsVisited() {
       visitHistory: [...(existingVisit.visitHistory || []), newVisit]
     };
     
-    console.log('[visit-tracker] Saving visit data:', updatedVisitData);
+    console.log('[visit-manager] Saving visit data:', updatedVisitData);
     
     // Save to Firestore
     await FirebaseUtils.saveUserData('addressVisits', addressHash, updatedVisitData);
     
     // Update local data
-    window.userVisits[addressHash] = updatedVisitData;
+    userVisits[addressHash] = updatedVisitData;
+    window.userVisits = userVisits; // Sync with global
     
-    console.log('[visit-tracker] Visit saved successfully, local data updated');
+    console.log('[visit-manager] Visit saved successfully, local data updated');
     
     // Update UI
-    updateVisitDisplay();
-    updateMapMarkers();
+    if (typeof updateVisitDisplay === 'function') {
+      updateVisitDisplay();
+    }
+    if (typeof updateMapMarkers === 'function') {
+      updateMapMarkers();
+    }
+    
+    // Refresh address list to show updated visit status
+    if (typeof updateMiddleAddresses === 'function') {
+      updateMiddleAddresses();
+    }
     
     showMessage(`Visit recorded for ${window.currentAddress}`, 'success');
     
     return updatedVisitData;
     
   } catch (error) {
-    console.error('[visit-tracker] Error marking visit:', error);
+    console.error('[visit-manager] Error marking visit:', error);
     showMessage('Failed to record visit: ' + error.message, 'error');
     throw error;
   }
 }
 
-// Update visit display in overlay
-function updateVisitDisplay() {
-  if (!window.currentAddress) return;
-  
-  const addressHash = generateAddressHash(window.currentAddress);
-  const visitData = window.userVisits[addressHash];
-  const visitStats = document.getElementById('visitStats');
-  const visitHistory = document.getElementById('visitHistory');
-  const visitHistoryList = document.getElementById('visitHistoryList');
-  
-  if (visitStats) {
-    if (visitData && visitData.visitCount > 0) {
-      const daysSince = Math.floor((new Date() - new Date(visitData.lastVisited)) / (1000 * 60 * 60 * 24));
-      const dayText = daysSince === 0 ? 'today' : `${daysSince} day${daysSince === 1 ? '' : 's'} ago`;
-      visitStats.textContent = `${visitData.visitCount} visit${visitData.visitCount === 1 ? '' : 's'} • Last: ${dayText}`;
-    } else {
-      visitStats.textContent = 'Never visited';
-    }
-  }
-  
-  // Update visit history
-  if (visitHistory && visitHistoryList) {
-    if (visitData && visitData.visitHistory && visitData.visitHistory.length > 0) {
-      visitHistory.style.display = 'block';
-      visitHistoryList.innerHTML = '';
-      
-      // Show last 5 visits
-      const recentVisits = visitData.visitHistory.slice(-5).reverse();
-      recentVisits.forEach(visit => {
-        const li = document.createElement('li');
-        const visitDate = new Date(visit.date);
-        li.innerHTML = `<span class="visit-date">${visitDate.toLocaleDateString()}</span> at ${visitDate.toLocaleTimeString()}`;
-        visitHistoryList.appendChild(li);
-      });
-    } else {
-      visitHistory.style.display = 'none';
-    }
-  }
-}
-
-// Get days since last visit for color coding
-function getDaysSinceLastVisit(address) {
-  const addressHash = generateAddressHash(address);
-  const visitData = window.userVisits[addressHash];
-  
-  if (!visitData || !visitData.lastVisited) {
-    return null; // Never visited
-  }
-  
-  const daysSince = Math.floor((new Date() - new Date(visitData.lastVisited)) / (1000 * 60 * 60 * 24));
-  return daysSince;
-}
-
-// Get visit count for address
-function getVisitCount(address) {
-  const addressHash = generateAddressHash(address);
-  const visitData = window.userVisits[addressHash];
-  return visitData ? visitData.visitCount : 0;
-}
-
-// Get last visit date formatted
-function getLastVisitFormatted(address) {
-  const addressHash = generateAddressHash(address);
-  const visitData = window.userVisits[addressHash];
-  
-  if (!visitData || !visitData.lastVisited) {
-    return 'Never visited';
-  }
-  
-  const daysSince = getDaysSinceLastVisit(address);
-  if (daysSince === 0) {
-    return 'Visited today';
-  } else if (daysSince === 1) {
-    return 'Visited yesterday';
-  } else {
-    return `Visited ${daysSince} days ago`;
-  }
-}
-
-// Update map markers based on visit data
-function updateMapMarkers() {
-  console.log('[visit-tracker] updateMapMarkers called');
-  // This will trigger the map to refresh with new colors
-  if (typeof displayAddressMarkers === 'function' && typeof currentlyDisplayedItems !== 'undefined') {
-    console.log('[visit-tracker] Refreshing map markers');
-    displayAddressMarkers(currentlyDisplayedItems);
-  }
-}
-
-// Make functions globally available
-window.getDaysSinceLastVisit = getDaysSinceLastVisit;
-window.getVisitCount = getVisitCount;
-window.getLastVisitFormatted = getLastVisitFormatted;
-window.updateVisitDisplay = updateVisitDisplay;
+// Make core tracking functions globally available
 window.markAddressAsVisited = markAddressAsVisited;
 
 // Initialize when DOM is loaded

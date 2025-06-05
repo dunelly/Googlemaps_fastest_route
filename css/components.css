@@ -231,3 +231,68 @@ button:hover, button:focus {
   opacity: 0 !important;
   background: none !important;
 }
+
+/* Address List Styling */
+.address-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.address-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.address-checklist input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.address-checklist span {
+  flex: 1;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.address-checklist span:hover {
+  background-color: #f8f9fa;
+}
+
+/* Note Icon Button */
+.note-icon-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  margin: 0;
+  width: auto;
+  height: auto;
+  min-width: 32px;
+  min-height: 28px;
+  flex-shrink: 0;
+}
+
+.note-icon-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #bbb;
+}
+
+.note-icon-btn.has-note {
+  background-color: #4285F4;
+  color: white;
+  border-color: #4285F4;
+}
+
+.note-icon-btn.has-note:hover {
+  background-color: #3367d6;
+  border-color: #3367d6;
+}

@@ -196,7 +196,20 @@ function processColumnMapping(headers, dataRows, addressFieldPrompt) {
       if (filterSection) filterSection.style.display = '';
       populateAddressSelection(currentlyDisplayedItems);
       if (addressListSection) addressListSection.style.display = '';
+      
       showMessage('Addresses loaded.', 'success');
+      
+      // Save Excel data to history
+      const fileInput = document.getElementById('excelFile');
+      const fileName = (fileInput && fileInput.files[0] && fileInput.files[0].name) || 'Excel Import';
+      console.log('[excel-handler] Attempting to save Excel data:', { fileName, itemCount: currentlyDisplayedItems.length });
+      
+      if (typeof saveExcelData === 'function') {
+        console.log('[excel-handler] saveExcelData function found, calling it...');
+        saveExcelData(fileName, currentlyDisplayedItems);
+      } else {
+        console.error('[excel-handler] saveExcelData function not found!');
+      }
 
       if (currentlyDisplayedItems.length > 0) {
         showMessage('Geocoding addresses...', 'info');

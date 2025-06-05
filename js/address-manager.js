@@ -100,26 +100,9 @@ function initializeCopyAndMarkVisited() {
   const markVisitedBtn = document.getElementById('markVisitedBtn');
   const middleAddressesList = document.getElementById('middleAddressesList');
   
-  if (markVisitedBtn && middleAddressesList) {
-    markVisitedBtn.addEventListener('click', function() {
-      const listItems = middleAddressesList.getElementsByTagName('li');
-      for (let item of listItems) {
-        const checkbox = item.querySelector('input[type="checkbox"]');
-        const span = item.querySelector('span');
-        if (checkbox && checkbox.checked && span) {
-          const address = checkbox.value;
-          const matchedItem = allExcelItems.find(i => i.address === address);
-          if (matchedItem) {
-            matchedItem.visited = true;
-            span.style.color = '#888';
-            span.style.textDecoration = 'line-through';
-          }
-        }
-      }
-      showMessage('Selected addresses marked as visited.', 'success');
-    });
-  }
-
+  // Note: Mark visited functionality is now handled by visit-tracker.js
+  // The button event listener is set up there to handle both single and bulk visits
+  
   if (copyBtn && middleAddressesList) {
     copyBtn.addEventListener('click', function() {
       const addressesToCopy = [];
