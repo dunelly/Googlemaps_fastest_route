@@ -118,7 +118,7 @@ function addNewDestinationFieldAboveButton() {
   const fieldsContainer = document.getElementById('destinationFields');
   if (!fieldsContainer) return;
 
-  // Create new destination input field
+  // Create new destination input field (original clean design)
   const newFieldContainer = document.createElement('div');
   newFieldContainer.className = 'destination-input-container';
   newFieldContainer.innerHTML = `

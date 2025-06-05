@@ -180,7 +180,7 @@ function updateMiddleAddresses() {
         
         let dText = item.address;
         if (item.name) dText = `<b>${item.name}</b> - ${dText}`;
-        if (item.auctionDateFormatted) dText += ` <span style="color:#0077b6;">(Auction: ${item.auctionDateFormatted})</span>`;
+        if (item.auctionDateFormatted) dText += ` <span style="color:#0077b6;">(${item.auctionDateFormatted})</span>`;
         
         const span = document.createElement('span');
         span.innerHTML = ' ' + dText;
@@ -188,7 +188,26 @@ function updateMiddleAddresses() {
           span.style.color = '#888';
           span.style.textDecoration = 'line-through';
         }
+        
+        // Add click handler to highlight address on map AND open notes
+        span.addEventListener('click', function(e) {
+          e.stopPropagation(); // Prevent checkbox toggle
+          
+          // Highlight on map
+          if (typeof highlightAddressOnMap === 'function') {
+            highlightAddressOnMap(item.address);
+          }
+          
+          // Open notes overlay
+          if (typeof openNotesOverlay === 'function') {
+            openNotesOverlay(item.address);
+          }
+        });
+        span.style.cursor = 'pointer';
+        span.title = 'Click to view on map and manage notes';
+        
         li.appendChild(span);
+        
         middleAddressesList.appendChild(li);
       }
     });

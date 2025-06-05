@@ -271,12 +271,65 @@ function displayAddressMarkers(itemsToDisplayOnMap) {
   
   itemsToDisplayOnMap.forEach(item => {
     if (item && typeof item.lat === 'number' && typeof item.lng === 'number') {
-      const marker = L.marker([item.lat, item.lng]);
-      let popupHtml = `<strong>${item.address}</strong>`;
-      if (item.name) popupHtml = `<strong>${item.name}</strong><br>${item.address}`;
-      if (item.auctionDateFormatted) popupHtml += `<br><span style="color:#0077b6;">Auction: ${item.auctionDateFormatted}</span>`;
+      // Get visit data for color coding
+      let daysSince = null;
+      let visitCount = 0;
+      if (typeof getDaysSinceLastVisit === 'function') {
+        daysSince = getDaysSinceLastVisit(item.address);
+      }
+      if (typeof getVisitCount === 'function') {
+        visitCount = getVisitCount(item.address);
+      }
+      
+      // Choose marker color based on visit recency
+      let markerColor = 'blue'; // Default
+      if (daysSince !== null) {
+        if (daysSince === 0) markerColor = 'lightblue';
+        else if (daysSince <= 3) markerColor = 'blue';
+        else if (daysSince <= 7) markerColor = 'darkblue';
+        else if (daysSince <= 14) markerColor = 'navy';
+        else markerColor = 'black';
+      }
+      
+      // Create custom icon with color
+      const customIcon = L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${markerColor === 'lightblue' ? 'blue' : markerColor === 'navy' ? 'violet' : markerColor === 'black' ? 'black' : 'blue'}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+      
+      const marker = L.marker([item.lat, item.lng], { icon: customIcon });
+      
+      // Create popup content with visit info and note button
+      let popupHtml = `<div style="min-width: 200px;">`;
+      if (item.name) popupHtml += `<strong>${item.name}</strong><br>`;
+      popupHtml += `<strong>${item.address}</strong>`;
+      if (item.auctionDateFormatted) popupHtml += `<br><span style="color:#0077b6;">(${item.auctionDateFormatted})</span>`;
+      
+      // Add visit info
+      if (visitCount > 0) {
+        const dayText = daysSince === 0 ? 'today' : daysSince === null ? 'unknown' : `${daysSince} day${daysSince === 1 ? '' : 's'} ago`;
+        popupHtml += `<br><small style="color:#666;">Visited ${visitCount} time${visitCount === 1 ? '' : 's'} • Last: ${dayText}</small>`;
+      } else {
+        popupHtml += `<br><small style="color:#666;">Never visited</small>`;
+      }
+      
+      popupHtml += `<br><button onclick="openNotesFromMap('${item.address.replace(/'/g, "\\'")}'); return false;" 
+                     style="margin-top: 8px; padding: 4px 8px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                     📝 Add/View Note
+                   </button></div>`;
+      
       marker.bindPopup(popupHtml);
-      marker.customData = item; 
+      marker.customData = item;
+      
+      // Add click handler for notes
+      marker.on('click', function() {
+        // Popup will show automatically, but we can add additional functionality here if needed
+      });
+      
       markers.push(marker);
       plottedCount++;
     }
@@ -290,3 +343,45 @@ function displayAddressMarkers(itemsToDisplayOnMap) {
     showMessage('No coordinates to plot.', 'warning');
   }
 }
+
+// Global function to open notes from map markers
+window.openNotesFromMap = function(address) {
+  // Check if notes manager is available
+  if (typeof openNotesOverlay === 'function') {
+    openNotesOverlay(address);
+  } else {
+    showMessage('Please sign in to add notes', 'warning');
+  }
+};
+
+// Function to highlight address on map when clicked in list
+function highlightAddressOnMap(address) {
+  if (!addressMarkersLayer) return;
+  
+  addressMarkersLayer.eachLayer(function(marker) {
+    if (marker.customData && marker.customData.address === address) {
+      // Pan to marker and open popup
+      map.setView(marker.getLatLng(), Math.max(map.getZoom(), 15));
+      marker.openPopup();
+      
+      // Add temporary highlight effect
+      const originalIcon = marker.getIcon();
+      marker.setIcon(L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      }));
+      
+      // Reset icon after 3 seconds
+      setTimeout(() => {
+        marker.setIcon(originalIcon);
+      }, 3000);
+    }
+  });
+}
+
+// Make highlight function globally available
+window.highlightAddressOnMap = highlightAddressOnMap;

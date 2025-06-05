@@ -15,6 +15,7 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.2/firebase-ui-auth.css" />
   <script src="https://www.gstatic.com/firebasejs/ui/6.0.2/firebase-ui-auth.js"></script>
   
@@ -180,7 +181,46 @@
     <div id="drawTooltip"></div>
   </div>
 
-  <!-- Our JavaScript Modules -->
+  <!-- Notes Overlay -->
+  <div id="notesOverlay" class="notes-overlay">
+    <div class="notes-header">
+      <h3 id="notesAddressTitle">Add Note</h3>
+      <button id="closeNotesBtn" class="close-notes-btn">×</button>
+    </div>
+    <div class="notes-content">
+      <div class="notes-address">
+        <strong>Address:</strong>
+        <span id="notesAddressText"></span>
+      </div>
+      <div class="notes-input-section">
+        <label for="noteTextarea">Note:</label>
+        <textarea id="noteTextarea" placeholder="Add your note here..." rows="8"></textarea>
+        <div class="notes-meta">
+          <span id="noteTimestamp"></span>
+          <span id="noteCharCount">0/500</span>
+        </div>
+      </div>
+      <div class="visit-tracking-section">
+        <div class="visit-info">
+          <div id="visitStats" class="visit-stats"></div>
+          <button id="markVisitedBtn" class="mark-visited-btn">📍 Mark as Visited</button>
+        </div>
+        <div id="visitHistory" class="visit-history" style="display: none;">
+          <h4>Visit History:</h4>
+          <ul id="visitHistoryList"></ul>
+        </div>
+      </div>
+      
+      <div class="notes-actions">
+        <button id="saveNoteBtn" class="primary-action-btn">Save Note</button>
+        <button id="deleteNoteBtn" class="secondary-btn" style="background: #dc3545; color: white;">Delete Note</button>
+        <button id="cancelNoteBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Our JavaScript Modules - Load in dependency order -->
+  <script src="js/firebase-utils.js"></script>
   <script src="js/app.js"></script>
   <script src="js/tabs.js"></script>
   <script src="js/address-manager.js"></script>
@@ -188,5 +228,7 @@
   <script src="js/excel-handler.js"></script>
   <script src="js/map-handler.js"></script>
   <script src="js/firebase-auth.js"></script>
+  <script src="js/visit-tracker.js"></script>
+  <script src="js/notes-manager.js"></script>
 </body>
 </html>
