@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug - Address Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .addresses-list { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .addresses-list > div { display: flex; margin: 5px 0; gap: 8px; }
+        .addresses-list input { flex: 1; padding: 5px; }
+        button { padding: 8px 16px; margin: 5px; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Debug - Address Management Test</h1>
+    
+    <div class="debug">
+        <h3>Test Elements</h3>
+        <div id="manualAddressesList" class="addresses-list">
+            <!-- Address fields will be added here -->
+        </div>
+        <button type="button" id="addManualAddressBtn">+ Add Destination</button>
+    </div>
+
+    <div class="debug">
+        <h3>Debug Info</h3>
+        <div id="debugInfo"></div>
+    </div>
+
+    <script>
+        // Simple test implementation
+        function testAddressManagement() {
+            const manualAddressesList = document.getElementById('manualAddressesList');
+            const addManualAddressBtn = document.getElementById('addManualAddressBtn');
+            const debugInfo = document.getElementById('debugInfo');
+            
+            debugInfo.innerHTML += 'Elements found:<br>';
+            debugInfo.innerHTML += `manualAddressesList: ${!!manualAddressesList}<br>`;
+            debugInfo.innerHTML += `addManualAddressBtn: ${!!addManualAddressBtn}<br>`;
+            
+            function addAddressField(value = "") {
+                if (!manualAddressesList) {
+                    debugInfo.innerHTML += 'ERROR: manualAddressesList not found!<br>';
+                    return;
+                }
+                
+                const div = document.createElement('div');
+                
+                const input = document.createElement('input');
+                input.type = "text";
+                input.placeholder = "Enter address";
+                input.value = value;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = "×";
+                removeBtn.onclick = () => div.remove();
+                
+                div.appendChild(input);
+                div.appendChild(removeBtn);
+                manualAddressesList.appendChild(div);
+                
+                debugInfo.innerHTML += `Address field added. Total fields: ${manualAddressesList.children.length}<br>`;
+            }
+            
+            if (addManualAddressBtn) {
+                addManualAddressBtn.onclick = () => {
+                    debugInfo.innerHTML += 'Add button clicked<br>';
+                    addAddressField();
+                };
+                debugInfo.innerHTML += 'Button click handler attached<br>';
+            }
+            
+            // Add one field by default
+            addAddressField('Default address');
+        }
+        
+        // Run test when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, running test...');
+            testAddressManagement();
+        });
+    </script>
+</body>
+</html>
