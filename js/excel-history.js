@@ -33,10 +33,25 @@ function initializeExcelHistory() {
       excelHistoryCurrentUser = user;
       window.excelHistoryCurrentUser = user;
       if (user) {
-        loadExcelHistory(user.uid);
+        loadExcelHistory(user.uid).then(() => {
+          console.log('[excel-history] Excel history loaded after auth change');
+          // If we're currently on the Manage Files tab, refresh the display
+          const manageFilesTab = document.getElementById('manageFilesTab');
+          const manageFilesContent = document.getElementById('manageFilesContent');
+          if (manageFilesTab && manageFilesContent && 
+              manageFilesTab.classList.contains('active') && 
+              manageFilesContent.style.display !== 'none') {
+            populateExcelHistory();
+          }
+        });
       } else {
         savedExcelFiles = {};
         window.savedExcelFiles = savedExcelFiles;
+        // Clear the display if showing
+        const listContainer = document.getElementById('excelHistoryList');
+        if (listContainer) {
+          listContainer.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Please sign in to view Excel history</p>';
+        }
       }
     });
     
@@ -96,86 +111,47 @@ function setupExcelHistoryEvents() {
   }
 }
 
-// Open Excel history panel
+// Open Excel history panel (now switches to Manage Files tab)
 function openExcelHistory() {
   console.log('[excel-history] openExcelHistory called');
   console.log('[excel-history] Current user:', excelHistoryCurrentUser);
   console.log('[excel-history] Saved files count:', Object.keys(savedExcelFiles).length);
   
   if (!excelHistoryCurrentUser) {
-    console.warn('[excel-history] No user signed in - showing demo for testing');
+    console.warn('[excel-history] No user signed in');
     if (typeof showMessage === 'function') {
-      showMessage('Please sign in to view Excel history. Showing demo for testing.', 'warning');
+      showMessage('Please sign in to view Excel history.', 'warning');
     }
-    // Continue to show overlay for testing purposes
+    return;
   }
   
   try {
-    const overlay = document.getElementById('excelHistoryOverlay');
-    const panel = document.getElementById('excelHistoryPanel');
-    
-    console.log('[excel-history] Overlay found:', !!overlay);
-    console.log('[excel-history] Panel found:', !!panel);
-    
-    if (overlay && panel) {
-      console.log('[excel-history] Showing overlay...');
-      
-      // Force overlay to show properly
-      overlay.style.cssText = `
-        position: fixed !important;
-        top: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        background: rgba(0, 0, 0, 0.5) !important;
-        z-index: 10003 !important;
-        display: block !important;
-      `;
-      
-      // Force panel to show properly
-      panel.style.cssText = `
-        position: absolute !important;
-        top: 0 !important;
-        right: 0 !important;
-        height: 100vh !important;
-        width: 500px !important;
-        background: #fff !important;
-        transform: translateX(0) !important;
-        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15) !important;
-        overflow-y: auto !important;
-        z-index: 10004 !important;
-      `;
-      
-      setTimeout(() => {
-        panel.classList.add('active');
-        console.log('[excel-history] Panel activated');
-        
-        // Render the list after panel is shown
-        setTimeout(() => {
-          renderExcelHistoryList();
-        }, 50);
-      }, 10);
-    } else {
-      console.error('[excel-history] Missing overlay or panel elements');
+    // Switch to Manage Files tab
+    if (typeof switchTab === 'function') {
+      switchTab('manageFiles');
     }
+    
+    // Render the Excel history list
+    setTimeout(() => {
+      renderExcelHistoryList();
+    }, 100);
+    
   } catch (error) {
     console.error('[excel-history] Error opening history:', error);
   }
 }
 
-// Close Excel history
+// Close Excel history (switch back to Plan Route tab)
 function closeExcelHistory() {
   try {
-    const overlay = document.getElementById('excelHistoryOverlay');
-    const historyPanel = document.getElementById('excelHistoryPanel');
-    const dataPanel = document.getElementById('excelDataPanel');
+    // Switch back to Plan Route tab
+    if (typeof switchTab === 'function') {
+      switchTab('planRoute');
+    }
     
-    if (historyPanel) historyPanel.classList.remove('active');
-    if (dataPanel) dataPanel.classList.remove('active');
+    // Also close any open data panels
+    closeExcelDataPanel();
     
-    setTimeout(() => {
-      if (overlay) overlay.style.display = 'none';
-    }, 300);
   } catch (error) {
     console.error('[excel-history] Error closing history:', error);
   }
@@ -317,11 +293,45 @@ function renderExcelHistoryList() {
 }
 
 
+// Populate Excel history for the Manage Files tab
+function populateExcelHistory() {
+  console.log('[excel-history] populateExcelHistory called for tab');
+  
+  const listContainer = document.getElementById('excelHistoryList');
+  if (!listContainer) {
+    console.error('[excel-history] excelHistoryList container not found');
+    return;
+  }
+  
+  if (!excelHistoryCurrentUser) {
+    listContainer.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Please sign in to view Excel history</p>';
+    return;
+  }
+  
+  // Check if we have data already, if not try to load it
+  if (!savedExcelFiles || Object.keys(savedExcelFiles).length === 0) {
+    console.log('[excel-history] No data found, loading from Firebase...');
+    listContainer.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Loading Excel files...</p>';
+    
+    // Try to load the data and then render
+    loadExcelHistory(excelHistoryCurrentUser.uid).then(() => {
+      renderExcelHistoryList();
+    }).catch(error => {
+      console.error('[excel-history] Error loading history:', error);
+      listContainer.innerHTML = '<p style="text-align:center;color:#dc3545;padding:20px;">Error loading Excel files</p>';
+    });
+  } else {
+    // We have data, render immediately
+    renderExcelHistoryList();
+  }
+}
+
 // Make functions globally available
 window.saveExcelData = saveExcelData;
 window.openExcelHistory = openExcelHistory;
 window.closeExcelDataPanel = closeExcelDataPanel;
 window.renderExcelHistoryList = renderExcelHistoryList;
+window.populateExcelHistory = populateExcelHistory;
 window.closeExcelHistory = closeExcelHistory;
 
 // Initialize when DOM is ready

@@ -66,104 +66,98 @@
       <div class="container">
         <!-- Header -->
         <div class="header-area">
-          <h1>Smash Routes</h1>
+          <h1 style="display: flex; align-items: center; gap: 12px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 2.2rem; color: #1a2330; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            🚗 Smash Routes
+          </h1>
           <a href="#" class="sign-in-link">Sign in</a>
         </div>
 
         <form id="routeForm">
           <!-- Tab Navigation -->
           <div class="tab-navigation">
-            <button type="button" id="singleEntryTab" class="tab-button active">Single Entry</button>
-            <button type="button" id="pasteListTab" class="tab-button">Paste List</button>
-            <button type="button" id="uploadFileTab" class="tab-button">Upload File</button>
+            <button type="button" id="planRouteTab" class="tab-button active">Plan Route</button>
+            <button type="button" id="manageFilesTab" class="tab-button">Manage Files</button>
           </div>
 
-          <!-- Single Entry Tab -->
-          <div id="singleEntryContent" class="tab-content active">
+          <!-- Plan Route Tab -->
+          <div id="planRouteContent" class="tab-content active">
+            <!-- Action Buttons Section -->
+            <div class="form-section" style="background: #f8f9fa; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;">
+              <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" id="pasteAddressesBtn" class="secondary-btn" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  📋 Paste Addresses
+                </button>
+                <button type="button" id="uploadFileBtn" class="secondary-btn" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  📁 Upload File
+                </button>
+              </div>
+            </div>
+            
+            <!-- Address Input Section -->
             <div class="form-section">
-              <label class="section-label">Start Address</label>
-              <input type="text" id="manualStartAddress" class="clean-input" placeholder="Enter your starting address">
+              <div style="margin-bottom: 16px;">
+                <input type="text" id="manualStartAddress" class="clean-input required-field" placeholder="✓ Start Address (Required)" style="width: 100%; box-shadow: 0 2px 6px rgba(220, 53, 69, 0.15); border: 2px solid #ffc107; background: #fffbf0;">
+              </div>
             </div>
             
             <div id="destinationFieldsContainer" class="form-section">
-              <label class="section-label">Destination</label>
               <div id="destinationFields">
-                <div class="destination-input-container">
-                  <input type="text" class="clean-input destination-input destination-field" placeholder="Enter destination address">
-                  <button type="button" class="clear-btn">×</button>
+                <div class="destination-input-container" style="position: relative; margin-bottom: 12px;">
+                  <input type="text" class="clean-input destination-input destination-field" placeholder="Destination 1" style="width: 100%; padding-right: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+                  <button type="button" class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">×</button>
                 </div>
               </div>
-              <button type="button" id="addDestinationBtn" class="add-destination-btn">
-                + Add Destination
-              </button>
+              <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button type="button" id="addDestinationBtn" class="add-destination-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                  + Add Destination
+                </button>
+                <button type="submit" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                  🚀 Get Optimized Route
+                </button>
+              </div>
             </div>
-          </div>
-
-          <!-- Paste List Tab -->
-          <div id="pasteListContent" class="tab-content">
-            <div class="form-section">
+            
+            <!-- Paste Addresses Section (Initially Hidden) -->
+            <div id="pasteAddressesSection" class="form-section" style="display: none;">
               <label class="section-label">Paste Multiple Addresses</label>
-              <textarea id="pasteAddressesTextarea" class="clean-input" placeholder="Paste addresses here, one per line" rows="8"></textarea>
-              <button type="button" id="confirmPasteBtn" class="add-destination-btn">Add All Addresses</button>
+              <textarea id="pasteAddressesTextarea" class="clean-input" placeholder="Paste addresses here, one per line" rows="6"></textarea>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button type="button" id="confirmPasteBtn" class="add-destination-btn">Add All Addresses</button>
+                <button type="button" id="cancelPasteBtn" class="secondary-btn">Cancel</button>
+              </div>
             </div>
-          </div>
-
-          <!-- Upload File Tab -->
-          <div id="uploadFileContent" class="tab-content">
-            <div class="form-section">
+            
+            <!-- Upload File Section (Initially Hidden) -->
+            <div id="uploadFileSection" class="form-section" style="display: none;">
               <label class="section-label">Upload Excel/CSV File</label>
               <input type="file" id="excelFile" class="clean-input" accept=".xlsx,.xls,.csv" />
-            </div>
-            
-            <div class="form-section">
-              <label class="section-label">Google Sheets URL</label>
-              <input type="text" id="googleSheetUrl" class="clean-input" placeholder="https://docs.google.com/spreadsheets/d/...">
-              <button type="button" id="loadGoogleSheetBtn" class="secondary-btn">Load</button>
-            </div>
-
-            <!-- Filter Section -->
-            <div id="filterSection" class="form-section" style="display:none;">
-              <label class="section-label">Filter by Auction Date</label>
-              <select id="auctionDateMultiSelect" class="clean-input" multiple>
-              </select>
-              <div style="margin-top: 8px;">
-                <button type="button" id="selectAllDatesBtn" class="secondary-btn">Select All</button>
-                <button type="button" id="clearDatesBtn" class="secondary-btn">Clear</button>
+              
+              <div class="form-section">
+                <label class="section-label">Google Sheets URL</label>
+                <input type="text" id="googleSheetUrl" class="clean-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+                <button type="button" id="loadGoogleSheetBtn" class="secondary-btn" style="margin-top: 8px;">Load</button>
+                <div id="googleSheetError" style="display: none; margin-top: 8px; padding: 8px; background: #fee; border: 1px solid #fcc; border-radius: 4px; color: #c00; font-size: 0.9rem;"></div>
               </div>
+              
+              <button type="button" id="cancelUploadBtn" class="secondary-btn" style="margin-top: 8px;">Cancel</button>
             </div>
-
-            <!-- Address List Section -->
-            <div id="addressListSection" class="form-section" style="display:none;">
-              <div id="excelAddressesCard">
-                <div class="form-section">
-                  <label class="section-label">Start Address</label>
-                  <input type="text" id="customStartAddress" class="clean-input" placeholder="Start address" />
-                </div>
-                
-                <div class="form-section">
-                  <label class="section-label">Destination Addresses</label>
-                  <div id="middleAddresses">
-                    <ul id="middleAddressesList" class="address-checklist"></ul>
-                  </div>
-                  <div style="margin-top: 8px;">
-                    <button type="button" id="copySelectedBtn" class="secondary-btn">Copy Selected</button>
-                    <button type="button" id="markSelectedVisitedBtn" class="secondary-btn">Visited Today</button>
-                  </div>
-                </div>
-                
-                <div class="form-section">
-                  <label class="section-label">End Address (optional)</label>
-                  <input type="text" id="customEndAddress" class="clean-input" placeholder="End address (optional)" />
-                </div>
-              </div>
-            </div>
-            
           </div>
 
-          <!-- Primary Action Button -->
-          <button type="submit" class="primary-action-btn">
-            Get Optimized Route
-          </button>
+          <!-- Manage Files Tab -->
+          <div id="manageFilesContent" class="tab-content">
+            <!-- Excel History Section -->
+            <div id="excelHistorySection" class="form-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; color: #333;">📊 Excel Files</h3>
+                <button id="deleteAllExcelBtn" class="secondary-btn" style="background: #dc3545; color: white;" title="Delete All Excel Files">🗑️ Delete All</button>
+              </div>
+              <div id="excelHistoryList" class="excel-history-list">
+                <!-- Excel files will be populated here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary Action Button moved to inline with Add Destination button -->
         </form>
       </div>
     </div>

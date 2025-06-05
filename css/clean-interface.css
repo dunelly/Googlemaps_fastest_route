@@ -4,14 +4,14 @@
 .left-panel {
   width: 450px !important;
   background: #ffffff !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 12px rgba(44,62,80,0.08) !important;
   padding: 20px !important;
 }
 
 .container {
   background: #ffffff !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
+  box-shadow: 0 4px 20px rgba(44,62,80,0.06) !important;
+  border-radius: 8px !important;
   padding: 20px !important;
   gap: 24px !important;
 }
@@ -57,20 +57,21 @@
   color: #999999;
   transition: all 0.2s ease;
   margin: 0;
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
 }
 
 .tab-button:hover {
-  background: none;
+  background: rgba(66, 133, 244, 0.05);
   transform: none;
-  box-shadow: none;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.08);
 }
 
 .tab-button.active {
   color: #4285F4;
   border-bottom-color: #4285F4;
-  background: none;
+  background: rgba(66, 133, 244, 0.08);
+  box-shadow: 0 -2px 8px rgba(66, 133, 244, 0.15);
 }
 
 /* Form Section Styling */
@@ -103,7 +104,7 @@
 .clean-input:focus {
   border-color: #4285F4;
   outline: none;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.15);
   background: #ffffff;
 }
 
@@ -114,89 +115,142 @@
 /* Destination Input with Clear Button */
 .destination-input-container {
   position: relative;
-  display: flex;
-  align-items: center;
+  display: block;
 }
 
 .destination-input {
   padding-right: 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .clear-btn {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  color: #999999;
-  font-size: 1.2rem;
+  background: rgba(248, 249, 250, 0.9);
+  border: 1px solid rgba(222, 226, 230, 0.6);
+  color: #6c757d;
+  font-size: 1rem;
   cursor: pointer;
   padding: 0;
   margin: 0;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0;
-  box-shadow: none;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.2s ease, opacity 0.15s ease, transform 0.15s ease;
+  backdrop-filter: blur(4px);
+  opacity: 0.4;
 }
 
 .clear-btn:hover {
-  color: #666666;
-  background: none;
-  transform: none;
-  box-shadow: none;
+  color: #dc3545;
+  background: rgba(248, 215, 218, 0.9);
+  border-color: rgba(220, 53, 69, 0.3);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
 }
 
 /* Action Buttons */
 .add-destination-btn {
-  width: 100%;
   background: #4CAF50;
   color: white;
   border: none;
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 12px 20px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  margin: 16px 0;
-  transition: background-color 0.2s ease;
-  box-shadow: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .add-destination-btn:hover {
   background: #45a049;
-  transform: none;
-  box-shadow: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
 .primary-action-btn {
-  width: 100%;
   background: #4285F4;
   color: white;
   border: none;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 14px 20px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 24px;
-  transition: background-color 0.2s ease;
-  box-shadow: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .primary-action-btn:hover {
   background: #3367d6;
-  transform: none;
-  box-shadow: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+}
+
+.secondary-btn {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.secondary-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+/* Required Field Styling */
+.required-field {
+  border: 2px solid #ffc107 !important;
+  background: #fffbf0 !important;
+  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2) !important;
+}
+
+.required-field:focus {
+  border-color: #fd7e14 !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(253, 126, 20, 0.25) !important;
+}
+
+.required-field::placeholder {
+  color: #d63384 !important;
+  font-weight: 600 !important;
+}
+
+/* Enhanced input focus states */
+.clean-input {
+  transition: all 0.2s ease !important;
+}
+
+.clean-input:not(.required-field)::placeholder {
+  color: #6c757d !important;
+  font-weight: 500 !important;
 }
 
 /* Tab Content */

@@ -26,11 +26,8 @@ window.updateCurrentlyDisplayedItems = updateCurrentlyDisplayedItems;
 let singleEntryTab, pasteListTab, uploadFileTab;
 let singleEntryContent, pasteListContent, uploadFileContent;
 let pasteAddressesTextarea, confirmPasteBtn;
-let excelFileInput, messageArea, addressListSection, debugArea;
-let middleAddressesList, manualAddressesList, addManualAddressBtn;
-let filterSection, auctionDateFilterSelect;
-let copyBtn = null;
-let markVisitedBtn = null;
+let excelFileInput, messageArea, debugArea;
+let manualAddressesList, addManualAddressBtn;
 
 // Utility Functions
 function formatDate(rawDateValue) {
@@ -152,16 +149,9 @@ function hideDebug() {
 
 // Helper to set required only if manual entry section is visible
 function updateManualAddressRequired() {
-  const singleEntryContentVisible = singleEntryContent && singleEntryContent.style.display !== 'none';
+  const planRouteContentVisible = planRouteContent && planRouteContent.style.display !== 'none';
   const manualInputs = document.querySelectorAll('#manualAddressesList input[type="text"]');
-  manualInputs.forEach(i => i.required = !!singleEntryContentVisible);
-
-  // Also handle required for customStartAddress in the Upload File tab
-  const uploadFileContentVisible = uploadFileContent && uploadFileContent.style.display !== 'none';
-  const customStartAddressInput = document.getElementById('customStartAddress');
-  if (customStartAddressInput) {
-    customStartAddressInput.required = !!uploadFileContentVisible && excelFileInput && excelFileInput.files.length > 0;
-  }
+  manualInputs.forEach(i => i.required = !!planRouteContentVisible);
 }
 
 // Main initialization when DOM is ready
@@ -183,28 +173,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initializeDOMReferences() {
   // Tab elements
-  singleEntryTab = document.getElementById('singleEntryTab');
-  pasteListTab = document.getElementById('pasteListTab');
-  uploadFileTab = document.getElementById('uploadFileTab');
+  planRouteTab = document.getElementById('planRouteTab');
+  manageFilesTab = document.getElementById('manageFilesTab');
 
-  singleEntryContent = document.getElementById('singleEntryContent');
-  pasteListContent = document.getElementById('pasteListContent');
-  uploadFileContent = document.getElementById('uploadFileContent');
+  planRouteContent = document.getElementById('planRouteContent');
+  manageFilesContent = document.getElementById('manageFilesContent');
   pasteAddressesTextarea = document.getElementById('pasteAddressesTextarea');
   confirmPasteBtn = document.getElementById('confirmPasteBtn');
 
   // Essential elements
   excelFileInput = document.getElementById('excelFile');
   messageArea = document.getElementById('messageArea');
-  addressListSection = document.getElementById('addressListSection');
   debugArea = document.getElementById('debugArea');
-  middleAddressesList = document.getElementById('middleAddressesList');
   manualAddressesList = document.getElementById('manualAddressesList');
   addManualAddressBtn = document.getElementById('addManualAddressBtn');
-  filterSection = document.getElementById('filterSection');
-  auctionDateFilterSelect = document.getElementById('auctionDateFilter');
-  copyBtn = document.getElementById('copySelectedBtn');
-  markVisitedBtn = document.getElementById('markVisitedBtn');
 }
 
 // Make essential functions globally available

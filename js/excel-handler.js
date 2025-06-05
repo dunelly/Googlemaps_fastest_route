@@ -26,6 +26,15 @@ function initializeExcelHandling() {
     if (addressListSection) addressListSection.style.display = 'none';
     if (filterSection) filterSection.style.display = 'none';
     if (auctionDateFilterSelect) auctionDateFilterSelect.innerHTML = '<option value="all">All Dates</option>';
+    
+    // Hide column mapping prompt if it exists
+    const addressFieldPrompt = document.getElementById('addressFieldPrompt');
+    if (addressFieldPrompt) addressFieldPrompt.style.display = 'none';
+    
+    // Clear Google Sheets error
+    const googleSheetError = document.getElementById('googleSheetError');
+    if (googleSheetError) googleSheetError.style.display = 'none';
+    
     updateManualAddressRequired();
     hideMessage();
     hideDebug();
@@ -77,8 +86,17 @@ function createColumnMappingPrompt(headers, dataRows) {
     addressFieldPrompt.id = 'addressFieldPrompt';
     addressFieldPrompt.style = 'margin:16px 0;padding:12px;background:#fffbe7;border:1.5px solid #ffe082;border-radius:8px;';
     addressFieldPrompt.style.display = 'block';
-    if (filterSection && filterSection.parentNode) {
-      filterSection.parentNode.insertBefore(addressFieldPrompt, filterSection);
+    
+    // Insert the prompt after the upload file section in the Plan Route tab
+    const uploadFileSection = document.getElementById('uploadFileSection');
+    if (uploadFileSection && uploadFileSection.parentNode) {
+      uploadFileSection.parentNode.insertBefore(addressFieldPrompt, uploadFileSection.nextSibling);
+    } else {
+      // Fallback: insert at the end of the Plan Route content
+      const planRouteContent = document.getElementById('planRouteContent');
+      if (planRouteContent) {
+        planRouteContent.appendChild(addressFieldPrompt);
+      }
     }
   } else {
     addressFieldPrompt.style.display = 'block';
@@ -193,12 +211,19 @@ function processColumnMapping(headers, dataRows, addressFieldPrompt) {
     
     setTimeout(function() {
       hideDebug();
-      populateAuctionDateFilter(currentlyDisplayedItems);
-      if (filterSection) filterSection.style.display = '';
-      populateAddressSelection(currentlyDisplayedItems);
-      if (addressListSection) addressListSection.style.display = '';
       
-      showMessage('Addresses loaded.', 'success');
+      // Hide the upload file section and column mapping prompt
+      const uploadFileSection = document.getElementById('uploadFileSection');
+      const addressFieldPrompt = document.getElementById('addressFieldPrompt');
+      if (uploadFileSection) uploadFileSection.style.display = 'none';
+      if (addressFieldPrompt) addressFieldPrompt.style.display = 'none';
+      
+      // Switch back to Plan Route tab - addresses are automatically available
+      if (typeof switchTab === 'function') {
+        switchTab('planRoute');
+      }
+      
+      showMessage('Addresses loaded successfully! You can now optimize your route.', 'success');
       
       // Save Excel data to history
       const fileInput = document.getElementById('excelFile');
@@ -218,7 +243,7 @@ function processColumnMapping(headers, dataRows, addressFieldPrompt) {
           .then(geocodedItems => {
             allExcelItems = geocodedItems;
             currentlyDisplayedItems = [...allExcelItems];
-            applyAuctionDateMultiSelectFilter();
+            showMessage('Addresses geocoded and ready for route optimization!', 'success');
           })
           .catch(err => showMessage('Geocoding error: ' + err, 'error'));
       }
@@ -286,39 +311,7 @@ function initializeGoogleSheetsHandling() {
   }
 }
 
-// Filter functionality
-function populateAuctionDateFilter(items) {
-  const dates = new Set();
-  items.forEach(item => {
-    if (item.auctionDateFormatted) dates.add(item.auctionDateFormatted);
-  });
-  const sortedDates = Array.from(dates).sort((a, b) => new Date(a) - new Date(b));
-  const multiSelect = document.getElementById('auctionDateMultiSelect');
-  if (!multiSelect) return;
-  multiSelect.innerHTML = '';
-  sortedDates.forEach(date => {
-    const option = document.createElement('option');
-    option.value = date;
-    option.textContent = date;
-    multiSelect.appendChild(option);
-  });
-}
-
-function applyAuctionDateMultiSelectFilter() {
-  const multiSelect = document.getElementById('auctionDateMultiSelect');
-  if (!multiSelect) return;
-  
-  const selected = Array.from(multiSelect.selectedOptions).map(opt => opt.value);
-  if (selected.length === 0) {
-    currentlyDisplayedItems = [...allExcelItems];
-  } else {
-    currentlyDisplayedItems = allExcelItems.filter(item => selected.includes(item.auctionDateFormatted));
-  }
-  populateAddressSelection(currentlyDisplayedItems);
-  
-  // Instead of showing on map immediately, open View Data interface for filtering
-  openViewDataAfterUpload();
-}
+// Note: Filtering functionality removed - addresses are loaded directly for route optimization
 
 // Open View Data interface for the most recently uploaded Excel file
 function openViewDataAfterUpload() {
@@ -347,19 +340,4 @@ function openViewDataAfterUpload() {
   }
 }
 
-// Initialize filter event listeners
-document.addEventListener('DOMContentLoaded', function() {
-  const multiSelect = document.getElementById('auctionDateMultiSelect');
-  const selectAllBtn = document.getElementById('selectAllDatesBtn');
-  const clearBtn = document.getElementById('clearDatesBtn');
-  
-  if (multiSelect) multiSelect.addEventListener('change', applyAuctionDateMultiSelectFilter);
-  if (selectAllBtn) selectAllBtn.addEventListener('click', function() {
-    Array.from(multiSelect.options).forEach(opt => opt.selected = true);
-    applyAuctionDateMultiSelectFilter();
-  });
-  if (clearBtn) clearBtn.addEventListener('click', function() {
-    Array.from(multiSelect.options).forEach(opt => opt.selected = false);
-    applyAuctionDateMultiSelectFilter();
-  });
-});
+// Note: Filter event listeners removed - no longer needed

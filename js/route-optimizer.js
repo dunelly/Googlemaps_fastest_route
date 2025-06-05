@@ -11,47 +11,32 @@ function initializeRouteForm() {
       let startAddressForRoute = '';
       let waypointsForRoute = [];
 
-      // Determine active tab
-      const singleEntryActive = singleEntryContent && singleEntryContent.style.display === 'block';
-      const uploadFileActive = uploadFileContent && uploadFileContent.style.display === 'block';
+      // All route optimization now happens from the Plan Route tab
+      console.log("Optimizing route from Plan Route tab");
+      startAddressForRoute = document.getElementById('manualStartAddress').value.trim();
+      
+      // Get waypoints from destination fields (manual entry)
+      const destinationFields = document.querySelectorAll('.destination-field');
+      const manualWaypoints = Array.from(destinationFields).map(field => field.value.trim()).filter(addr => addr);
+      
+      // If we have loaded Excel data and no manual waypoints, use Excel data
+      if (manualWaypoints.length === 0 && window.currentlyDisplayedItems && window.currentlyDisplayedItems.length > 0) {
+        console.log("Using loaded Excel data for waypoints");
+        waypointsForRoute = window.currentlyDisplayedItems.map(item => item.address).filter(addr => addr);
+      } else {
+        console.log("Using manual destination fields for waypoints");
+        waypointsForRoute = manualWaypoints;
+      }
 
-      if (singleEntryActive) {
-        console.log("Optimizing with Single Entry data");
-        startAddressForRoute = document.getElementById('manualStartAddress').value.trim();
-        
-        // Get waypoints from the dynamic destination fields
-        const destinationFields = document.querySelectorAll('.destination-field');
-        waypointsForRoute = Array.from(destinationFields).map(field => field.value.trim()).filter(addr => addr);
-
-        if (startAddressForRoute) {
-            addresses.push(startAddressForRoute); // Origin
-            addresses = addresses.concat(waypointsForRoute); // Waypoints
-            addresses.push(startAddressForRoute); // Destination (round trip)
-        }
-      } else if (uploadFileActive) {
-        console.log("Optimizing with Upload File data");
-        startAddressForRoute = document.getElementById('customStartAddress').value.trim();
-        let endAddrFromFile = document.getElementById('customEndAddress').value.trim();
-        const middleCheckboxes = document.querySelectorAll('#middleAddressesList input[type="checkbox"]:checked');
-        waypointsForRoute = Array.from(middleCheckboxes).map(cb => cb.value);
-
-        if (startAddressForRoute) {
-            addresses.push(startAddressForRoute); // Origin
-            addresses = addresses.concat(waypointsForRoute); // Waypoints
-            if (endAddrFromFile && endAddrFromFile !== startAddressForRoute) {
-                addresses.push(endAddrFromFile); // Explicit destination
-            } else {
-                addresses.push(startAddressForRoute); // Destination (round trip)
-            }
-        }
+      if (startAddressForRoute) {
+          addresses.push(startAddressForRoute); // Origin
+          addresses = addresses.concat(waypointsForRoute); // Waypoints
+          addresses.push(startAddressForRoute); // Destination (round trip)
       }
 
       // Validate addresses collected
       if (!startAddressForRoute) {
-        let specificMessage = 'Please enter a Start Address.';
-        if (singleEntryActive) specificMessage = 'Please enter a Start Address in the Single Entry tab.';
-        else if (uploadFileActive) specificMessage = 'Please enter a Start Address in the Upload File tab (after loading a file and selecting columns).';
-        showMessage(specificMessage, 'error');
+        showMessage('Please enter a Start Address in the Plan Route tab.', 'error');
         return;
       }
       

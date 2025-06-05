@@ -1,13 +1,18 @@
 // Tab Switching Functionality Module
 
 function initializeTabSwitching() {
-  if (!singleEntryTab || !pasteListTab || !uploadFileTab) {
+  const planRouteTab = document.getElementById('planRouteTab');
+  const manageFilesTab = document.getElementById('manageFilesTab');
+  const planRouteContent = document.getElementById('planRouteContent');
+  const manageFilesContent = document.getElementById('manageFilesContent');
+  
+  if (!planRouteTab || !manageFilesTab) {
     console.error("Tab elements not found");
     return;
   }
 
-  const tabButtons = [singleEntryTab, pasteListTab, uploadFileTab];
-  const tabContents = [singleEntryContent, pasteListContent, uploadFileContent];
+  const tabButtons = [planRouteTab, manageFilesTab];
+  const tabContents = [planRouteContent, manageFilesContent];
 
   function setActiveTab(activeIndex) {
     tabButtons.forEach((tab, index) => {
@@ -33,53 +38,22 @@ function initializeTabSwitching() {
   }
 
   // Event listeners for tab buttons
-  singleEntryTab.addEventListener('click', () => setActiveTab(0));
-  pasteListTab.addEventListener('click', () => setActiveTab(1));
-  uploadFileTab.addEventListener('click', () => {
-    setActiveTab(2);
-    let addressFieldPrompt = document.getElementById('addressFieldPrompt');
-    const excelFileHasValue = excelFileInput && excelFileInput.files && excelFileInput.files.length > 0;
-    if (addressFieldPrompt && !excelFileHasValue && (!addressListSection.style.display || addressListSection.style.display === 'none')) {
-       // addressFieldPrompt.style.display = 'block';
-    }
+  planRouteTab.addEventListener('click', () => setActiveTab(0));
+  manageFilesTab.addEventListener('click', () => {
+    setActiveTab(1);
+    // Show Excel history when switching to Manage Files tab with a small delay
+    // to ensure tab switch completes first
+    setTimeout(() => {
+      if (typeof populateExcelHistory === 'function') {
+        populateExcelHistory();
+      }
+    }, 50);
   });
   
-  // Paste confirmation handler
-  if (confirmPasteBtn) {
-    confirmPasteBtn.addEventListener('click', () => {
-      if (!pasteAddressesTextarea) return;
-      const addressesToPaste = pasteAddressesTextarea.value.trim().split('\n').filter(addr => addr.trim() !== '');
-      if (addressesToPaste.length > 0) {
-        // Clear existing destination fields except the first one
-        clearAllDestinationFields();
-        
-        // Add pasted addresses to destination fields
-        addressesToPaste.forEach((addr, index) => {
-          if (index === 0) {
-            // Fill the first field
-            const firstField = document.querySelector('.destination-field');
-            if (firstField) {
-              firstField.value = addr;
-            }
-          } else {
-            // Add new fields for remaining addresses
-            addNewDestinationFieldAboveButton();
-            const allFields = document.querySelectorAll('.destination-field');
-            const newField = allFields[allFields.length - 1]; // Get the last field (newly created)
-            if (newField) {
-              newField.value = addr;
-            }
-          }
-        });
-        
-        pasteAddressesTextarea.value = '';
-        setActiveTab(0);
-        showMessage(`${addressesToPaste.length} addresses added to Single Entry.`, 'success');
-      } else {
-        showMessage('No addresses to paste.', 'warning');
-      }
-    });
-  }
+  // Button event listeners for Plan Route tab
+  initializePlanRouteButtons();
+  
+  // Moved to initializePlanRouteButtons()
 
   // Set initial active tab
   setActiveTab(0);
@@ -118,15 +92,20 @@ function addNewDestinationFieldAboveButton() {
   const fieldsContainer = document.getElementById('destinationFields');
   if (!fieldsContainer) return;
 
-  // Create new destination input field (original clean design)
+  // Count existing destination fields to get the next number
+  const existingFields = fieldsContainer.querySelectorAll('.destination-input-container');
+  const nextNumber = existingFields.length + 1;
+
+  // Create new destination input field with numbered placeholder
   const newFieldContainer = document.createElement('div');
   newFieldContainer.className = 'destination-input-container';
+  newFieldContainer.style.cssText = 'position: relative; margin-bottom: 12px;';
   newFieldContainer.innerHTML = `
-    <input type="text" class="clean-input destination-input destination-field" placeholder="Enter destination address">
-    <button type="button" class="clear-btn">×</button>
+    <input type="text" class="clean-input destination-input destination-field" placeholder="Destination ${nextNumber}" style="width: 100%; padding-right: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+    <button type="button" class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">×</button>
   `;
   
-  // Insert the new field at the end of the fields container (above the button)
+  // Insert the new field at the end of the fields container
   fieldsContainer.appendChild(newFieldContainer);
   
   // Focus on the new input
@@ -137,6 +116,12 @@ function addNewDestinationFieldAboveButton() {
   
   // Reconnect clear buttons
   connectClearButtons();
+  
+  // Update all labels to ensure proper numbering
+  updateDestinationLabels();
+  
+  // Set up input monitoring for clear button visibility
+  setupClearButtonVisibility();
 }
 
 function clearAllDestinationFields() {
@@ -156,36 +141,197 @@ function clearAllDestinationFields() {
   if (firstField) {
     firstField.value = '';
   }
+  
+  // Update labels to ensure proper numbering
+  updateDestinationLabels();
+  
+  // Set up input monitoring for clear button visibility
+  setupClearButtonVisibility();
+}
+
+// Update destination placeholders to ensure proper numbering
+function updateDestinationLabels() {
+  const fieldsContainer = document.getElementById('destinationFields');
+  if (!fieldsContainer) return;
+  
+  const containers = fieldsContainer.querySelectorAll('.destination-input-container');
+  containers.forEach((container, index) => {
+    const input = container.querySelector('input.destination-field');
+    if (input) {
+      input.placeholder = `Destination ${index + 1}`;
+    }
+  });
 }
 
 function connectClearButtons() {
   // Clear buttons for destination inputs
   document.querySelectorAll('.clear-btn').forEach(btn => {
+    // Remove existing listeners to prevent duplicates
+    btn.replaceWith(btn.cloneNode(true));
+  });
+  
+  // Re-attach listeners
+  document.querySelectorAll('.clear-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const input = btn.parentElement.querySelector('input');
-      if (input) {
-        input.value = '';
-        input.focus();
+      const container = btn.parentElement;
+      const input = container.querySelector('input');
+      
+      // If this is the first container, just clear the input
+      const fieldsContainer = document.getElementById('destinationFields');
+      const allContainers = fieldsContainer.querySelectorAll('.destination-input-container');
+      
+      if (allContainers[0] === container && allContainers.length === 1) {
+        // First and only field - just clear it
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      } else {
+        // Remove the entire container
+        container.remove();
+        updateDestinationLabels();
       }
     });
   });
 }
 
+// Initialize Plan Route tab button functionality
+function initializePlanRouteButtons() {
+  const pasteAddressesBtn = document.getElementById('pasteAddressesBtn');
+  const uploadFileBtn = document.getElementById('uploadFileBtn');
+  const pasteAddressesSection = document.getElementById('pasteAddressesSection');
+  const uploadFileSection = document.getElementById('uploadFileSection');
+  const confirmPasteBtn = document.getElementById('confirmPasteBtn');
+  const cancelPasteBtn = document.getElementById('cancelPasteBtn');
+  const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+  const pasteAddressesTextarea = document.getElementById('pasteAddressesTextarea');
+  
+  // Show/hide paste addresses section
+  if (pasteAddressesBtn && pasteAddressesSection) {
+    pasteAddressesBtn.addEventListener('click', () => {
+      pasteAddressesSection.style.display = 'block';
+      uploadFileSection.style.display = 'none';
+      pasteAddressesTextarea.focus();
+    });
+  }
+  
+  // Show/hide upload file section
+  if (uploadFileBtn && uploadFileSection) {
+    uploadFileBtn.addEventListener('click', () => {
+      uploadFileSection.style.display = 'block';
+      pasteAddressesSection.style.display = 'none';
+    });
+  }
+  
+  // Cancel paste addresses
+  if (cancelPasteBtn && pasteAddressesSection) {
+    cancelPasteBtn.addEventListener('click', () => {
+      pasteAddressesSection.style.display = 'none';
+      pasteAddressesTextarea.value = '';
+    });
+  }
+  
+  // Cancel upload file
+  if (cancelUploadBtn && uploadFileSection) {
+    cancelUploadBtn.addEventListener('click', () => {
+      uploadFileSection.style.display = 'none';
+      const fileInput = document.getElementById('excelFile');
+      const googleSheetUrl = document.getElementById('googleSheetUrl');
+      const addressFieldPrompt = document.getElementById('addressFieldPrompt');
+      const googleSheetError = document.getElementById('googleSheetError');
+      
+      if (fileInput) fileInput.value = '';
+      if (googleSheetUrl) googleSheetUrl.value = '';
+      if (addressFieldPrompt) addressFieldPrompt.style.display = 'none';
+      if (googleSheetError) googleSheetError.style.display = 'none';
+    });
+  }
+  
+  // Paste confirmation handler
+  if (confirmPasteBtn && pasteAddressesTextarea) {
+    confirmPasteBtn.addEventListener('click', () => {
+      const addressesToPaste = pasteAddressesTextarea.value.trim().split('\n').filter(addr => addr.trim() !== '');
+      if (addressesToPaste.length > 0) {
+        // Clear existing destination fields except the first one
+        clearAllDestinationFields();
+        
+        // Add pasted addresses to destination fields
+        addressesToPaste.forEach((addr, index) => {
+          if (index === 0) {
+            // Fill the first field
+            const firstField = document.querySelector('.destination-field');
+            if (firstField) {
+              firstField.value = addr;
+            }
+          } else {
+            // Add new fields for remaining addresses
+            addNewDestinationFieldAboveButton();
+            const allFields = document.querySelectorAll('.destination-field');
+            const newField = allFields[allFields.length - 1]; // Get the last field (newly created)
+            if (newField) {
+              newField.value = addr;
+            }
+          }
+        });
+        
+        // Update placeholders to reflect the current state
+        updateDestinationLabels();
+        
+        // Set up clear button visibility for new fields
+        setupClearButtonVisibility();
+        
+        pasteAddressesTextarea.value = '';
+        pasteAddressesSection.style.display = 'none';
+        if (typeof showMessage === 'function') {
+          showMessage(`${addressesToPaste.length} addresses added to destinations.`, 'success');
+        }
+      } else {
+        if (typeof showMessage === 'function') {
+          showMessage('No addresses to paste.', 'warning');
+        }
+      }
+    });
+  }
+}
+
 // Global function to switch tabs programmatically
 function switchTab(tabName) {
-  if (tabName === 'singleEntry' || tabName === 0) {
-    const tab = document.getElementById('singleEntryTab');
+  if (tabName === 'planRoute' || tabName === 0) {
+    const tab = document.getElementById('planRouteTab');
     if (tab) tab.click();
-  } else if (tabName === 'pasteList' || tabName === 1) {
-    const tab = document.getElementById('pasteListTab');
-    if (tab) tab.click();
-  } else if (tabName === 'uploadFile' || tabName === 2) {
-    const tab = document.getElementById('uploadFileTab');
+  } else if (tabName === 'manageFiles' || tabName === 1) {
+    const tab = document.getElementById('manageFilesTab');
     if (tab) tab.click();
   }
+}
+
+// Set up clear button visibility based on input content
+function setupClearButtonVisibility() {
+  const containers = document.querySelectorAll('.destination-input-container');
+  containers.forEach(container => {
+    const input = container.querySelector('.destination-field');
+    const clearBtn = container.querySelector('.clear-btn');
+    
+    if (input && clearBtn) {
+      // Initial state
+      clearBtn.style.opacity = input.value.trim() ? '1' : '0.4';
+      clearBtn.style.pointerEvents = input.value.trim() ? 'auto' : 'none';
+      
+      // Monitor input changes
+      input.addEventListener('input', function() {
+        const hasContent = this.value.trim().length > 0;
+        clearBtn.style.opacity = hasContent ? '1' : '0.4';
+        clearBtn.style.pointerEvents = hasContent ? 'auto' : 'none';
+        clearBtn.style.transform = hasContent ? 'translateY(-50%) scale(1)' : 'translateY(-50%) scale(0.8)';
+      });
+    }
+  });
 }
 
 // Make functions globally available
 window.switchTab = switchTab;
 window.addNewDestinationFieldAboveButton = addNewDestinationFieldAboveButton;
 window.clearAllDestinationFields = clearAllDestinationFields;
+window.updateDestinationLabels = updateDestinationLabels;
+window.setupClearButtonVisibility = setupClearButtonVisibility;
+window.initializePlanRouteButtons = initializePlanRouteButtons;

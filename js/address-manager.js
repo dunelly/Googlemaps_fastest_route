@@ -124,109 +124,16 @@ function initializeCopyAndMarkVisited() {
   }
 }
 
+// Note: Address selection UI functions removed - Excel data now loads directly into Plan Route tab
 function populateAddressSelection(itemsToDisplay) {
-  console.log('[address-manager.js] populateAddressSelection called. itemsToDisplay.length:', itemsToDisplay.length);
-  updateMiddleAddresses();
+  console.log('[address-manager.js] populateAddressSelection called - Excel data loaded for route optimization');
+  // No longer needed - addresses are automatically available for route optimization
 }
 
-function updateMiddleAddresses() {
-  const customStartAddressInput = document.getElementById('customStartAddress');
-  const customEndAddressInput = document.getElementById('customEndAddress');
-  const middleAddressesList = document.getElementById('middleAddressesList');
-  
-  if (!middleAddressesList) {
-    return; // Not on upload tab
-  }
-
-  const startAddr = customStartAddressInput ? customStartAddressInput.value.trim() : '';
-  const endAddr = customEndAddressInput ? customEndAddressInput.value.trim() : '';
-
-  // Preserve checked state
-  const prevChecked = {};
-  Array.from(middleAddressesList.querySelectorAll('input[type="checkbox"].address-checkbox')).forEach(cb => {
-    prevChecked[cb.value] = cb.checked;
-  });
-
-  middleAddressesList.innerHTML = '';
-
-  if (typeof currentlyDisplayedItems !== 'undefined' && currentlyDisplayedItems) {
-    currentlyDisplayedItems.forEach(item => {
-      const isVisited = item.visited === true;
-      if (item.address !== startAddr && item.address !== endAddr) {
-        const li = document.createElement('li');
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.className = 'address-checkbox';
-        cb.value = item.address;
-        cb.checked = !!prevChecked[item.address];
-        li.appendChild(cb);
-        
-        let dText = item.address;
-        if (item.name) dText = `<b>${item.name}</b> - ${dText}`;
-        if (item.auctionDateFormatted) dText += ` <span style="color:#0077b6;">(${item.auctionDateFormatted})</span>`;
-        
-        const span = document.createElement('span');
-        span.innerHTML = ' ' + dText;
-        if (isVisited) {
-          span.style.color = '#888';
-          span.style.textDecoration = 'line-through';
-        }
-        
-        // Add click handler to highlight address on map AND open notes
-        span.addEventListener('click', function(e) {
-          e.stopPropagation(); // Prevent checkbox toggle
-          
-          // Highlight on map
-          if (typeof highlightAddressOnMap === 'function') {
-            highlightAddressOnMap(item.address);
-          }
-          
-          // Open notes overlay
-          if (typeof openNotesOverlay === 'function') {
-            openNotesOverlay(item.address);
-          }
-        });
-        span.style.cursor = 'pointer';
-        span.title = 'Click to view on map and manage notes';
-        
-        li.appendChild(span);
-        
-        middleAddressesList.appendChild(li);
-      }
-    });
-  }
-}
-
-// Initialize event listeners for start/end address changes
+// Initialize event listeners for start address changes
 function initializeAddressFieldListeners() {
-  const customStartAddress = document.getElementById('customStartAddress');
-  const customEndAddress = document.getElementById('customEndAddress');
   const manualStartAddress = document.getElementById('manualStartAddress');
   
-  if (customStartAddress) {
-    customStartAddress.addEventListener('input', function(e) {
-      const address = e.target.value.trim();
-      localStorage.setItem('savedStartAddress', address);
-      updateMiddleAddresses();
-      
-      // Save to recent addresses list
-      if (address) {
-        saveToRecentAddresses(address);
-      }
-      
-      // Also update the manual start address field
-      if (manualStartAddress && !manualStartAddress.value.trim()) {
-        manualStartAddress.value = address;
-      }
-    });
-
-    // Restore start address from localStorage if available
-    const saved = localStorage.getItem('savedStartAddress');
-    if (saved) {
-      customStartAddress.value = saved;
-    }
-  }
-
   if (manualStartAddress) {
     manualStartAddress.addEventListener('input', function(e) {
       const address = e.target.value.trim();
@@ -236,11 +143,6 @@ function initializeAddressFieldListeners() {
       if (address) {
         saveToRecentAddresses(address);
       }
-      
-      // Also update the custom start address field
-      if (customStartAddress && !customStartAddress.value.trim()) {
-        customStartAddress.value = address;
-      }
     });
 
     // Restore start address from localStorage if available
@@ -249,12 +151,6 @@ function initializeAddressFieldListeners() {
       manualStartAddress.value = saved;
     }
   }
-
-  if (customEndAddress) {
-    customEndAddress.addEventListener('input', updateMiddleAddresses);
-  }
-
-  updateMiddleAddresses();
 }
 
 // Save address to recent addresses list

@@ -269,3 +269,46 @@
   color: #666;
   margin-top: 5px;
 }
+
+/* Excel History Section in Tab */
+#excelHistorySection {
+  min-height: 300px;
+}
+
+#excelHistorySection .excel-history-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fff;
+}
+
+#excelHistorySection .excel-file-item {
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+#excelHistorySection .excel-file-item:last-child {
+  border-bottom: none;
+}
+
+#excelHistorySection .excel-file-item:hover {
+  background: #f8f9fa;
+}
+
+.delete-all-btn {
+  padding: 6px 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-all-btn:hover {
+  background: #c82333;
+}
