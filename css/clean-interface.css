@@ -79,6 +79,15 @@
   margin-bottom: 16px;
 }
 
+/* Special styling for Excel History Section to maximize space */
+#excelHistorySection.form-section {
+  margin-bottom: 0;
+  height: calc(100vh - 250px);
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+}
+
 .section-label {
   display: block;
   font-weight: bold;

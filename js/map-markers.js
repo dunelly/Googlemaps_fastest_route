@@ -31,6 +31,12 @@ function createMarkerPopupContent(item, lastVisitFormatted, visitCount) {
                  style="flex: 1; padding: 8px 12px; background: #4285F4; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
                  📝 Notes
                </button>`;
+
+  // Add "Add to Route" button
+  popupHtml += `<button onclick="addAddressToRoute('${item.address.replace(/'/g, "\\'")}'); return false;" 
+                 style="flex: 1; padding: 8px 12px; background: #17a2b8; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                 🚀 Add to Route
+               </button>`;
   popupHtml += `</div></div>`;
   
   return popupHtml;
@@ -105,6 +111,69 @@ function openNotesFromMap(address) {
   }
 }
 
+// Global function to add address to route destination fields
+function addAddressToRoute(address) {
+  console.log('[map-markers] addAddressToRoute called with address:', address);
+  
+  // Find the destination fields container
+  const fieldsContainer = document.getElementById('destinationFields');
+  if (!fieldsContainer) {
+    if (typeof showMessage === 'function') {
+      showMessage('Destination fields not found', 'error');
+    }
+    return;
+  }
+  
+  // Get all existing destination input fields
+  const destinationFields = fieldsContainer.querySelectorAll('.destination-field');
+  
+  // Look for an empty field to fill first
+  let emptyFieldFound = false;
+  for (let field of destinationFields) {
+    if (!field.value.trim()) {
+      field.value = address;
+      field.focus();
+      emptyFieldFound = true;
+      break;
+    }
+  }
+  
+  // If no empty field found, add a new one
+  if (!emptyFieldFound) {
+    if (typeof addNewDestinationFieldAboveButton === 'function') {
+      addNewDestinationFieldAboveButton();
+      // Get the newly created field and fill it
+      const newFields = fieldsContainer.querySelectorAll('.destination-field');
+      const lastField = newFields[newFields.length - 1];
+      if (lastField) {
+        lastField.value = address;
+        lastField.focus();
+      }
+    } else {
+      if (typeof showMessage === 'function') {
+        showMessage('Unable to add new destination field', 'error');
+      }
+      return;
+    }
+  }
+  
+  // Switch to Plan Route tab to show the addition
+  const planRouteTab = document.getElementById('planRouteTab');
+  if (planRouteTab && typeof switchTab === 'function') {
+    switchTab('planRoute');
+  } else if (planRouteTab) {
+    // Fallback: trigger click on Plan Route tab
+    planRouteTab.click();
+  }
+  
+  // Show success message
+  if (typeof showMessage === 'function') {
+    showMessage(`Address added to route: ${address}`, 'success');
+  }
+  
+  console.log('[map-markers] Address successfully added to route');
+}
+
 // Global function to mark visited from map popup
 function markVisitedFromMap(address) {
   console.log('[map-markers] markVisitedFromMap called with address:', address);
@@ -168,6 +237,7 @@ window.addressMarkersArray = addressMarkersArray;
 window.updateMapMarkers = updateMapMarkers;
 window.openNotesFromMap = openNotesFromMap;
 window.markVisitedFromMap = markVisitedFromMap;
+window.addAddressToRoute = addAddressToRoute;
 window.highlightAddressOnMap = highlightAddressOnMap;
 window.createMarkerPopupContent = createMarkerPopupContent;
 window.getMarkerColor = getMarkerColor;

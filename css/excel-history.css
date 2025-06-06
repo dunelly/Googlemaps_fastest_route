@@ -276,11 +276,17 @@
 
 /* Excel History Section in Tab */
 #excelHistorySection {
-  min-height: 300px;
+  min-height: 500px;
+  height: calc(100vh - 300px);
+  display: flex;
+  flex-direction: column;
 }
 
 #excelHistorySection .excel-history-list {
-  max-height: 400px;
+  flex: 1;
+  height: calc(100vh - 350px);
+  min-height: 400px;
+  max-height: none;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
