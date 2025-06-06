@@ -22,10 +22,23 @@ function initializeRouteForm() {
       // If we have loaded Excel data and no manual waypoints, use Excel data
       if (manualWaypoints.length === 0 && window.currentlyDisplayedItems && window.currentlyDisplayedItems.length > 0) {
         console.log("Using loaded Excel data for waypoints");
+        
+        // Check if Excel data has too many addresses
+        if (window.currentlyDisplayedItems.length > 25) {
+          showMessage(`Too many addresses for route optimization (${window.currentlyDisplayedItems.length}). Please use manual destination fields or select fewer than 25 addresses. Google Maps API supports maximum 25 waypoints.`, 'error');
+          return;
+        }
+        
         waypointsForRoute = window.currentlyDisplayedItems.map(item => item.address).filter(addr => addr);
       } else {
         console.log("Using manual destination fields for waypoints");
         waypointsForRoute = manualWaypoints;
+      }
+
+      // Check total waypoint limit
+      if (waypointsForRoute.length > 25) {
+        showMessage(`Too many waypoints (${waypointsForRoute.length}). Google Maps API supports maximum 25 waypoints. Please reduce the number of destinations.`, 'error');
+        return;
       }
 
       if (startAddressForRoute) {

@@ -43,7 +43,7 @@ function setupVisitTracking() {
       button.addEventListener('click', handler);
       return true;
     } else {
-      console.warn(`[visit-manager] ${description} button not found: ${buttonId}`);
+      console.log(`[visit-manager] ${description} button not found: ${buttonId} - will skip this button`);
       return false;
     }
   }
@@ -64,7 +64,7 @@ function setupVisitTracking() {
     }
   };
   
-  // Handle bulk address visits (from address list)
+  // Handle bulk address visits (from address list) - only if bulk button exists
   const bulkHandler = async function() {
     console.log('[visit-manager] Bulk mark visited button clicked');
     try {
@@ -77,11 +77,19 @@ function setupVisitTracking() {
   
   // Try to attach listeners immediately
   const singleAttached = attachEventListener('markVisitedBtn', singleHandler, 'single visit');
-  const bulkAttached = attachEventListener('markSelectedVisitedBtn', bulkHandler, 'bulk visit');
   
-  // If buttons not found, set up observers to try again later
-  if (!singleAttached || !bulkAttached) {
-    console.log('[visit-manager] Some buttons not found, setting up observer...');
+  // Check if bulk visit button exists before trying to attach
+  const bulkButton = document.getElementById('markSelectedVisitedBtn');
+  let bulkAttached = false;
+  if (bulkButton) {
+    bulkAttached = attachEventListener('markSelectedVisitedBtn', bulkHandler, 'bulk visit');
+  } else {
+    console.log('[visit-manager] Bulk visit button not found - feature not available in current UI');
+  }
+  
+  // Only set up observers if the single visit button wasn't found
+  if (!singleAttached) {
+    console.log('[visit-manager] Single visit button not found, setting up observer...');
     
     // Set up mutation observer to watch for dynamic button creation
     const observer = new MutationObserver(function(mutations) {
@@ -92,13 +100,8 @@ function setupVisitTracking() {
         }
       });
       
-      if (shouldCheck) {
-        if (!singleAttached) {
-          attachEventListener('markVisitedBtn', singleHandler, 'single visit (retry)');
-        }
-        if (!bulkAttached) {
-          attachEventListener('markSelectedVisitedBtn', bulkHandler, 'bulk visit (retry)');
-        }
+      if (shouldCheck && !singleAttached) {
+        attachEventListener('markVisitedBtn', singleHandler, 'single visit (retry)');
       }
     });
     
@@ -111,9 +114,6 @@ function setupVisitTracking() {
     setTimeout(() => {
       if (!singleAttached) {
         attachEventListener('markVisitedBtn', singleHandler, 'single visit (delayed)');
-      }
-      if (!bulkAttached) {
-        attachEventListener('markSelectedVisitedBtn', bulkHandler, 'bulk visit (delayed)');
       }
     }, 1000);
   }

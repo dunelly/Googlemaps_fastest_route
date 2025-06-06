@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Excel Data Table</title>
+  <link rel="stylesheet" href="css/excel-data-table.css">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .test-btn { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Excel Data Table Debug</h1>
+  
+  <button class="test-btn" onclick="testDataTable()">Test Data Table</button>
+  <button class="test-btn" onclick="testWithTestData()">Test with Sample Data</button>
+  
+  <div id="excelDataContent" style="border: 1px solid #ccc; min-height: 400px; margin-top: 20px;">
+    <!-- Data table will render here -->
+  </div>
+
+  <script src="js/excel-data-table.js"></script>
+  <script>
+    // Test function
+    function testDataTable() {
+      console.log('Testing data table...');
+      
+      // Set up test data
+      window.currentTableData = [
+        {
+          rowId: 0,
+          address: '123 Main St, New York, NY',
+          name: 'John Doe',
+          status: 'Unvisited',
+          visitCount: 0,
+          lastVisited: 'Never',
+          lastVisitedDate: new Date(0),
+          hasNotes: false,
+          auctionDateFormatted: '2025-01-15'
+        },
+        {
+          rowId: 1,
+          address: '456 Oak Ave, Los Angeles, CA',
+          name: 'Jane Smith',
+          status: 'Visited',
+          visitCount: 2,
+          lastVisited: '2025-01-10',
+          lastVisitedDate: new Date('2025-01-10'),
+          hasNotes: true,
+          auctionDateFormatted: '2025-02-20'
+        },
+        {
+          rowId: 2,
+          address: '789 Pine Rd, Chicago, IL',
+          name: 'Bob Johnson',
+          status: 'Unvisited',
+          visitCount: 0,
+          lastVisited: 'Never',
+          lastVisitedDate: new Date(0),
+          hasNotes: false,
+          auctionDateFormatted: ''
+        }
+      ];
+      
+      // Test the render function
+      if (typeof window.renderDataTable === 'function') {
+        console.log('Calling renderDataTable...');
+        window.renderDataTable();
+      } else {
+        console.error('renderDataTable function not found!');
+        document.getElementById('excelDataContent').innerHTML = '<p style="color: red;">ERROR: renderDataTable function not available</p>';
+      }
+    }
+    
+    function testWithTestData() {
+      console.log('Testing with Excel History test data...');
+      
+      // Simulate what Excel History would do
+      const testData = {
+        'excel_test_1': {
+          id: 'excel_test_1',
+          fileName: 'Test Excel 1.xlsx',
+          uploadDate: new Date().toISOString(),
+          addressCount: 3,
+          processedData: [
+            { address: '123 Main St, New York, NY', name: 'John Doe', lat: 40.7128, lng: -74.0060 },
+            { address: '456 Oak Ave, Los Angeles, CA', name: 'Jane Smith', lat: 34.0522, lng: -118.2437 },
+            { address: '789 Pine Rd, Chicago, IL', name: 'Bob Johnson', lat: 41.8781, lng: -87.6298 }
+          ]
+        }
+      };
+      
+      // Prepare data like viewExcelData would
+      const file = testData['excel_test_1'];
+      const processedData = file.processedData.map((item, index) => ({
+        ...item,
+        rowId: index,
+        status: item.visitCount > 0 ? 'Visited' : 'Unvisited',
+        visitCount: item.visitCount || 0,
+        lastVisited: item.lastVisited || 'Never',
+        lastVisitedDate: item.lastVisitedDate || new Date(0),
+        hasNotes: !!(item.notes && item.notes.trim()),
+        auctionDateFormatted: item.auctionDate || ''
+      }));
+      
+      window.currentTableData = processedData;
+      
+      if (typeof window.renderDataTable === 'function') {
+        console.log('Calling renderDataTable with processed data...');
+        window.renderDataTable();
+      } else {
+        console.error('renderDataTable function not found!');
+        document.getElementById('excelDataContent').innerHTML = '<p style="color: red;">ERROR: renderDataTable function not available</p>';
+      }
+    }
+  </script>
+</body>
+</html>
