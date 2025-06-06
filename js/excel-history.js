@@ -162,6 +162,12 @@ function closeExcelDataPanel() {
   try {
     const dataPanel = document.getElementById('excelDataPanel');
     if (dataPanel) dataPanel.classList.remove('active');
+    
+    // Hide the overlay when data panel is closed
+    const overlay = document.getElementById('excelHistoryOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
   } catch (error) {
     console.error('[excel-history] Error closing data panel:', error);
   }
@@ -266,13 +272,13 @@ function renderExcelHistoryList() {
           Addresses: ${file.addressCount}
         </div>
         <div class="excel-file-actions">
-          <button class="excel-action-btn" onclick="loadExcelAddresses('${file.id}')">
+          <button type="button" class="excel-action-btn" onclick="loadExcelAddresses('${file.id}')">
             📍 Load Addresses
           </button>
-          <button class="excel-action-btn" onclick="viewExcelData('${file.id}')">
+          <button type="button" class="excel-action-btn" onclick="viewExcelData('${file.id}')">
             📊 View Data
           </button>
-          <button class="excel-delete-btn" onclick="deleteExcelFile('${file.id}')" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 5px; border: 1px solid #dc3545; background: #fff; color: #dc3545; cursor: pointer; margin: 0; width: auto; transition: all 0.2s;" title="Delete this Excel file">
+          <button type="button" class="excel-delete-btn" onclick="deleteExcelFile('${file.id}')" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 5px; border: 1px solid #dc3545; background: #fff; color: #dc3545; cursor: pointer; margin: 0; width: auto; transition: all 0.2s;" title="Delete this Excel file">
             🗑️ Delete
           </button>
         </div>

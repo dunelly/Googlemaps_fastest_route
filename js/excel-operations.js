@@ -216,13 +216,23 @@ async function deleteAllExcelFiles() {
 // View Excel data with visits and notes
 function viewExcelData(excelId) {
   try {
+    console.log('[excel-operations] viewExcelData called for ID:', excelId);
+    
     const excelData = window.savedExcelFiles ? window.savedExcelFiles[excelId] : null;
-    if (!excelData) return;
+    if (!excelData) {
+      console.error('[excel-operations] Excel data not found for ID:', excelId);
+      return;
+    }
     
     const dataPanel = document.getElementById('excelDataPanel');
     const dataTitle = document.getElementById('excelDataTitle');
     
-    if (!dataPanel) return;
+    if (!dataPanel) {
+      console.error('[excel-operations] excelDataPanel element not found!');
+      return;
+    }
+    
+    console.log('[excel-operations] Found data panel, preparing data...');
     
     // Store current Excel file ID for deletion functionality
     window.currentExcelFileId = excelId;
@@ -257,38 +267,119 @@ function viewExcelData(excelId) {
       console.log('[excel-operations] Cleared selected rows');
     }
     
-    // Initial sort: unvisited first
-    if (typeof window.sortTableData === 'function') {
-      console.log('[excel-operations] Calling sortTableData');
-      window.sortTableData('status', 'desc');
-    } else {
-      console.warn('[excel-operations] sortTableData function not available');
+    // Show the overlay first, then activate the data panel
+    const overlay = document.getElementById('excelHistoryOverlay');
+    if (overlay) {
+      overlay.style.display = 'block';
+      console.log('[excel-operations] Overlay shown');
     }
     
-    // Render the table
-    if (typeof window.renderDataTable === 'function') {
-      console.log('[excel-operations] Calling renderDataTable');
-      window.renderDataTable();
-    } else {
-      console.error('[excel-operations] renderDataTable function not available!');
-      // Try to render simple content as fallback
-      const dataContent = document.getElementById('excelDataContent');
-      if (dataContent) {
-        dataContent.innerHTML = `
-          <div style="padding: 20px; text-align: center; color: #666;">
-            <h3>Data Table Loading...</h3>
-            <p>Advanced table functionality is loading. Please wait a moment and try again.</p>
-            <p>Data items prepared: ${window.currentTableData.length}</p>
-          </div>
-        `;
-      }
-    }
-    
-    // Show data panel
     dataPanel.classList.add('active');
     console.log('[excel-operations] Data panel activated');
+    
+    // Wait a brief moment for the panel to be visible before rendering
+    setTimeout(() => {
+      // Initial sort: unvisited first
+      if (typeof window.sortTableData === 'function') {
+        console.log('[excel-operations] Calling sortTableData');
+        window.sortTableData('status', 'desc');
+      } else {
+        console.warn('[excel-operations] sortTableData function not available');
+      }
+      
+      // Render the table
+      if (typeof window.renderDataTable === 'function') {
+        console.log('[excel-operations] Calling renderDataTable');
+        window.renderDataTable();
+      } else {
+        console.error('[excel-operations] renderDataTable function not available!');
+        // Provide a more robust fallback that actually shows the data
+        const dataContent = document.getElementById('excelDataContent');
+        if (dataContent) {
+          const tableHTML = `
+            <div style="padding: 20px;">
+              <h3>${excelData.fileName}</h3>
+              <p><strong>Total Addresses:</strong> ${window.currentTableData.length}</p>
+              <p><strong>Unvisited:</strong> ${window.currentTableData.filter(item => item.visitCount === 0).length}</p>
+              <p><strong>Visited:</strong> ${window.currentTableData.filter(item => item.visitCount > 0).length}</p>
+              
+              <div style="margin-top: 20px;">
+                <button onclick="displayExcelDataOnMapOnly('${excelId}')" style="padding: 10px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                  📍 Show All on Map
+                </button>
+                <button onclick="closeExcelDataPanel()" style="padding: 10px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                  Close
+                </button>
+              </div>
+              
+              <div style="max-height: 400px; overflow-y: auto; margin-top: 20px; border: 1px solid #ddd; border-radius: 4px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                  <thead style="background: #f8f9fa; position: sticky; top: 0;">
+                    <tr>
+                      <th style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: left;">Name</th>
+                      <th style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: left;">Address</th>
+                      <th style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: center;">Status</th>
+                      <th style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: center;">Visits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${window.currentTableData.map(item => `
+                      <tr style="border-bottom: 1px solid #f1f3f4; ${item.visitCount === 0 ? 'background: #fff3cd;' : ''}">
+                        <td style="padding: 8px;">${item.name || '-'}</td>
+                        <td style="padding: 8px;">${item.address}</td>
+                        <td style="padding: 8px; text-align: center; ${item.visitCount === 0 ? 'color: #ffc107; font-weight: 600;' : 'color: #28a745; font-weight: 600;'}">${item.status}</td>
+                        <td style="padding: 8px; text-align: center;">${item.visitCount}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+          dataContent.innerHTML = tableHTML;
+        }
+      }
+    }, 100);
+    
   } catch (error) {
     console.error('[excel-operations] Error viewing data:', error);
+    if (typeof showMessage === 'function') {
+      showMessage('Error loading Excel data: ' + error.message, 'error');
+    }
+  }
+}
+
+// New function to display Excel data on map without triggering route optimization
+function displayExcelDataOnMapOnly(excelId) {
+  try {
+    console.log('[excel-operations] displayExcelDataOnMapOnly called for ID:', excelId);
+    
+    const excelData = window.savedExcelFiles ? window.savedExcelFiles[excelId] : null;
+    if (!excelData) {
+      console.error('[excel-operations] Excel data not found for ID:', excelId);
+      return;
+    }
+    
+    // Simply display the markers on the map without setting up route optimization
+    if (typeof displayAddressMarkers === 'function') {
+      displayAddressMarkers(excelData.processedData);
+      console.log('[excel-operations] Displayed', excelData.processedData.length, 'markers on map');
+    }
+    
+    // Close the data panel
+    if (typeof closeExcelDataPanel === 'function') {
+      closeExcelDataPanel();
+    }
+    
+    if (typeof showMessage === 'function') {
+      showMessage(`Displaying ${excelData.processedData.length} addresses on map`, 'success');
+    }
+    
+  } catch (error) {
+    console.error('[excel-operations] Error displaying data on map:', error);
+    if (typeof showMessage === 'function') {
+      showMessage('Error displaying addresses on map: ' + error.message, 'error');
+    }
   }
 }
 
