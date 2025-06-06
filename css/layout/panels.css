@@ -1,0 +1,58 @@
+/* LAYOUT PANELS - Left/right panel overrides and container styling */
+
+/* Override main layout for clean design */
+.left-panel {
+  width: 450px !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 12px rgba(44,62,80,0.08) !important;
+  padding: 20px !important;
+}
+
+.container {
+  background: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(44,62,80,0.06) !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  gap: 24px !important;
+}
+
+/* Header Area Styling */
+.header-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-area h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #000000;
+  margin: 0;
+  text-align: left;
+}
+
+.sign-in-link {
+  color: #999999;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+/* Override existing styles for clean design */
+.left-panel .container h1 {
+  font-size: 2rem !important;
+  text-align: left !important;
+  margin: 0 !important;
+  color: #000000 !important;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif !important;
+  font-weight: bold !important;
+}
+
+/* Hidden Elements - Keep accessible to JavaScript but invisible */
+.legacy-hidden {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}

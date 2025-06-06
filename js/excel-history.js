@@ -178,10 +178,7 @@ async function saveExcelData(fileName, processedData) {
   console.log('[excel-history] saveExcelData called with:', { fileName, dataLength: processedData?.length });
   
   if (!excelHistoryCurrentUser) {
-    console.warn('[excel-history] No user signed in, cannot save Excel data');
-    if (typeof showMessage === 'function') {
-      showMessage('Please sign in to save Excel history', 'warning');
-    }
+    console.log('[excel-history] No user signed in, skipping Excel history save');
     return;
   }
   

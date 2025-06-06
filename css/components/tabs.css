@@ -1,0 +1,27 @@
+/* TAB COMPONENTS - Tab navigation and content areas */
+
+/* Tab Navigation Styling */
+.tab-navigation {
+  display: flex;
+  width: 100%;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+/* Tab Content Areas */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Tab-specific content styling */
+#planRouteContent {
+  /* Plan route tab specific styles if needed */
+}
+
+#manageFilesContent {
+  /* Manage files tab specific styles if needed */
+}

@@ -1,0 +1,238 @@
+/* BUTTON COMPONENTS - All button variants and styles */
+
+/* Base Button Styles */
+.tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #999999;
+  transition: all 0.2s ease;
+  margin: 0;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
+}
+
+.tab-button:hover {
+  background: rgba(66, 133, 244, 0.05);
+  transform: none;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.08);
+}
+
+.tab-button.active {
+  color: #4285F4;
+  border-bottom-color: #4285F4;
+  background: rgba(66, 133, 244, 0.08);
+  box-shadow: 0 -2px 8px rgba(66, 133, 244, 0.15);
+}
+
+/* Primary Action Button */
+.primary-action-btn {
+  background: #4285F4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.primary-action-btn:hover {
+  background: #3367d6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+}
+
+/* Secondary Button */
+.secondary-btn {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.secondary-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+/* Add Destination Button */
+.add-destination-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.add-destination-btn:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* Clear Button (for destination inputs) */
+.clear-btn {
+  background: rgba(248, 249, 250, 0.9);
+  border: 1px solid rgba(222, 226, 230, 0.6);
+  color: #6c757d;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.2s ease, opacity 0.15s ease, transform 0.15s ease;
+  backdrop-filter: blur(4px);
+  opacity: 0.4;
+}
+
+.clear-btn:hover {
+  color: #dc3545;
+  background: rgba(248, 215, 218, 0.9);
+  border-color: rgba(220, 53, 69, 0.3);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+}
+
+/* Close Button (for modals and overlays) */
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999999;
+  cursor: pointer;
+  padding: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+  color: #666666;
+}
+
+/* Notes Close Button */
+.close-notes-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-notes-btn:hover {
+  background: #e9ecef;
+  color: #666666;
+}
+
+/* Mark Visited Button */
+.mark-visited-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mark-visited-btn:hover {
+  background: #218838;
+}
+
+/* Note Icon Button */
+.note-icon-btn {
+  background: none;
+  border: none;
+  color: #999999;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.note-icon-btn:hover {
+  background: #f8f9fa;
+  color: #4285F4;
+}
+
+.note-icon-btn.has-note {
+  color: #4285F4;
+}
+
+/* Delete All Button */
+.delete-all-btn {
+  padding: 6px 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.delete-all-btn:hover {
+  background: #c82333;
+}

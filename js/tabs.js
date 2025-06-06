@@ -478,8 +478,14 @@ async function handleGoogleSheetLoad() {
     
     const sheetId = match[1];
     
+    // Extract gid parameter if present, default to 0
+    const gidMatch = url.match(/[#&]gid=(\d+)/);
+    const gid = gidMatch ? gidMatch[1] : '0';
+    
+    console.log('[google-sheets] Extracted Sheet ID:', sheetId, 'GID:', gid);
+    
     // Try direct Google Sheets CSV export first (faster, no proxy needed)
-    const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+    const directCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
     const proxyCsvUrl = `https://googlemaps-fastest-route-1.onrender.com/fetch-google-sheet-csv?sheetId=${sheetId}`;
     
     console.log('[google-sheets] Trying direct CSV export first:', directCsvUrl);
@@ -865,6 +871,9 @@ function processModalColumnMapping(headers, dataRows, selects) {
     console.log('[modal-upload] Auto-loading addresses on map for new users');
     autoLoadAddressesOnMap(processedData);
 
+    // Store fileName before clearing data
+    const uploadedFileName = window.currentUploadData ? window.currentUploadData.fileName : 'uploaded file';
+    
     // Save to Excel history if user is signed in
     if (window.currentUploadData && typeof saveExcelData === 'function') {
       saveExcelData(window.currentUploadData.fileName, processedData);
@@ -879,7 +888,7 @@ function processModalColumnMapping(headers, dataRows, selects) {
     clearUploadModal();
     
     if (typeof showMessage === 'function') {
-      showMessage(`Successfully processed ${validCount} addresses from "${window.currentUploadData.fileName}". All addresses loaded on map.`, 'success');
+      showMessage(`Successfully processed ${validCount} addresses from "${uploadedFileName}". All addresses loaded on map.`, 'success');
     }
 
     // Clear stored data
