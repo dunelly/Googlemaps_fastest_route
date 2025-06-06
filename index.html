@@ -116,31 +116,6 @@
                 </button>
               </div>
             </div>
-            
-            <!-- Paste Addresses Section (Initially Hidden) -->
-            <div id="pasteAddressesSection" class="form-section" style="display: none;">
-              <label class="section-label">Paste Multiple Addresses</label>
-              <textarea id="pasteAddressesTextarea" class="clean-input" placeholder="Paste addresses here, one per line" rows="6"></textarea>
-              <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button type="button" id="confirmPasteBtn" class="add-destination-btn">Add All Addresses</button>
-                <button type="button" id="cancelPasteBtn" class="secondary-btn">Cancel</button>
-              </div>
-            </div>
-            
-            <!-- Upload File Section (Initially Hidden) -->
-            <div id="uploadFileSection" class="form-section" style="display: none;">
-              <label class="section-label">Upload Excel/CSV File</label>
-              <input type="file" id="excelFile" class="clean-input" accept=".xlsx,.xls,.csv" />
-              
-              <div class="form-section">
-                <label class="section-label">Google Sheets URL</label>
-                <input type="text" id="googleSheetUrl" class="clean-input" placeholder="https://docs.google.com/spreadsheets/d/...">
-                <button type="button" id="loadGoogleSheetBtn" class="secondary-btn" style="margin-top: 8px;">Load</button>
-                <div id="googleSheetError" style="display: none; margin-top: 8px; padding: 8px; background: #fee; border: 1px solid #fcc; border-radius: 4px; color: #c00; font-size: 0.9rem;"></div>
-              </div>
-              
-              <button type="button" id="cancelUploadBtn" class="secondary-btn" style="margin-top: 8px;">Cancel</button>
-            </div>
           </div>
 
           <!-- Manage Files Tab -->
@@ -202,6 +177,73 @@
       <div class="panel-content">
         <div id="excelDataContent" class="excel-data-content">
           <!-- Full data view will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paste Addresses Modal -->
+  <div id="pasteAddressesModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📋 Paste Multiple Addresses</h3>
+        <button type="button" id="closePasteModalBtn" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 16px; color: #666; font-size: 0.9rem;">Paste your addresses below, one per line:</p>
+        <textarea id="pasteAddressesModalTextarea" class="clean-input" placeholder="123 Main St, City, State&#10;456 Oak Ave, City, State&#10;789 Pine Rd, City, State" rows="8"></textarea>
+        <div style="display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end;">
+          <button type="button" id="cancelPasteModalBtn" class="secondary-btn">Cancel</button>
+          <button type="button" id="confirmPasteModalBtn" class="primary-action-btn">Add All Addresses</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload File Modal -->
+  <div id="uploadFileModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="uploadModalTitle">📁 Upload Excel/CSV File</h3>
+        <button type="button" id="closeUploadModalBtn" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Step 1: File Selection -->
+        <div id="uploadStep1" class="upload-step">
+          <div style="margin-bottom: 20px;">
+            <label class="section-label" style="margin-bottom: 8px; display: block;">Choose Excel/CSV File</label>
+            <input type="file" id="excelFileModal" class="clean-input" accept=".xlsx,.xls,.csv" />
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <label class="section-label" style="margin-bottom: 8px; display: block;">Or Google Sheets URL</label>
+            <input type="text" id="googleSheetUrlModal" class="clean-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+            <button type="button" id="loadGoogleSheetModalBtn" class="secondary-btn" style="margin-top: 8px;">Load from URL</button>
+            <div id="googleSheetModalError" style="display: none; margin-top: 8px; padding: 8px; background: #fee; border: 1px solid #fcc; border-radius: 4px; color: #c00; font-size: 0.9rem;"></div>
+          </div>
+          
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" id="cancelUploadModalBtn" class="secondary-btn">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Column Mapping -->
+        <div id="uploadStep2" class="upload-step" style="display: none;">
+          <div style="margin-bottom: 16px; padding: 12px; background: #fffbe7; border: 1px solid #ffe082; border-radius: 6px;">
+            <p style="margin: 0; color: #8a6914; font-weight: 500;">📋 Select the columns that contain your data:</p>
+          </div>
+          
+          <div id="columnMappingContent" style="margin-bottom: 20px;">
+            <!-- Column selection dropdowns will be inserted here -->
+          </div>
+          
+          <div style="display: flex; gap: 12px; justify-content: space-between;">
+            <button type="button" id="backToUploadBtn" class="secondary-btn">← Back</button>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="clearPresetModalBtn" class="secondary-btn">Clear Preset</button>
+              <button type="button" id="confirmColumnMappingBtn" class="primary-action-btn">Confirm Mapping</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

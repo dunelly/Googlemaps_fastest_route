@@ -597,3 +597,185 @@
 .note-icon-btn.has-note {
   color: #4285F4;
 }
+
+/* Modal Overlay Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10010;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+  animation: modalFadeIn 0.3s ease;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  transform: scale(0.9);
+  animation: modalSlideUp 0.3s ease forwards;
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #E0E0E0;
+  background: #f8f9fa;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1a2330;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(80vh - 80px);
+}
+
+.modal-overlay .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999999;
+  cursor: pointer;
+  padding: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.modal-overlay .close-btn:hover {
+  background: #e9ecef;
+  color: #666666;
+}
+
+/* Modal specific input styling */
+.modal-body .clean-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-body textarea.clean-input {
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+/* Modal button styling */
+.modal-body .primary-action-btn,
+.modal-body .secondary-btn {
+  margin: 0;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+}
+
+/* Upload modal step styling */
+.upload-step {
+  transition: opacity 0.3s ease;
+}
+
+.upload-step.hidden {
+  display: none;
+}
+
+/* Column mapping styling */
+#columnMappingContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.column-mapping-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.column-mapping-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.column-mapping-select {
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: #333333;
+  transition: border-color 0.2s ease;
+}
+
+.column-mapping-select:focus {
+  border-color: #4285F4;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.15);
+}
+
+/* Responsive modal */
+@media (max-width: 600px) {
+  .modal-content {
+    width: 95vw;
+    margin: 20px;
+  }
+  
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  #columnMappingContent {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
