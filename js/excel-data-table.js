@@ -22,39 +22,39 @@ function renderDataTable() {
   const unvisitedCount = currentTableData.filter(item => item.visitCount === 0).length;
   
   dataContent.innerHTML = `
-    <div style="margin-bottom: 4px; padding: 3px 6px; background: #f8f9fa; border-radius: 3px; font-size: 0.7rem; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <span style="font-weight: 600;">Total: ${currentTableData.length}</span> |
-        <span style="color: #dc3545;">Unvisited: ${unvisitedCount}</span> |
-        <span style="color: #28a745;">Visited: ${currentTableData.filter(item => item.visitCount > 0).length}</span> |
-        <span style="color: #007bff;">Notes: ${currentTableData.filter(item => item.hasNotes).length}</span>
+    <div class="excel-table-header">
+      <div class="excel-table-stats">
+        <span class="stat-total">Total: ${currentTableData.length}</span>
+        <span class="stat-unvisited">Unvisited: ${unvisitedCount}</span>
+        <span class="stat-visited">Visited: ${currentTableData.filter(item => item.visitCount > 0).length}</span>
+        <span class="stat-notes">Notes: ${currentTableData.filter(item => item.hasNotes).length}</span>
       </div>
-      <div style="display: flex; gap: 4px;">
-        <button id="showSelectedOnMap" style="padding: 2px 6px; font-size: 0.65rem; background: #007bff; color: white; border: none; border-radius: 2px; cursor: pointer;" onclick="showSelectedAddressesOnMap()" disabled>
+      <div class="excel-table-actions">
+        <button id="showSelectedOnMap" onclick="showSelectedAddressesOnMap()" disabled>
           📍 Show Selected (0)
         </button>
-        <button id="showAllOnMap" style="padding: 2px 6px; font-size: 0.65rem; background: #28a745; color: white; border: none; border-radius: 2px; cursor: pointer;" onclick="showAllAddressesOnMap()">
+        <button id="showAllOnMap" onclick="showAllAddressesOnMap()">
           📍 Show All on Map
         </button>
-        <button id="deleteSelectedBtn" style="padding: 2px 6px; font-size: 0.65rem; background: #dc3545; color: white; border: none; border-radius: 2px; cursor: pointer;" onclick="deleteSelectedAddresses()" disabled>
+        <button id="deleteSelectedBtn" onclick="deleteSelectedAddresses()" disabled>
           🗑️ Delete (0)
         </button>
       </div>
     </div>
     
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 4px; padding: 3px 6px; margin-bottom: 4px; background: #f8f9fa; border-radius: 3px; border: 1px solid #e9ecef; font-size: 0.7rem;">
-      <div>
-        <label style="display: block; font-weight: 600; margin-bottom: 1px; color: #495057; font-size: 0.65rem;">Notes:</label>
-        <select id="notesFilter" style="width: 100%; padding: 2px 4px; font-size: 0.7rem; border: 1px solid #ced4da; border-radius: 2px;" onchange="applyFilters()">
+    <div class="excel-filter-controls">
+      <div class="excel-filter-group">
+        <label for="notesFilter" class="excel-filter-label">Notes</label>
+        <select id="notesFilter" class="excel-filter-select" onchange="applyFilters()">
           <option value="">All</option>
           <option value="with">With Notes</option>
           <option value="without">Without Notes</option>
         </select>
       </div>
       
-      <div>
-        <label style="display: block; font-weight: 600; margin-bottom: 1px; color: #495057; font-size: 0.65rem;">Visits:</label>
-        <select id="visitCountFilter" style="width: 100%; padding: 2px 4px; font-size: 0.7rem; border: 1px solid #ced4da; border-radius: 2px;" onchange="applyFilters()">
+      <div class="excel-filter-group">
+        <label for="visitCountFilter" class="excel-filter-label">Visits</label>
+        <select id="visitCountFilter" class="excel-filter-select" onchange="applyFilters()">
           <option value="">All</option>
           <option value="0">0 visits</option>
           <option value="1">1 visit</option>
@@ -62,34 +62,34 @@ function renderDataTable() {
         </select>
       </div>
       
-      <div style="grid-column: span 2;">
-        <label style="display: block; font-weight: 600; margin-bottom: 1px; color: #495057; font-size: 0.65rem;">Search:</label>
-        <input type="text" id="addressSearch" style="width: 100%; padding: 2px 4px; font-size: 0.7rem; border: 1px solid #ced4da; border-radius: 2px;" placeholder="Search addresses..." oninput="applyFilters()">
+      <div class="excel-filter-group search-filter">
+        <label for="addressSearch" class="excel-filter-label">Search</label>
+        <input type="text" id="addressSearch" class="excel-filter-input" placeholder="Search addresses or names..." oninput="applyFilters()">
       </div>
       
-      <div style="grid-column: span 2;">
-        <label style="display: block; font-weight: 600; margin-bottom: 1px; color: #495057; font-size: 0.65rem;">Auction Dates:</label>
-        <select id="auctionDateFilter" style="width: 100%; padding: 2px 4px; font-size: 0.7rem; border: 1px solid #ced4da; border-radius: 2px; height: 50px;" multiple onchange="applyFilters()">
+      <div class="excel-filter-group">
+        <label for="auctionDateFilter" class="excel-filter-label">Auction Dates</label>
+        <select id="auctionDateFilter" class="excel-filter-select" multiple onchange="applyFilters()">
           <!-- Options will be populated dynamically -->
         </select>
       </div>
       
-      <button onclick="clearAllFiltersAndSelections()" style="padding: 2px 6px; font-size: 0.7rem; background: #6c757d; color: white; border: none; border-radius: 2px; cursor: pointer; height: 24px; align-self: end;">Clear All</button>
+      <button onclick="clearAllFiltersAndSelections()" class="excel-clear-filters-btn">Clear All</button>
     </div>
     
-    <div style="max-height: 65vh; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;" id="dataTable">
+    <div class="table-container">
+      <table class="data-table" id="dataTable">
         <thead>
-          <tr style="background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
-            <th style="width: 25px; padding: 4px 2px; text-align: center; border-bottom: 1px solid #dee2e6; font-weight: 600;">
-              <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()" style="width: 12px; height: 12px;">
+          <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #dee2e6;">
+            <th style="width: 20px;" class="text-center"> <!-- Checkbox column further reduced -->
+              <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
             </th>
-            <th class="sortable" onclick="sortTable('name')" style="width: 16%; padding: 4px 6px; text-align: left; border-bottom: 1px solid #dee2e6; cursor: pointer; font-weight: 600;">Name</th>
-            <th class="sortable" onclick="sortTable('address')" style="width: 30%; padding: 4px 6px; text-align: left; border-bottom: 1px solid #dee2e6; cursor: pointer; font-weight: 600;">Address</th>
-            <th class="sortable" onclick="sortTable('visitCount')" style="width: 7%; padding: 4px 6px; text-align: center; border-bottom: 1px solid #dee2e6; cursor: pointer; font-weight: 600;">Visits</th>
-            <th class="sortable" onclick="sortTable('lastVisitedDate')" style="width: 11%; padding: 4px 6px; text-align: center; border-bottom: 1px solid #dee2e6; cursor: pointer; font-weight: 600;">Last Visit</th>
-            <th class="sortable" onclick="sortTable('hasNotes')" style="width: 16%; padding: 4px 6px; text-align: left; border-bottom: 1px solid #dee2e6; cursor: pointer; font-weight: 600;">Notes</th>
-            <th class="sortable" onclick="sortTable('auctionDateFormatted')" style="width: 11%; padding: 4px 6px; text-align: center; border-bottom: 1px solid #dee2e6; cursor: pointer; font-weight: 600;">Auction Date</th>
+            <th class="sortable" onclick="sortTable('name')" style="width: 16%;">Name</th> <!-- Name slightly reduced -->
+            <th class="sortable" onclick="sortTable('address')" style="width: 28%;">Address</th> <!-- Address slightly reduced -->
+            <th class="sortable text-center" onclick="sortTable('auctionDateFormatted')" style="width: 10%;">Auction Date</th> <!-- Auction Date slightly reduced -->
+            <th class="sortable text-center" onclick="sortTable('visitCount')" style="width: 5%;">Visits</th> <!-- Visits significantly reduced -->
+            <th class="sortable text-center" onclick="sortTable('lastVisitedDate')" style="width: 8%;">Last Visit</th> <!-- Last Visit reduced -->
+            <th class="sortable" onclick="sortTable('hasNotes')" style="width: 28%;">Notes</th> <!-- Notes significantly increased -->
           </tr>
         </thead>
         <tbody id="dataTableBody">
@@ -113,24 +113,27 @@ function updateTableRows() {
   
   tbody.innerHTML = filteredData.map(item => {
     const isUnvisited = item.visitCount === 0;
-    const rowStyle = isUnvisited ? 'background: #fff3cd;' : '';
-    const statusIcon = isUnvisited ? '🔴' : '✅';
-    const visitClass = item.visitCount > 0 ? 'style="color: #28a745; font-weight: 600;"' : 'style="color: #ffc107; font-weight: 600;"';
-    const noteClass = item.hasNotes ? 'style="color: #007bff; font-weight: 600;"' : '';
+    const rowStyle = isUnvisited ? 'background: #fff3cd;' : ''; // Keep unvisited highlight
+    const visitClass = item.visitCount > 0 ? 'style="color: #28a745; font-weight: 600;"' : 'style="color: #dc3545; font-weight: 600;"'; // Adjusted unvisited color
     const isSelected = window.selectedRows.has(item.rowId);
     const selectedClass = isSelected ? 'selected' : '';
     
     return `
-      <tr class="${selectedClass}" style="${rowStyle} border-bottom: 1px solid #f1f3f4;" onclick="toggleRowSelection(${item.rowId})" data-row-id="${item.rowId}">
-        <td style="padding: 3px 2px; text-align: center;">
-          <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleRowSelection(${item.rowId})" onclick="event.stopPropagation()" style="width: 12px; height: 12px;">
+      <tr class="${selectedClass}" style="${rowStyle}" onclick="toggleRowSelection(${item.rowId})" data-row-id="${item.rowId}">
+        <td class="text-center">
+          <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleRowSelection(${item.rowId})" onclick="event.stopPropagation()">
         </td>
-        <td style="padding: 3px 6px; max-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">${item.name || '-'}</td>
-        <td style="padding: 3px 6px; word-wrap: break-word; max-width: 0; overflow: hidden; text-overflow: ellipsis;">${item.address}</td>
-        <td ${visitClass} style="padding: 3px 6px; text-align: center;">${item.visitCount}</td>
-        <td ${visitClass} style="padding: 3px 6px; text-align: center; font-size: 0.7rem;">${item.lastVisited}</td>
-        <td style="padding: 3px 6px; max-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 0.7rem;">${item.hasNotes ? (item.notes ? item.notes.substring(0, 50) + (item.notes.length > 50 ? '...' : '') : '📝 Note') : '-'}</td>
-        <td style="padding: 3px 6px; text-align: center; font-size: 0.7rem;">${item.auctionDateFormatted || '-'}</td>
+        <td>${item.name || '-'}</td>
+        <td>${item.address}</td>
+        <td class="text-center">${item.auctionDateFormatted || '-'}</td>
+        <td class="text-center" ${visitClass}>${item.visitCount}</td>
+        <td class="text-center" ${visitClass}>${item.lastVisited}</td>
+        <td>
+          ${item.hasNotes 
+            ? `<span class="note-text" onclick="event.stopPropagation(); openNotesForAddress('${item.address.replace(/'/g, "\\'")}', ${item.rowId})" title="Click to edit note">${item.notes ? (item.notes.length > 30 ? item.notes.substring(0, 30) + '...' : item.notes) : '📝 View/Edit Note'}</span>` // Shortened preview
+            : `<span class="add-note-placeholder" onclick="event.stopPropagation(); openNotesForAddress('${item.address.replace(/'/g, "\\'")}', ${item.rowId})" title="Click to add note">- Add Note -</span>`
+          }
+        </td>
       </tr>
     `;
   }).join('');
@@ -234,9 +237,15 @@ function updateSortIndicators() {
   });
   
   if (currentSortColumn) {
+    // Order of keys here must match the visual order of th elements for correct index lookup
+    // Checkbox (index 0, not sortable), Name (1), Address (2), Auction Date (3), Visits (4), Last Visit (5), Notes (6)
     const columnMap = {
-      'address': 0, 'name': 1, 'status': 2, 'visitCount': 3,
-      'lastVisitedDate': 4, 'hasNotes': 5, 'auctionDateFormatted': 6
+      'name': 1, 
+      'address': 2, 
+      'auctionDateFormatted': 3, 
+      'visitCount': 4, 
+      'lastVisitedDate': 5, 
+      'hasNotes': 6 
     };
     
     const columnIndex = columnMap[currentSortColumn];
@@ -634,6 +643,31 @@ async function deleteSelectedAddresses() {
   }
 }
 
+// Open notes for a specific address from the table
+function openNotesForAddress(address, rowId) {
+  console.log('[excel-data-table] Opening notes for address:', address);
+  
+  // Set the global currentAddress for the notes system
+  window.currentAddress = address;
+  
+  // Check if notes overlay is already open and switch to this address
+  const overlay = document.getElementById('notesOverlay');
+  if (overlay && overlay.classList.contains('open') && typeof switchNotesToAddress === 'function') {
+    switchNotesToAddress(address);
+    return;
+  }
+  
+  // Open the notes overlay
+  if (typeof openNotesOverlay === 'function') {
+    openNotesOverlay(address);
+  } else {
+    // Fallback: check if notes manager is available
+    if (typeof showMessage === 'function') {
+      showMessage('Please sign in to add notes', 'warning');
+    }
+  }
+}
+
 // Make functions globally available
 window.sortTable = sortTable;
 window.sortTableData = sortTableData;
@@ -647,3 +681,4 @@ window.deleteSelectedAddresses = deleteSelectedAddresses;
 window.setupDragSelection = setupDragSelection;
 window.showAllAddressesOnMap = showAllAddressesOnMap;
 window.clearAllFiltersAndSelections = clearAllFiltersAndSelections;
+window.openNotesForAddress = openNotesForAddress;

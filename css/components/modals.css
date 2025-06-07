@@ -101,6 +101,149 @@
   gap: 16px;
 }
 
+/* Progress Bar Component */
+.progress-container {
+  margin: 16px 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  display: none;
+}
+
+.progress-container.active {
+  display: block;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.progress-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.progress-stats {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.progress-bar-wrapper {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4285F4 0%, #34a853 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.progress-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.progress-eta {
+  font-style: italic;
+}
+
+/* Global Geocoding Progress Indicator */
+.global-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10020;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.global-progress-overlay.active {
+  display: flex;
+}
+
+.global-progress-content {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 24px;
+  width: 90vw;
+  max-width: 500px;
+  border: 1px solid #e9ecef;
+}
+
+.global-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.global-progress-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.global-progress-stats {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.global-progress-bar-wrapper {
+  width: 100%;
+  height: 12px;
+  background: #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.global-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4285F4 0%, #34a853 100%);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  width: 0%;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+}
+
+.global-progress-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.global-progress-eta {
+  font-style: italic;
+  color: #4285F4;
+  font-weight: 500;
+}
+
+/* Column Mapping Styles - Clean Design */
+
 /* Excel History Slide-out Panels */
 .excel-history-overlay {
   position: fixed;

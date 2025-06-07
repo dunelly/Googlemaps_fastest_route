@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/clean-interface.css">
   <link rel="stylesheet" href="css/excel-history.css">
+  <link rel="stylesheet" href="css/mobile-navigation.css">
   
   <script>
     // Firebase configuration
@@ -62,7 +63,7 @@
   </div>
 
   <!-- Main Application -->
-  <div class="page-wrapper">
+  <div class="page-wrapper desktop-planning-mode">
     <div class="left-panel">
       <div class="container">
         <!-- Header -->
@@ -142,6 +143,151 @@
     <div class="right-panel">
       <div id="map"></div>
       <div id="drawArrowOverlay" style="display:none;position:absolute;z-index:1000;pointer-events:none;"></div>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation Interface -->
+  <div class="mobile-navigation-mode">
+    <div class="mobile-nav-container">
+      <!-- Navigation Header -->
+      <div class="mobile-nav-header">
+        <div class="mobile-nav-progress">
+          <span id="mobileProgressText">Stop 3 of 12 • 47% Complete</span>
+        </div>
+        <div class="mobile-nav-progress-bar">
+          <div class="mobile-nav-progress-fill" id="mobileProgressFill" style="width: 47%"></div>
+        </div>
+      </div>
+
+      <!-- Current Destination Card -->
+      <div class="mobile-destination-card">
+        <div class="mobile-destination-header">
+          📍 CURRENT DESTINATION
+        </div>
+        <div class="mobile-destination-content">
+          <div class="mobile-destination-address" id="mobileDestinationAddress">
+            123 Oak Street, Houston TX 77001
+          </div>
+          <div class="mobile-destination-details" id="mobileDestinationOwner">
+            👤 John & Mary Smith
+          </div>
+          <div class="mobile-destination-details" id="mobileDestinationDate">
+            📅 Auction: Feb 15, 2025
+          </div>
+          <div class="mobile-destination-distance" id="mobileDestinationDistance">
+            🗺️ 2.3 miles • ⏱️ 8 min drive
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="mobile-nav-controls">
+        <!-- Primary Navigation Controls -->
+        <div class="mobile-nav-primary-controls">
+          <button class="mobile-nav-btn mobile-nav-btn-previous" id="mobilePreviousBtn">
+            ◀<br><span style="font-size: 11px;">PREVIOUS</span>
+          </button>
+          <button class="mobile-nav-btn mobile-nav-btn-checkin" id="mobileCheckInBtn">
+            ✅<br><span style="font-size: 11px;">CHECK IN</span>
+          </button>
+          <button class="mobile-nav-btn mobile-nav-btn-next" id="mobileNextBtn">
+            ▶<br><span style="font-size: 11px;">NEXT</span>
+          </button>
+        </div>
+
+        <!-- Primary Navigate Button -->
+        <button class="mobile-navigate-btn" id="mobileNavigateBtn">
+          🗺️ NAVIGATE NOW
+        </button>
+
+        <!-- Secondary Controls -->
+        <div class="mobile-nav-secondary-controls">
+          <button class="mobile-secondary-btn" id="mobileNotesBtn">
+            📝 Notes
+          </button>
+          <button class="mobile-secondary-btn" id="mobileSkipBtn">
+            ⏭️ Skip
+          </button>
+          <button class="mobile-secondary-btn" id="mobileMenuBtn">
+            ⚙️ Menu
+          </button>
+        </div>
+      </div>
+
+      <!-- Map Container -->
+      <div class="mobile-map-container">
+        <div id="mobileMap"></div>
+        
+        <!-- Map Controls -->
+        <div class="mobile-map-controls">
+          <button class="mobile-map-control-btn" id="mobileCurrentLocationBtn" title="Center on Current Location">
+            📍
+          </button>
+          <button class="mobile-map-control-btn" id="mobileFitRouteBtn" title="Show Full Route">
+            🗺️
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Route Overview Toggle Button -->
+    <button class="mobile-route-toggle" id="mobileRouteToggle">
+      📋 Route
+    </button>
+
+    <!-- Route Overview Panel (Slide-out) -->
+    <div class="mobile-route-overview" id="mobileRouteOverview">
+      <div class="mobile-route-panel">
+        <div class="mobile-route-header">
+          📋 Route Overview
+          <button class="mobile-route-close" id="mobileRouteClose">×</button>
+        </div>
+        <div class="mobile-route-list" id="mobileRouteList">
+          <!-- Route items will be populated by JavaScript -->
+          <div class="mobile-route-item">
+            <div class="mobile-route-number completed">✓</div>
+            <div class="mobile-route-address">456 Pine Street<br><small>Completed 2:30 PM</small></div>
+          </div>
+          <div class="mobile-route-item">
+            <div class="mobile-route-number completed">✓</div>
+            <div class="mobile-route-address">789 Elm Avenue<br><small>Completed 3:15 PM</small></div>
+          </div>
+          <div class="mobile-route-item">
+            <div class="mobile-route-number current">3</div>
+            <div class="mobile-route-address">123 Oak Street<br><small>Current destination</small></div>
+          </div>
+          <div class="mobile-route-item">
+            <div class="mobile-route-number next">4</div>
+            <div class="mobile-route-address">321 Maple Drive<br><small>Next stop</small></div>
+          </div>
+          <div class="mobile-route-item">
+            <div class="mobile-route-number pending">5</div>
+            <div class="mobile-route-address">654 Cedar Lane<br><small>Pending</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GPS Status Indicator -->
+    <div class="mobile-gps-status" id="mobileGpsStatus">
+      📍 GPS Active
+    </div>
+  </div>
+
+  <!-- Global Geocoding Progress Indicator -->
+  <div id="globalGeocodingProgress" class="global-progress-overlay">
+    <div class="global-progress-content">
+      <div class="global-progress-header">
+        <span class="global-progress-title">🌍 Geocoding Addresses</span>
+        <span class="global-progress-stats" id="globalProgressStats">0/0 (0%)</span>
+      </div>
+      <div class="global-progress-bar-wrapper">
+        <div class="global-progress-bar" id="globalProgressBar"></div>
+      </div>
+      <div class="global-progress-details">
+        <span id="globalProgressStatus">Preparing addresses...</span>
+        <span class="global-progress-eta" id="globalProgressEta"></span>
+      </div>
     </div>
   </div>
 
@@ -237,6 +383,21 @@
             <!-- Column selection dropdowns will be inserted here -->
           </div>
           
+          <!-- Progress Container -->
+          <div id="geocodingProgress" class="progress-container">
+            <div class="progress-header">
+              <span class="progress-title">🌍 Geocoding Addresses</span>
+              <span class="progress-stats" id="progressStats">0/0 (0%)</span>
+            </div>
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-details">
+              <span id="progressStatus">Preparing addresses...</span>
+              <span class="progress-eta" id="progressEta"></span>
+            </div>
+          </div>
+          
           <div style="display: flex; gap: 12px; justify-content: space-between;">
             <button type="button" id="backToUploadBtn" class="secondary-btn">← Back</button>
             <div style="display: flex; gap: 8px;">
@@ -306,5 +467,6 @@
   <script src="js/excel-data-table.js"></script>
   <script src="js/excel-operations.js"></script>
   <script src="js/excel-history.js"></script>
+  <script src="js/mobile-navigation.js"></script>
 </body>
 </html>

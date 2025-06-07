@@ -239,7 +239,13 @@ function processColumnMapping(headers, dataRows, addressFieldPrompt) {
 
       if (currentlyDisplayedItems.length > 0) {
         showMessage('Geocoding addresses...', 'info');
-        geocodeAddresses(currentlyDisplayedItems)
+        
+        // Use global progress function if available
+        const geocodeFunction = typeof geocodeAddressesWithProgress === 'function' 
+          ? geocodeAddressesWithProgress 
+          : geocodeAddresses;
+          
+        geocodeFunction(currentlyDisplayedItems)
           .then(geocodedItems => {
             allExcelItems = geocodedItems;
             currentlyDisplayedItems = [...allExcelItems];

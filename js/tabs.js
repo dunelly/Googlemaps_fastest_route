@@ -587,11 +587,25 @@ async function handleGoogleSheetLoad() {
     
     console.log('[google-sheets] Processed data - Headers:', headers.length, 'Data rows:', dataRows.length);
     
+    // Generate a meaningful filename for the Google Sheet
+    let fileName;
+    try {
+      // Use the sheet ID as part of the filename for better identification
+      const shortId = sheetId.substring(0, 8);
+      const timestamp = new Date().toLocaleDateString();
+      
+      // Create a default name with sheet ID - no popup interruption
+      fileName = `Google Sheet (${shortId}...) - ${timestamp}`;
+    } catch (error) {
+      console.warn('[google-sheets] Could not generate filename:', error);
+      fileName = `Google Sheets (${new Date().toLocaleDateString()})`;
+    }
+    
     // Store data for later processing
     window.currentUploadData = { 
       headers, 
       dataRows, 
-      fileName: `Google Sheets (${new Date().toLocaleDateString()})` 
+      fileName: fileName 
     };
     
     // Show column mapping step
@@ -689,32 +703,7 @@ function showColumnMappingStep(headers) {
   }
 }
 
-// Generate column mapping HTML
-function generateColumnMappingHTML(headers) {
-  const fields = [
-    { id: 'addressColSelect', label: 'Address', required: true },
-    { id: 'cityColSelect', label: 'City (Optional)', required: false },
-    { id: 'stateColSelect', label: 'State (Optional)', required: false },
-    { id: 'firstNameColSelect', label: 'First Name (Optional)', required: false },
-    { id: 'lastNameColSelect', label: 'Last Name (Optional)', required: false },
-    { id: 'auctionDateColSelect', label: 'Auction Date (Optional)', required: false }
-  ];
-  
-  return fields.map(field => {
-    const options = field.required 
-      ? headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')
-      : `<option value="">(none)</option>${headers.map((h, i) => `<option value="${i}">${h}</option>`).join('')}`;
-    
-    return `
-      <div class="column-mapping-row">
-        <label class="column-mapping-label">${field.label}${field.required ? ' *' : ''}</label>
-        <select id="${field.id}" class="column-mapping-select">
-          ${options}
-        </select>
-      </div>
-    `;
-  }).join('');
-}
+// Note: generateColumnMappingHTML function is now defined after the smart detection algorithm
 
 // Apply saved column preset
 function applySavedColumnPreset() {
@@ -847,7 +836,9 @@ function processModalColumnMapping(headers, dataRows, selects) {
       if (auctionDateCol !== null) {
         const auctionDateValue = row[auctionDateCol];
         if (auctionDateValue) {
-          item.auctionDate = auctionDateValue.toString();
+          item.auctionDateRaw = auctionDateValue;
+          item.auctionDateFormatted = typeof formatDate === 'function' ? formatDate(auctionDateValue) : auctionDateValue.toString();
+          item.auctionDate = item.auctionDateFormatted; // For backwards compatibility
         }
       }
 
@@ -940,10 +931,10 @@ async function autoLoadAddressesOnMap(processedData) {
         showMessage(`Geocoding ${addressesNeedingGeocode.length} addresses for map display...`, 'info');
       }
       
-      // Geocode missing coordinates
+      // Geocode missing coordinates with progress
       if (typeof geocodeAddresses === 'function') {
         try {
-          const geocodedItems = await geocodeAddresses(processedData);
+          const geocodedItems = await geocodeAddressesWithProgress(processedData);
           
           // Update the global data with geocoded coordinates
           if (typeof updateAllExcelItems === 'function') {
@@ -1043,3 +1034,227 @@ window.initializePlanRouteButtons = initializePlanRouteButtons;
 window.showModal = showModal;
 window.hideModal = hideModal;
 window.hideAllModals = hideAllModals;
+
+// Progress Management Functions
+function showGeocodingProgress() {
+  // Show global progress indicator
+  const globalProgressContainer = document.getElementById('globalGeocodingProgress');
+  if (globalProgressContainer) {
+    globalProgressContainer.classList.add('active');
+  }
+  
+  // Also show modal progress if modal is open
+  const modalProgressContainer = document.getElementById('geocodingProgress');
+  if (modalProgressContainer) {
+    modalProgressContainer.classList.add('active');
+  }
+}
+
+function hideGeocodingProgress() {
+  // Hide global progress indicator
+  const globalProgressContainer = document.getElementById('globalGeocodingProgress');
+  if (globalProgressContainer) {
+    globalProgressContainer.classList.remove('active');
+  }
+  
+  // Also hide modal progress
+  const modalProgressContainer = document.getElementById('geocodingProgress');
+  if (modalProgressContainer) {
+    modalProgressContainer.classList.remove('active');
+  }
+}
+
+function updateGeocodingProgress(progressData) {
+  // Update global progress indicator
+  const globalProgressStats = document.getElementById('globalProgressStats');
+  const globalProgressBar = document.getElementById('globalProgressBar');
+  const globalProgressStatus = document.getElementById('globalProgressStatus');
+  const globalProgressEta = document.getElementById('globalProgressEta');
+  
+  if (globalProgressStats) {
+    globalProgressStats.textContent = `${progressData.processed}/${progressData.total} (${progressData.percentage}%)`;
+  }
+  
+  if (globalProgressBar) {
+    globalProgressBar.style.width = `${progressData.percentage}%`;
+  }
+  
+  if (globalProgressStatus) {
+    globalProgressStatus.textContent = progressData.status;
+  }
+  
+  if (globalProgressEta) {
+    globalProgressEta.textContent = progressData.eta || '';
+  }
+  
+  // Also update modal progress if elements exist
+  const modalProgressStats = document.getElementById('progressStats');
+  const modalProgressBar = document.getElementById('progressBar');
+  const modalProgressStatus = document.getElementById('progressStatus');
+  const modalProgressEta = document.getElementById('progressEta');
+  
+  if (modalProgressStats) {
+    modalProgressStats.textContent = `${progressData.processed}/${progressData.total} (${progressData.percentage}%)`;
+  }
+  
+  if (modalProgressBar) {
+    modalProgressBar.style.width = `${progressData.percentage}%`;
+  }
+  
+  if (modalProgressStatus) {
+    modalProgressStatus.textContent = progressData.status;
+  }
+  
+  if (modalProgressEta) {
+    modalProgressEta.textContent = progressData.eta || '';
+  }
+}
+
+// Enhanced geocoding with progress
+async function geocodeAddressesWithProgress(itemsArray) {
+  showGeocodingProgress();
+  
+  const progressCallback = (data) => {
+    updateGeocodingProgress(data);
+  };
+  
+  try {
+    const result = await geocodeAddresses(itemsArray, progressCallback);
+    
+    // Keep progress visible for a moment to show completion
+    setTimeout(() => {
+      hideGeocodingProgress();
+    }, 2000);
+    
+    return result;
+  } catch (error) {
+    hideGeocodingProgress();
+    throw error;
+  }
+}
+
+// Smart Column Detection Algorithm
+function detectColumnMapping(headers) {
+  const columnPatterns = {
+    address: {
+      patterns: ['address', 'street', 'addr', 'location', 'property', 'full_address', 'street_address', 'property_address', 'mailing_address'],
+      confidence: 'high'
+    },
+    city: {
+      patterns: ['city', 'town', 'municipality', 'locale', 'city_name'],
+      confidence: 'high'
+    },
+    state: {
+      patterns: ['state', 'province', 'st', 'region', 'state_code'],
+      confidence: 'high'
+    },
+    firstName: {
+      patterns: ['first_name', 'firstname', 'first', 'fname', 'given_name', 'forename', 'given'],
+      confidence: 'medium'
+    },
+    lastName: {
+      patterns: ['last_name', 'lastname', 'last', 'lname', 'surname', 'family_name', 'family'],
+      confidence: 'medium'
+    },
+    auctionDate: {
+      patterns: ['auction', 'date', 'sale', 'scheduled', 'event', 'auction_date', 'sale_date', 'auction_day', 'event_date', 'auction_dt'],
+      confidence: 'medium'
+    }
+  };
+  
+  const detectedMapping = {};
+  const usedIndices = new Set();
+  
+  // Helper function to calculate match score
+  function calculateMatchScore(header, patterns) {
+    const headerLower = header.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    for (const pattern of patterns) {
+      const patternLower = pattern.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      // Exact match
+      if (headerLower === patternLower) return 100;
+      
+      // Contains pattern
+      if (headerLower.includes(patternLower)) return 80;
+      
+      // Pattern contains header (for short headers like "addr")
+      if (patternLower.includes(headerLower) && headerLower.length >= 3) return 60;
+      
+      // Fuzzy match for common abbreviations
+      if (headerLower.includes('addr') && patternLower.includes('address')) return 70;
+      if (headerLower.includes('st') && patternLower.includes('state') && headerLower.length <= 5) return 70;
+      if (headerLower.includes('nm') && patternLower.includes('name')) return 60;
+    }
+    
+    return 0;
+  }
+  
+  // Detect each column type
+  Object.keys(columnPatterns).forEach(columnType => {
+    let bestMatch = { index: -1, score: 0, confidence: 'low' };
+    
+    headers.forEach((header, index) => {
+      if (usedIndices.has(index)) return; // Skip already used headers
+      
+      const score = calculateMatchScore(header, columnPatterns[columnType].patterns);
+      if (score > bestMatch.score && score >= 50) { // Minimum confidence threshold
+        bestMatch = {
+          index,
+          score,
+          confidence: score >= 80 ? 'high' : score >= 60 ? 'medium' : 'low',
+          header: header
+        };
+      }
+    });
+    
+    if (bestMatch.index >= 0) {
+      detectedMapping[columnType] = bestMatch;
+      usedIndices.add(bestMatch.index);
+    }
+  });
+  
+  return detectedMapping;
+}
+
+// Generate column mapping HTML with silent auto-detection
+function generateColumnMappingHTML(headers) {
+  // Silently detect column mappings in background
+  const detectedMapping = detectColumnMapping(headers);
+  
+  const fields = [
+    { id: 'addressColSelect', label: 'Address', required: true, type: 'address' },
+    { id: 'cityColSelect', label: 'City (Optional)', required: false, type: 'city' },
+    { id: 'stateColSelect', label: 'State (Optional)', required: false, type: 'state' },
+    { id: 'firstNameColSelect', label: 'First Name (Optional)', required: false, type: 'firstName' },
+    { id: 'lastNameColSelect', label: 'Last Name (Optional)', required: false, type: 'lastName' },
+    { id: 'auctionDateColSelect', label: 'Auction Date (Optional)', required: false, type: 'auctionDate' }
+  ];
+  
+  // Generate clean HTML with auto-detected selections (but no visual indicators)
+  return fields.map(field => {
+    const detection = detectedMapping[field.type];
+    const isDetected = detection && detection.index >= 0;
+    
+    // Build options with detected selection
+    const options = field.required 
+      ? headers.map((h, i) => `<option value="${i}" ${isDetected && detection.index === i ? 'selected' : ''}>${h}</option>`).join('')
+      : `<option value="" ${!isDetected ? 'selected' : ''}>(none)</option>${headers.map((h, i) => `<option value="${i}" ${isDetected && detection.index === i ? 'selected' : ''}>${h}</option>`).join('')}`;
+    
+    return `
+      <div class="column-mapping-row">
+        <label class="column-mapping-label">${field.label}${field.required ? ' *' : ''}</label>
+        <select id="${field.id}" class="column-mapping-select">
+          ${options}
+        </select>
+      </div>
+    `;
+  }).join('');
+}
+
+// Make progress functions globally available
+window.showGeocodingProgress = showGeocodingProgress;
+window.hideGeocodingProgress = hideGeocodingProgress;
+window.updateGeocodingProgress = updateGeocodingProgress;
+window.geocodeAddressesWithProgress = geocodeAddressesWithProgress;
+window.detectColumnMapping = detectColumnMapping;

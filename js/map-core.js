@@ -61,20 +61,96 @@ function initializeGeocoding() {
   // This function is here for completeness and future geocoding features
 }
 
-async function geocodeAddresses(itemsArray) {
+async function geocodeAddresses(itemsArray, progressCallback = null) {
   const apiKey = "AIzaSyAq-_o7JolKDWy943Q-dejkoqzPvJKIV2k"; 
   const cache = JSON.parse(localStorage.getItem("geocodeCache") || "{}");
   
-  for (const item of itemsArray) {
-    if (typeof item.lat === 'number' && typeof item.lng === 'number' && item.lat !== null && item.lng !== null) continue;
+  // Count addresses that need geocoding
+  const addressesToGeocode = itemsArray.filter(item => {
+    if (typeof item.lat === 'number' && typeof item.lng === 'number' && item.lat !== null && item.lng !== null) return false;
+    return !cache[item.address];
+  });
+  
+  const totalAddresses = itemsArray.length;
+  const totalToGeocode = addressesToGeocode.length;
+  let processed = 0;
+  let geocoded = 0;
+  let cached = 0;
+  let failed = 0;
+  
+  const startTime = Date.now();
+  
+  // Initial progress update
+  if (progressCallback) {
+    progressCallback({
+      processed: 0,
+      total: totalAddresses,
+      geocoded: 0,
+      cached: 0,
+      failed: 0,
+      percentage: 0,
+      status: 'Starting geocoding...',
+      eta: null
+    });
+  }
+  
+  for (let i = 0; i < itemsArray.length; i++) {
+    const item = itemsArray[i];
+    processed++;
     
-    const addressToGeocode = item.address;
-    if (cache[addressToGeocode]) {
-      item.lat = cache[addressToGeocode].lat;
-      item.lng = cache[addressToGeocode].lng;
+    // Skip if already has coordinates
+    if (typeof item.lat === 'number' && typeof item.lng === 'number' && item.lat !== null && item.lng !== null) {
+      // Update progress for skipped items
+      if (progressCallback && processed % 5 === 0) {
+        const elapsed = Date.now() - startTime;
+        const rate = processed / elapsed * 1000; // items per second
+        const remaining = totalAddresses - processed;
+        const eta = remaining > 0 ? Math.round(remaining / rate) : 0;
+        
+        progressCallback({
+          processed,
+          total: totalAddresses,
+          geocoded,
+          cached,
+          failed,
+          percentage: Math.round((processed / totalAddresses) * 100),
+          status: `Processing address ${processed}/${totalAddresses}...`,
+          eta: eta > 0 ? `${eta}s remaining` : null
+        });
+      }
       continue;
     }
     
+    const addressToGeocode = item.address;
+    
+    // Check cache first
+    if (cache[addressToGeocode]) {
+      item.lat = cache[addressToGeocode].lat;
+      item.lng = cache[addressToGeocode].lng;
+      cached++;
+      
+      // Update progress for cached items
+      if (progressCallback && processed % 5 === 0) {
+        const elapsed = Date.now() - startTime;
+        const rate = processed / elapsed * 1000;
+        const remaining = totalAddresses - processed;
+        const eta = remaining > 0 ? Math.round(remaining / rate) : 0;
+        
+        progressCallback({
+          processed,
+          total: totalAddresses,
+          geocoded,
+          cached,
+          failed,
+          percentage: Math.round((processed / totalAddresses) * 100),
+          status: `Found cached: ${addressToGeocode.substring(0, 30)}...`,
+          eta: eta > 0 ? `${eta}s remaining` : null
+        });
+      }
+      continue;
+    }
+    
+    // Geocode using API
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressToGeocode)}&key=${apiKey}`;
     try {
       const resp = await fetch(url);
@@ -84,20 +160,59 @@ async function geocodeAddresses(itemsArray) {
         item.lat = loc.lat;
         item.lng = loc.lng;
         cache[addressToGeocode] = { lat: loc.lat, lng: loc.lng };
+        geocoded++;
       } else {
         item.lat = null;
         item.lng = null;
+        failed++;
         console.warn('Failed geocode:', addressToGeocode, data.status);
       }
     } catch (err) {
       item.lat = null;
       item.lng = null;
+      failed++;
       console.error('Fetch error geocoding:', addressToGeocode, err);
     }
-    await new Promise(res => setTimeout(res, 60));
+    
+    // Update progress every few items or on important milestones
+    if (progressCallback && (processed % 3 === 0 || processed === totalAddresses)) {
+      const elapsed = Date.now() - startTime;
+      const rate = processed / elapsed * 1000;
+      const remaining = totalAddresses - processed;
+      const eta = remaining > 0 ? Math.round(remaining / rate) : 0;
+      
+      progressCallback({
+        processed,
+        total: totalAddresses,
+        geocoded,
+        cached,
+        failed,
+        percentage: Math.round((processed / totalAddresses) * 100),
+        status: processed < totalAddresses ? `Geocoding: ${addressToGeocode.substring(0, 30)}...` : 'Completing...',
+        eta: eta > 0 ? `${eta}s remaining` : null
+      });
+    }
+    
+    // Rate limiting - shorter delay for better UX
+    await new Promise(res => setTimeout(res, 50));
   }
   
   localStorage.setItem("geocodeCache", JSON.stringify(cache));
+  
+  // Final progress update
+  if (progressCallback) {
+    progressCallback({
+      processed: totalAddresses,
+      total: totalAddresses,
+      geocoded,
+      cached,
+      failed,
+      percentage: 100,
+      status: `Complete! ${geocoded} geocoded, ${cached} cached, ${failed} failed`,
+      eta: null
+    });
+  }
+  
   return itemsArray; 
 }
 

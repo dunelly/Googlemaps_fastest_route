@@ -263,7 +263,12 @@ function renderExcelHistoryList() {
     
     const htmlContent = files.map(file => `
       <div class="excel-file-item">
-        <div class="excel-file-name">${file.fileName}</div>
+        <div class="excel-file-name">
+          <span class="file-name-text" id="fileName_${file.id}">${file.fileName}</span>
+          <button type="button" class="rename-icon-btn" onclick="startRenameFile('${file.id}')" style="background: none; border: none; font-size: 0.7rem; padding: 2px 4px; margin-left: 6px; cursor: pointer; opacity: 0.6; border-radius: 3px;" title="Rename file">
+            ✏️
+          </button>
+        </div>
         <div class="excel-file-meta">
           Uploaded: ${new Date(file.uploadDate).toLocaleDateString()}<br>
           Addresses: ${file.addressCount}
@@ -329,6 +334,111 @@ function populateExcelHistory() {
   }
 }
 
+// File rename functionality
+function startRenameFile(fileId) {
+  console.log('[excel-history] Starting rename for file:', fileId);
+  
+  const file = savedExcelFiles[fileId];
+  if (!file) {
+    console.error('[excel-history] File not found for rename:', fileId);
+    return;
+  }
+  
+  const fileNameSpan = document.getElementById(`fileName_${fileId}`);
+  if (!fileNameSpan) {
+    console.error('[excel-history] File name span not found:', fileId);
+    return;
+  }
+  
+  const currentName = file.fileName;
+  
+  // Create input field for editing
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = currentName;
+  input.className = 'rename-input';
+  input.style.cssText = `
+    width: 100%;
+    padding: 4px 8px;
+    border: 2px solid #4285F4;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: #fff;
+    outline: none;
+  `;
+  
+  // Replace span with input
+  fileNameSpan.style.display = 'none';
+  fileNameSpan.parentNode.insertBefore(input, fileNameSpan);
+  input.focus();
+  input.select();
+  
+  // Handle save/cancel
+  function saveRename() {
+    const newName = input.value.trim();
+    if (newName && newName !== currentName) {
+      updateFileName(fileId, newName);
+    }
+    finishRename();
+  }
+  
+  function finishRename() {
+    input.remove();
+    fileNameSpan.style.display = 'inline';
+  }
+  
+  // Event listeners
+  input.addEventListener('blur', saveRename);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      finishRename();
+    }
+  });
+}
+
+// Update file name in storage
+async function updateFileName(fileId, newName) {
+  try {
+    console.log('[excel-history] Updating file name:', fileId, 'to:', newName);
+    
+    if (!savedExcelFiles[fileId]) {
+      console.error('[excel-history] File not found for update:', fileId);
+      return;
+    }
+    
+    // Update local data
+    savedExcelFiles[fileId].fileName = newName;
+    window.savedExcelFiles = savedExcelFiles;
+    
+    // Update in Firebase if user is signed in
+    if (excelHistoryCurrentUser && typeof FirebaseUtils !== 'undefined') {
+      await FirebaseUtils.saveUserData('excelHistory', fileId, savedExcelFiles[fileId]);
+      console.log('[excel-history] File name updated in Firebase');
+    }
+    
+    // Update the display
+    const fileNameSpan = document.getElementById(`fileName_${fileId}`);
+    if (fileNameSpan) {
+      fileNameSpan.textContent = newName;
+    }
+    
+    if (typeof showMessage === 'function') {
+      showMessage(`File renamed to "${newName}"`, 'success');
+    }
+    
+  } catch (error) {
+    console.error('[excel-history] Error updating file name:', error);
+    if (typeof showMessage === 'function') {
+      showMessage('Failed to rename file: ' + error.message, 'error');
+    }
+  }
+}
+
 // Make functions globally available
 window.saveExcelData = saveExcelData;
 window.openExcelHistory = openExcelHistory;
@@ -336,6 +446,8 @@ window.closeExcelDataPanel = closeExcelDataPanel;
 window.renderExcelHistoryList = renderExcelHistoryList;
 window.populateExcelHistory = populateExcelHistory;
 window.closeExcelHistory = closeExcelHistory;
+window.startRenameFile = startRenameFile;
+window.updateFileName = updateFileName;
 
 // Initialize when DOM is ready
 function safeInitialize() {

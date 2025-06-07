@@ -50,10 +50,10 @@ async function loadExcelAddresses(excelId) {
         showMessage(`Geocoding ${addressesNeedingGeocode.length} addresses...`, 'info');
       }
       
-      // Geocode missing coordinates
-      if (typeof geocodeAddresses === 'function') {
+      // Geocode missing coordinates with progress
+      if (typeof geocodeAddressesWithProgress === 'function') {
         try {
-          const geocodedItems = await geocodeAddresses(window.currentlyDisplayedItems);
+          const geocodedItems = await geocodeAddressesWithProgress(window.currentlyDisplayedItems);
           updateAllExcelItems(geocodedItems);
           updateCurrentlyDisplayedItems([...geocodedItems]);
           
