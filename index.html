@@ -148,11 +148,32 @@
 
   <!-- Mobile Navigation Interface -->
   <div class="mobile-navigation-mode">
+    <!-- Mobile Authentication Button (replacement for desktop auth) -->
+    <button class="mobile-auth-button" id="mobileAuthButton" style="display: none;">
+      👤 Sign In
+    </button>
+
+    <!-- Mobile Settings Menu -->
+    <div class="mobile-settings-menu" id="mobileSettingsMenu">
+      <div class="mobile-settings-item" id="mobileAuthMenuItem">
+        <span>👤</span> <span id="mobileAuthText">Sign In</span>
+      </div>
+      <div class="mobile-settings-item" id="mobileViewDataItem">
+        <span>📊</span> <span>View Data</span>
+      </div>
+      <div class="mobile-settings-item" id="mobileDesktopModeItem">
+        <span>🖥️</span> <span>Desktop Mode</span>
+      </div>
+      <div class="mobile-settings-item" id="mobileHelpItem">
+        <span>❓</span> <span>Help</span>
+      </div>
+    </div>
+
     <div class="mobile-nav-container">
       <!-- Navigation Header -->
       <div class="mobile-nav-header">
         <div class="mobile-nav-progress">
-          <span id="mobileProgressText">Stop 3 of 12 • 47% Complete</span>
+          <span id="mobileProgressText">DEMO MODE: Stop 3 of 12 • 47% Complete</span>
         </div>
         <div class="mobile-nav-progress-bar">
           <div class="mobile-nav-progress-fill" id="mobileProgressFill" style="width: 47%"></div>
@@ -185,13 +206,22 @@
         <!-- Primary Navigation Controls -->
         <div class="mobile-nav-primary-controls">
           <button class="mobile-nav-btn mobile-nav-btn-previous" id="mobilePreviousBtn">
-            ◀<br><span style="font-size: 11px;">PREVIOUS</span>
+            <div style="text-align: center;">
+              <div style="font-size: 18px;">◀</div>
+              <div style="font-size: 12px; margin-top: 2px;">PREVIOUS</div>
+            </div>
           </button>
           <button class="mobile-nav-btn mobile-nav-btn-checkin" id="mobileCheckInBtn">
-            ✅<br><span style="font-size: 11px;">CHECK IN</span>
+            <div style="text-align: center;">
+              <div style="font-size: 18px;">✓</div>
+              <div style="font-size: 12px; margin-top: 2px;">CHECK IN</div>
+            </div>
           </button>
           <button class="mobile-nav-btn mobile-nav-btn-next" id="mobileNextBtn">
-            ▶<br><span style="font-size: 11px;">NEXT</span>
+            <div style="text-align: center;">
+              <div style="font-size: 18px;">▶</div>
+              <div style="font-size: 12px; margin-top: 2px;">NEXT</div>
+            </div>
           </button>
         </div>
 
@@ -203,13 +233,13 @@
         <!-- Secondary Controls -->
         <div class="mobile-nav-secondary-controls">
           <button class="mobile-secondary-btn" id="mobileNotesBtn">
-            📝 Notes
+            📝 Add Notes
           </button>
           <button class="mobile-secondary-btn" id="mobileSkipBtn">
-            ⏭️ Skip
+            ⏭️ Skip Stop
           </button>
           <button class="mobile-secondary-btn" id="mobileMenuBtn">
-            ⚙️ Menu
+            ⚙️ Settings
           </button>
         </div>
       </div>

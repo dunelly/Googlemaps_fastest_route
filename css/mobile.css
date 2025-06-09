@@ -1,0 +1,424 @@
+/* Mobile Navigation CSS - Document Preview Style */
+/* SmashRoutes Mobile Interface - Clean, Professional Design */
+
+/* Mobile Detection & Interface Control */
+@media (max-width: 768px) {
+  /* Hide desktop interface on mobile */
+  .desktop-interface,
+  .left-panel,
+  .right-panel,
+  .tab-content:not(.mobile-interface) {
+    display: none !important;
+  }
+  
+  /* Show mobile interface */
+  .mobile-interface {
+    display: block !important;
+  }
+}
+
+/* Mobile Interface Foundation */
+.mobile-interface {
+  display: none; /* Hidden by default, shown on mobile */
+  width: 100vw;
+  height: 100vh;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* Mobile Tab System */
+.mobile-tabs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: white;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.mobile-tab-header {
+  display: flex;
+  height: 56px;
+  align-items: center;
+}
+
+.mobile-tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  height: 100%;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mobile-tab-btn.active {
+  color: #007bff;
+}
+
+.mobile-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: #007bff;
+  border-radius: 3px 3px 0 0;
+}
+
+.mobile-tab-btn:active {
+  background: rgba(0,123,255,0.05);
+}
+
+/* Mobile Tab Content */
+.mobile-tab-content {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8f9fa;
+}
+
+.mobile-tab-pane {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-tab-pane.active {
+  display: block;
+}
+
+/* Route Navigation Tab */
+.mobile-route-tab {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+.mobile-map-container #map {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0;
+}
+
+/* Document-Style Destination Card */
+.destination-card {
+  position: absolute;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  z-index: 1001;
+  
+  /* Document preview styling */
+  background: white;
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 24px rgba(0,0,0,0.12),
+    0 2px 6px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.06);
+  
+  /* Document layered effect */
+  background-image: 
+    linear-gradient(135deg, transparent 8px, white 8px),
+    linear-gradient(225deg, transparent 8px, rgba(0,0,0,0.02) 8px);
+  
+  padding: 20px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Disable clicks when hidden */
+  pointer-events: none;
+}
+
+.destination-card.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto; /* Enable clicks when visible */
+}
+
+/* Card Header */
+.destination-header {
+  margin-bottom: 16px;
+}
+
+.destination-progress {
+  font-size: 14px;
+  font-weight: 600;
+  color: #007bff;
+  margin-bottom: 4px;
+  letter-spacing: 0.2px;
+}
+
+.destination-address {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.destination-details {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Navigation Controls */
+.destination-controls {
+  margin-top: 20px;
+}
+
+.control-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Button Styling - Document Style */
+.mobile-nav-btn {
+  flex: 1;
+  height: 48px;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 8px;
+  background: white;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  /* Subtle document-like shadow */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.mobile-nav-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.mobile-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary Navigation Button */
+.mobile-nav-btn.primary {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+  font-weight: 600;
+}
+
+.mobile-nav-btn.primary:active {
+  background: #0056b3;
+}
+
+/* Complete Button */
+.mobile-nav-btn.complete {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.mobile-nav-btn.complete:active {
+  background: #1e7e34;
+}
+
+/* Files Tab */
+.mobile-files-tab {
+  padding: 20px 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.mobile-files-header {
+  margin-bottom: 24px;
+}
+
+.mobile-files-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.mobile-files-subtitle {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* File List - Document Style Cards */
+.mobile-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-file-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 
+    0 2px 8px rgba(0,0,0,0.08),
+    0 1px 3px rgba(0,0,0,0.04);
+  
+  /* Document corner fold effect */
+  position: relative;
+  background-image: 
+    linear-gradient(135deg, transparent 12px, white 12px);
+}
+
+.mobile-file-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: 
+    linear-gradient(225deg, transparent 50%, rgba(0,0,0,0.03) 50%);
+}
+
+.mobile-file-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.mobile-file-details {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.mobile-file-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.mobile-file-btn {
+  flex: 1;
+  height: 44px;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.mobile-file-btn.primary {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.mobile-file-btn:active {
+  transform: translateY(1px);
+}
+
+/* Loading States */
+.mobile-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+.mobile-loading::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e9ecef;
+  border-top-color: #007bff;
+  border-radius: 50%;
+  margin-right: 12px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile Create Route Button */
+.mobile-create-route-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  z-index: 1002; /* Higher than destination card */
+  
+  /* Hidden by default, shown when addresses loaded */
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Ensure it doesn't interfere when hidden */
+  pointer-events: none;
+}
+
+.mobile-create-route-btn.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto; /* Enable clicks when visible */
+}
+
+.mobile-create-route-btn .mobile-nav-btn {
+  width: 100%;
+  height: 56px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 12px;
+  
+  /* Enhanced button styling */
+  box-shadow: 
+    0 4px 12px rgba(0,123,255,0.3),
+    0 2px 6px rgba(0,123,255,0.15);
+}
+
+.mobile-create-route-btn .mobile-nav-btn:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 2px 8px rgba(0,123,255,0.3),
+    0 1px 3px rgba(0,123,255,0.15);
+}
+
+/* Hide desktop route creation button on mobile */
+@media (max-width: 768px) {
+  #createRouteBtn {
+    display: none !important;
+  }
+}

@@ -18,6 +18,54 @@ body.force-mobile .mobile-navigation-mode {
   display: block !important;
 }
 
+/* Testing and debugging utilities */
+.mobile-debug-info {
+  position: fixed;
+  bottom: 60px;
+  left: 16px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  z-index: 2000;
+  display: none;
+}
+
+.mobile-debug-info.visible {
+  display: block;
+}
+
+/* Mobile overlay fix verification */
+.mobile-overlay-test-passed::before {
+  content: "✅ Mobile Overlay Fix Applied";
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #28a745;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 3000;
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body.mobile-overlay-test-passed::before {
+    display: block;
+    animation: slideInFadeOut 3s ease;
+  }
+}
+
+@keyframes slideInFadeOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
 /* Mobile-First Media Query */
 @media (max-width: 768px) {
   /* Hide desktop interface on mobile */
@@ -28,6 +76,35 @@ body.force-mobile .mobile-navigation-mode {
   /* Show mobile navigation interface */
   .mobile-navigation-mode {
     display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    background: #f8f9fa !important;
+  }
+  
+  /* AGGRESSIVE OVERLAY FIXES - Hide ALL desktop elements */
+  #subtle-login-bar,
+  #firebaseui-auth-card,
+  .sign-in-link,
+  #user-info,
+  #user-email,
+  #excel-history-btn,
+  #logout-btn,
+  #show-login-btn,
+  .tab-navigation,
+  .tab-button,
+  #planRouteTab,
+  #manageFilesTab {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    z-index: -9999 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
   }
   
   /* Override existing mobile styles for navigation mode */
@@ -55,6 +132,112 @@ body.force-mobile .mobile-navigation-mode {
     height: 100%;
     min-height: 300px;
   }
+
+  /* ===== CRITICAL OVERLAY FIXES ===== */
+  
+  /* Hide desktop authentication elements that cause overlays */
+  #subtle-login-bar,
+  #firebaseui-auth-card,
+  #show-login-btn,
+  #user-info,
+  #logout-btn,
+  #excel-history-btn {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  
+  /* Hide desktop modal overlays on mobile */
+  .modal-overlay,
+  #pasteAddressesModal,
+  #uploadFileModal,
+  #notesOverlay {
+    display: none !important;
+    visibility: hidden !important;
+    z-index: -1 !important;
+  }
+  
+  /* Allow authentication modal to show on mobile when needed */
+  #firebaseui-auth-card.mobile-auth-enabled {
+    display: block !important;
+    visibility: visible !important;
+    z-index: 15000 !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+    width: 300px !important;
+    max-width: 90vw !important;
+  }
+  
+  /* Hide Excel history overlays and panels */
+  #excelHistoryOverlay,
+  #excelHistoryPanel,
+  #excelDataPanel,
+  .excel-history-overlay,
+  .excel-history-panel,
+  .excel-data-panel {
+    display: none !important;
+    visibility: hidden !important;
+    z-index: -1 !important;
+  }
+  
+  /* Hide legacy hidden elements that might interfere */
+  .legacy-hidden,
+  #messageArea,
+  #debugArea,
+  #googleSheetError,
+  #drawTooltip {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* Hide desktop progress indicators */
+  #globalGeocodingProgress,
+  .global-progress-overlay {
+    display: none !important;
+  }
+  
+  /* Force mobile-specific z-index stacking */
+  .mobile-navigation-mode {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .mobile-nav-container {
+    position: relative;
+    z-index: 10;
+  }
+  
+  /* Ensure mobile elements are always on top */
+  .mobile-nav-header {
+    z-index: 1000;
+  }
+  
+  .mobile-destination-card {
+    z-index: 100;
+  }
+  
+  .mobile-nav-controls {
+    z-index: 100;
+  }
+  
+  .mobile-map-container {
+    z-index: 50;
+  }
+  
+  .mobile-route-toggle {
+    z-index: 1001;
+  }
+  
+  .mobile-route-overview {
+    z-index: 2000;
+  }
+  
+  .mobile-gps-status {
+    z-index: 1001;
+  }
 }
 
 /* Mobile Navigation Interface */
@@ -62,7 +245,14 @@ body.force-mobile .mobile-navigation-mode {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 100vw;
   background: #f8f9fa;
+  font-size: 16px; /* Increased base font size for better mobile readability */
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999; /* Ensure mobile interface is always on top */
+  overflow: hidden;
 }
 
 /* Navigation Header */
@@ -76,7 +266,7 @@ body.force-mobile .mobile-navigation-mode {
 }
 
 .mobile-nav-progress {
-  font-size: 14px;
+  font-size: 16px; /* Increased from 14px for better readability */
   font-weight: 600;
   text-align: center;
   margin-bottom: 8px;
@@ -118,7 +308,7 @@ body.force-mobile .mobile-navigation-mode {
 }
 
 .mobile-destination-address {
-  font-size: 18px;
+  font-size: 20px; /* Increased from 18px for better prominence */
   font-weight: 700;
   color: #1a2330;
   margin-bottom: 8px;
@@ -127,7 +317,7 @@ body.force-mobile .mobile-navigation-mode {
 
 .mobile-destination-details {
   color: #6c757d;
-  font-size: 14px;
+  font-size: 16px; /* Increased from 14px for better readability */
   margin-bottom: 4px;
 }
 
@@ -158,11 +348,11 @@ body.force-mobile .mobile-navigation-mode {
 
 .mobile-nav-btn {
   flex: 1;
-  height: 60px;
+  height: 70px; /* Increased from 60px for better touch targets */
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px; /* Increased from 14px for better readability */
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -170,6 +360,7 @@ body.force-mobile .mobile-navigation-mode {
   justify-content: center;
   gap: 4px;
   min-height: 44px; /* Apple touch target minimum */
+  padding: 8px 4px; /* Added padding for better text layout */
 }
 
 .mobile-nav-btn-previous {
@@ -251,18 +442,20 @@ body.force-mobile .mobile-navigation-mode {
 
 .mobile-secondary-btn {
   flex: 1;
-  height: 44px;
+  height: 48px; /* Increased from 44px for better touch targets */
   background: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 8px;
   color: #495057;
   font-weight: 500;
+  font-size: 14px; /* Explicit font size for consistency */
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  padding: 0 8px; /* Added padding for better text layout */
 }
 
 .mobile-secondary-btn:hover {
@@ -563,4 +756,151 @@ body.force-mobile .mobile-navigation-mode {
 @keyframes swipeHint {
   0%, 90%, 100% { opacity: 0; }
   10%, 80% { opacity: 1; }
+}
+
+/* ===== MOBILE-SPECIFIC ELEMENTS ===== */
+
+/* Mobile Authentication Button (replacement for desktop auth) */
+.mobile-auth-button {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  z-index: 1500;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  min-height: 44px; /* Apple touch target minimum */
+  display: none; /* Hidden by default, show via JavaScript when needed */
+}
+
+.mobile-auth-button:hover,
+.mobile-auth-button:active {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Mobile Settings Menu */
+.mobile-settings-menu {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  z-index: 2500;
+  opacity: 0;
+  transform: translateY(20px) scale(0.9);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  min-width: 200px;
+}
+
+.mobile-settings-menu.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+.mobile-settings-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  font-size: 16px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  transition: background 0.2s ease;
+}
+
+.mobile-settings-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.mobile-settings-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.mobile-settings-item:hover,
+.mobile-settings-item:active {
+  background: #f8f9fa;
+}
+
+/* Touch interaction improvements */
+.mobile-nav-btn,
+.mobile-secondary-btn,
+.mobile-navigate-btn,
+.mobile-map-control-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Prevent accidental zoom on form inputs */
+input, textarea, select {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+}
+
+/* Safe area adjustments for notched devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .mobile-nav-header {
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+  
+  .mobile-auth-button {
+    top: calc(16px + env(safe-area-inset-top));
+  }
+  
+  .mobile-route-toggle {
+    top: calc(80px + env(safe-area-inset-top));
+  }
+  
+  .mobile-gps-status {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-nav-container {
+    flex-direction: row;
+  }
+  
+  .mobile-destination-card {
+    flex: 0 0 300px;
+    margin: 8px;
+    height: fit-content;
+  }
+  
+  .mobile-nav-controls {
+    flex: 0 0 300px;
+    margin: 0 8px 8px 8px;
+  }
+  
+  .mobile-map-container {
+    flex: 1;
+  }
+  
+  .mobile-nav-header {
+    writing-mode: horizontal-tb;
+    text-align: center;
+    padding: 8px 16px;
+  }
+  
+  .mobile-nav-progress {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
 }

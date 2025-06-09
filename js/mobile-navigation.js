@@ -80,11 +80,77 @@ class MobileNavigationController {
       if (mobileMode) mobileMode.style.display = 'block';
       document.body.classList.add('mobile-navigation-active');
       console.log('📱 Activated mobile navigation interface');
+      
+      // Verify overlay fix is working
+      this.verifyMobileOverlayFix();
     } else {
       if (desktopMode) desktopMode.style.display = 'flex';
       if (mobileMode) mobileMode.style.display = 'none';
       document.body.classList.remove('mobile-navigation-active');
       console.log('🖥️ Activated desktop planning interface');
+    }
+  }
+
+  /**
+   * Verify that mobile overlay fixes are working
+   */
+  verifyMobileOverlayFix() {
+    const elementsToCheck = [
+      '#subtle-login-bar',
+      '#firebaseui-auth-card',
+      '#excelHistoryOverlay',
+      '.modal-overlay'
+    ];
+    
+    let allHidden = true;
+    const visibleElements = [];
+    
+    elementsToCheck.forEach(selector => {
+      const element = document.querySelector(selector);
+      if (element) {
+        const styles = window.getComputedStyle(element);
+        if (styles.display !== 'none' && styles.visibility !== 'hidden') {
+          allHidden = false;
+          visibleElements.push(selector);
+        }
+      }
+    });
+    
+    if (allHidden) {
+      document.body.classList.add('mobile-overlay-test-passed');
+      console.log('✅ Mobile overlay fix verification: PASSED');
+    } else {
+      console.warn('⚠️ Mobile overlay fix verification: FAILED - Visible elements:', visibleElements);
+    }
+    
+    // Add debug info if needed
+    this.addMobileDebugInfo(allHidden, visibleElements);
+  }
+
+  /**
+   * Add mobile debug information
+   */
+  addMobileDebugInfo(overlayFixPassed, visibleElements) {
+    // Only show debug info if there are issues or if debug mode is enabled
+    const debugMode = window.location.search.includes('mobile-debug=true');
+    
+    if (!overlayFixPassed || debugMode) {
+      const debugInfo = document.createElement('div');
+      debugInfo.className = 'mobile-debug-info visible';
+      debugInfo.innerHTML = `
+        📱 Mobile Debug:<br>
+        Screen: ${window.innerWidth}x${window.innerHeight}<br>
+        Overlay Fix: ${overlayFixPassed ? '✅' : '❌'}<br>
+        ${visibleElements.length > 0 ? 'Visible: ' + visibleElements.join(', ') : ''}
+      `;
+      
+      document.body.appendChild(debugInfo);
+      
+      // Auto-hide after 10 seconds
+      setTimeout(() => {
+        debugInfo.classList.remove('visible');
+        setTimeout(() => debugInfo.remove(), 300);
+      }, 10000);
     }
   }
 
@@ -166,6 +232,12 @@ class MobileNavigationController {
     
     // GPS controls
     this.setupGPSControls();
+    
+    // Mobile settings menu
+    this.setupMobileSettingsMenu();
+    
+    // Set up Firebase auth state listener for mobile UI updates
+    this.setupMobileAuthStateListener();
   }
 
   /**
@@ -519,20 +591,247 @@ class MobileNavigationController {
   }
 
   openMobileMenu() {
-    // Could open settings, switch to desktop mode, etc.
     console.log('⚙️ Mobile menu opened');
     
-    // Simple menu for now
-    const options = [
-      'Switch to Desktop Mode',
-      'Settings',
-      'Help',
-      'Cancel'
-    ];
+    const settingsMenu = document.getElementById('mobileSettingsMenu');
+    if (settingsMenu) {
+      // Toggle the settings menu
+      const isActive = settingsMenu.classList.contains('active');
+      
+      if (isActive) {
+        settingsMenu.classList.remove('active');
+      } else {
+        settingsMenu.classList.add('active');
+        
+        // Close menu when clicking outside
+        setTimeout(() => {
+          document.addEventListener('click', this.closeMobileMenuOnClickOutside.bind(this), { once: true });
+        }, 100);
+      }
+    }
+  }
+
+  /**
+   * Close mobile menu when clicking outside
+   */
+  closeMobileMenuOnClickOutside(event) {
+    const settingsMenu = document.getElementById('mobileSettingsMenu');
+    const menuBtn = document.getElementById('mobileMenuBtn');
     
-    // Use native mobile menu or create custom modal
-    // For now, just log
-    console.log('Menu options:', options);
+    if (settingsMenu && !settingsMenu.contains(event.target) && event.target !== menuBtn) {
+      settingsMenu.classList.remove('active');
+    }
+  }
+
+  /**
+   * Handle mobile settings menu interactions
+   */
+  setupMobileSettingsMenu() {
+    // Authentication menu item
+    const authMenuItem = document.getElementById('mobileAuthMenuItem');
+    if (authMenuItem) {
+      authMenuItem.addEventListener('click', () => {
+        this.handleMobileAuth();
+        this.closeMobileSettingsMenu();
+      });
+    }
+
+    // View data menu item
+    const viewDataItem = document.getElementById('mobileViewDataItem');
+    if (viewDataItem) {
+      viewDataItem.addEventListener('click', () => {
+        this.handleViewData();
+        this.closeMobileSettingsMenu();
+      });
+    }
+
+    // Desktop mode menu item
+    const desktopModeItem = document.getElementById('mobileDesktopModeItem');
+    if (desktopModeItem) {
+      desktopModeItem.addEventListener('click', () => {
+        this.switchToDesktopMode();
+        this.closeMobileSettingsMenu();
+      });
+    }
+
+    // Help menu item
+    const helpItem = document.getElementById('mobileHelpItem');
+    if (helpItem) {
+      helpItem.addEventListener('click', () => {
+        this.showMobileHelp();
+        this.closeMobileSettingsMenu();
+      });
+    }
+  }
+
+  /**
+   * Close mobile settings menu
+   */
+  closeMobileSettingsMenu() {
+    const settingsMenu = document.getElementById('mobileSettingsMenu');
+    if (settingsMenu) {
+      settingsMenu.classList.remove('active');
+    }
+  }
+
+  /**
+   * Handle mobile authentication
+   */
+  handleMobileAuth() {
+    // Check if user is already signed in
+    if (window.firebase && window.firebase.auth && window.firebase.auth().currentUser) {
+      // User is signed in, offer logout
+      if (confirm('Sign out of your account?')) {
+        window.firebase.auth().signOut().then(() => {
+          console.log('🔐 User signed out');
+          this.updateMobileAuthUI(null);
+        });
+      }
+    } else {
+      // User not signed in, trigger sign in
+      console.log('🔐 Triggering mobile sign in');
+      
+      // Enable the auth modal for mobile
+      const authCard = document.getElementById('firebaseui-auth-card');
+      if (authCard) {
+        authCard.classList.add('mobile-auth-enabled');
+      }
+      
+      // Trigger the existing authentication system
+      if (window.showLoginCard) {
+        window.showLoginCard();
+      } else {
+        // Fallback to desktop auth button
+        const showLoginBtn = document.getElementById('show-login-btn');
+        if (showLoginBtn) {
+          showLoginBtn.click();
+        }
+      }
+      
+      // Set up close handler for mobile auth
+      setTimeout(() => {
+        const closeLoginBtn = document.getElementById('close-login-btn');
+        if (closeLoginBtn) {
+          const originalHandler = closeLoginBtn.onclick;
+          closeLoginBtn.onclick = (e) => {
+            // Remove mobile auth enabled class
+            if (authCard) {
+              authCard.classList.remove('mobile-auth-enabled');
+            }
+            // Call original handler
+            if (originalHandler) {
+              originalHandler.call(closeLoginBtn, e);
+            }
+          };
+        }
+      }, 100);
+    }
+  }
+
+  /**
+   * Handle view data action
+   */
+  handleViewData() {
+    console.log('📊 Opening data view');
+    
+    // Try to open Excel history
+    if (window.excelHistory && window.excelHistory.showPanel) {
+      window.excelHistory.showPanel();
+    } else {
+      // Fallback to opening Excel history button
+      const excelHistoryBtn = document.getElementById('excel-history-btn');
+      if (excelHistoryBtn) {
+        excelHistoryBtn.click();
+      } else {
+        alert('No data available. Please upload an Excel file first.');
+      }
+    }
+  }
+
+  /**
+   * Switch to desktop mode
+   */
+  switchToDesktopMode() {
+    console.log('🖥️ Switching to desktop mode');
+    
+    // Force desktop mode by setting a larger screen width simulation
+    document.body.style.minWidth = '1024px';
+    document.body.style.overflow = 'auto';
+    
+    // Update the detection
+    this.isMobile = false;
+    this.applyInterfaceMode();
+    
+    // Show confirmation
+    setTimeout(() => {
+      alert('Switched to desktop mode. You can zoom and scroll to navigate.');
+    }, 500);
+  }
+
+  /**
+   * Show mobile help
+   */
+  showMobileHelp() {
+    console.log('❓ Showing mobile help');
+    
+    const helpText = `
+📱 SmashRoutes Mobile Help
+
+Navigation:
+• Tap "NAVIGATE NOW" to open Google Maps
+• Use "CHECK IN" when you arrive at a location
+• Tap "◀ PREVIOUS" / "NEXT ▶" to navigate between stops
+• Tap "📋 Route" to see your full route
+
+Actions:
+• Tap "📝 Notes" to add notes to a location
+• Tap "⏭️ Skip" to skip the current location
+• Tap "⚙️ Menu" to access settings
+
+Map:
+• Tap "📍" to center on your location
+• Tap "🗺️" to fit the full route on screen
+
+Need more help? Switch to desktop mode for full features.
+    `;
+    
+    alert(helpText);
+  }
+
+  /**
+   * Update mobile authentication UI
+   */
+  updateMobileAuthUI(user) {
+    const authText = document.getElementById('mobileAuthText');
+    const authButton = document.getElementById('mobileAuthButton');
+    
+    if (user) {
+      if (authText) {
+        authText.textContent = user.email || 'Signed In';
+      }
+      if (authButton) {
+        authButton.innerHTML = '👤 ' + (user.email || 'Account');
+      }
+    } else {
+      if (authText) {
+        authText.textContent = 'Sign In';
+      }
+      if (authButton) {
+        authButton.innerHTML = '👤 Sign In';
+      }
+    }
+  }
+
+  /**
+   * Set up Firebase auth state listener for mobile UI
+   */
+  setupMobileAuthStateListener() {
+    if (window.firebase && window.firebase.auth) {
+      window.firebase.auth().onAuthStateChanged((user) => {
+        this.updateMobileAuthUI(user);
+        console.log('🔐 Mobile auth state changed:', user ? 'Signed In' : 'Signed Out');
+      });
+    }
   }
 
   /**
