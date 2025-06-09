@@ -653,14 +653,27 @@ class MobileNavigation {
      */
     openGoogleMaps() {
         const current = this.currentRoute[this.currentPosition];
-        if (!current) return;
+        if (!current) {
+            console.error('[Mobile] No current destination to navigate to');
+            return;
+        }
         
         // Build Google Maps URL for single destination
         const address = encodeURIComponent(current.address || '');
         const url = `https://www.google.com/maps/dir/?api=1&destination=${address}`;
         
+        console.log('[Mobile] Opening Google Maps for:', current.address);
+        console.log('[Mobile] Google Maps URL:', url);
+        
         // Open in new tab
-        window.open(url, '_blank');
+        const newWindow = window.open(url, '_blank');
+        
+        if (!newWindow) {
+            console.error('[Mobile] Failed to open Google Maps - popup blocked?');
+            alert('Could not open Google Maps. Please allow popups for this site.');
+        } else {
+            console.log('[Mobile] Google Maps opened successfully');
+        }
     }
     
     /**
