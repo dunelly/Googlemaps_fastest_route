@@ -26,6 +26,9 @@ function initializeAddressFieldListeners() {
   const manualStartAddress = document.getElementById('manualStartAddress');
   
   if (manualStartAddress) {
+    // Debounce timer for geocoding
+    let geocodeTimer = null;
+    
     manualStartAddress.addEventListener('input', function(e) {
       const address = e.target.value.trim();
       localStorage.setItem('savedStartAddress', address);
@@ -34,12 +37,34 @@ function initializeAddressFieldListeners() {
       if (address) {
         saveToRecentAddresses(address);
       }
+      
+      // Clear existing timer
+      if (geocodeTimer) {
+        clearTimeout(geocodeTimer);
+      }
+      
+      // Remove home marker if address is empty
+      if (!address) {
+        if (typeof window.removeHomeMarker === 'function') {
+          window.removeHomeMarker();
+        }
+        return;
+      }
+      
+      // Debounce geocoding to avoid too many API calls while typing
+      geocodeTimer = setTimeout(() => {
+        geocodeAndDisplayHomeMarker(address);
+      }, 1000); // Wait 1 second after user stops typing
     });
 
     // Restore start address from localStorage if available
     const saved = localStorage.getItem('savedStartAddress');
     if (saved) {
       manualStartAddress.value = saved;
+      // Display home marker for saved address after a short delay
+      setTimeout(() => {
+        geocodeAndDisplayHomeMarker(saved);
+      }, 500);
     }
   }
 }
@@ -105,6 +130,49 @@ function updateAddressAutocomplete() {
     option.value = address;
     datalist.appendChild(option);
   });
+}
+
+// Function to geocode starting address and display home marker
+async function geocodeAndDisplayHomeMarker(address) {
+  console.log('[address-manager] Geocoding home address:', address);
+  
+  try {
+    // Check localStorage cache first
+    const cachedResult = localStorage.getItem(`geocode_${address}`);
+    if (cachedResult) {
+      const coords = JSON.parse(cachedResult);
+      if (coords.lat && coords.lng && typeof window.displayHomeMarker === 'function') {
+        window.displayHomeMarker(address, coords.lat, coords.lng);
+        console.log('[address-manager] Used cached coordinates for home marker');
+        return;
+      }
+    }
+    
+    // Use Google Geocoding API
+    const apiKey = 'AIzaSyDQqCkBqmHRiX04Xtydb2v0IjxpssxzpQQ';
+    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+    
+    const response = await fetch(geocodeUrl);
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results.length > 0) {
+      const location = data.results[0].geometry.location;
+      const coords = { lat: location.lat, lng: location.lng };
+      
+      // Cache the result
+      localStorage.setItem(`geocode_${address}`, JSON.stringify(coords));
+      
+      // Display home marker
+      if (typeof window.displayHomeMarker === 'function') {
+        window.displayHomeMarker(address, coords.lat, coords.lng);
+        console.log('[address-manager] Home marker displayed for:', address);
+      }
+    } else {
+      console.warn('[address-manager] Failed to geocode home address:', data.status);
+    }
+  } catch (error) {
+    console.error('[address-manager] Error geocoding home address:', error);
+  }
 }
 
 // Initialize when DOM is loaded

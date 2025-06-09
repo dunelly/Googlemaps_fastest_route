@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/clean-interface.css">
   <link rel="stylesheet" href="css/excel-history.css">
-  <link rel="stylesheet" href="css/mobile-navigation.css">
+  <link rel="stylesheet" href="css/mobile.css">
   
   <script>
     // Firebase configuration
@@ -47,7 +47,7 @@
     <button id="show-login-btn" class="tab-button">Sign In</button>
     <div id="user-info" style="display:none;">
       <span id="user-email" style="font-weight:600;"></span>
-      <button id="excel-history-btn" style="margin-left:8px;padding:5px 8px;font-size:1.1rem;" title="Excel History">📊</button>
+      <button id="user-preferences-btn" style="margin-left:8px;padding:5px 8px;font-size:1.1rem;" title="User Preferences">⚙️</button>
       <button id="logout-btn" style="margin-left:8px;padding:5px 14px;">Logout</button>
     </div>
   </div>
@@ -95,6 +95,7 @@
               </div>
             </div>
             
+            
             <!-- Address Input Section -->
             <div class="form-section">
               <div style="margin-bottom: 16px;">
@@ -102,14 +103,19 @@
               </div>
             </div>
             
-            <div id="destinationFieldsContainer" class="form-section">
+            <!-- Address Fields in Scrollable Container -->
+            <div id="destinationFieldsContainer" class="form-section" style="max-height: 250px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
               <div id="destinationFields">
                 <div class="destination-input-container" style="position: relative; margin-bottom: 12px;">
                   <input type="text" class="clean-input destination-input destination-field" placeholder="Destination 1" style="width: 100%; padding-right: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
                   <button type="button" class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">×</button>
                 </div>
               </div>
-              <div style="display: flex; gap: 12px; margin-top: 16px;">
+            </div>
+            
+            <!-- Always Visible Action Buttons -->
+            <div class="form-section" style="background: #f8f9fa; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;">
+              <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;">
                 <button type="button" id="addDestinationBtn" class="add-destination-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
                   + Add Destination
                 </button>
@@ -117,7 +123,13 @@
                   🚀 Get Optimized Route
                 </button>
               </div>
+              <div style="text-align: center;">
+                <button type="button" id="createRouteBtn" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 1.1rem; padding: 12px 24px;">
+                  🗺️ Create Route
+                </button>
+              </div>
             </div>
+            
           </div>
 
           <!-- Manage Files Tab -->
@@ -146,163 +158,6 @@
     </div>
   </div>
 
-  <!-- Mobile Navigation Interface -->
-  <div class="mobile-navigation-mode">
-    <!-- Mobile Authentication Button (replacement for desktop auth) -->
-    <button class="mobile-auth-button" id="mobileAuthButton" style="display: none;">
-      👤 Sign In
-    </button>
-
-    <!-- Mobile Settings Menu -->
-    <div class="mobile-settings-menu" id="mobileSettingsMenu">
-      <div class="mobile-settings-item" id="mobileAuthMenuItem">
-        <span>👤</span> <span id="mobileAuthText">Sign In</span>
-      </div>
-      <div class="mobile-settings-item" id="mobileViewDataItem">
-        <span>📊</span> <span>View Data</span>
-      </div>
-      <div class="mobile-settings-item" id="mobileDesktopModeItem">
-        <span>🖥️</span> <span>Desktop Mode</span>
-      </div>
-      <div class="mobile-settings-item" id="mobileHelpItem">
-        <span>❓</span> <span>Help</span>
-      </div>
-    </div>
-
-    <div class="mobile-nav-container">
-      <!-- Navigation Header -->
-      <div class="mobile-nav-header">
-        <div class="mobile-nav-progress">
-          <span id="mobileProgressText">DEMO MODE: Stop 3 of 12 • 47% Complete</span>
-        </div>
-        <div class="mobile-nav-progress-bar">
-          <div class="mobile-nav-progress-fill" id="mobileProgressFill" style="width: 47%"></div>
-        </div>
-      </div>
-
-      <!-- Current Destination Card -->
-      <div class="mobile-destination-card">
-        <div class="mobile-destination-header">
-          📍 CURRENT DESTINATION
-        </div>
-        <div class="mobile-destination-content">
-          <div class="mobile-destination-address" id="mobileDestinationAddress">
-            123 Oak Street, Houston TX 77001
-          </div>
-          <div class="mobile-destination-details" id="mobileDestinationOwner">
-            👤 John & Mary Smith
-          </div>
-          <div class="mobile-destination-details" id="mobileDestinationDate">
-            📅 Auction: Feb 15, 2025
-          </div>
-          <div class="mobile-destination-distance" id="mobileDestinationDistance">
-            🗺️ 2.3 miles • ⏱️ 8 min drive
-          </div>
-        </div>
-      </div>
-
-      <!-- Navigation Controls -->
-      <div class="mobile-nav-controls">
-        <!-- Primary Navigation Controls -->
-        <div class="mobile-nav-primary-controls">
-          <button class="mobile-nav-btn mobile-nav-btn-previous" id="mobilePreviousBtn">
-            <div style="text-align: center;">
-              <div style="font-size: 18px;">◀</div>
-              <div style="font-size: 12px; margin-top: 2px;">PREVIOUS</div>
-            </div>
-          </button>
-          <button class="mobile-nav-btn mobile-nav-btn-checkin" id="mobileCheckInBtn">
-            <div style="text-align: center;">
-              <div style="font-size: 18px;">✓</div>
-              <div style="font-size: 12px; margin-top: 2px;">CHECK IN</div>
-            </div>
-          </button>
-          <button class="mobile-nav-btn mobile-nav-btn-next" id="mobileNextBtn">
-            <div style="text-align: center;">
-              <div style="font-size: 18px;">▶</div>
-              <div style="font-size: 12px; margin-top: 2px;">NEXT</div>
-            </div>
-          </button>
-        </div>
-
-        <!-- Primary Navigate Button -->
-        <button class="mobile-navigate-btn" id="mobileNavigateBtn">
-          🗺️ NAVIGATE NOW
-        </button>
-
-        <!-- Secondary Controls -->
-        <div class="mobile-nav-secondary-controls">
-          <button class="mobile-secondary-btn" id="mobileNotesBtn">
-            📝 Add Notes
-          </button>
-          <button class="mobile-secondary-btn" id="mobileSkipBtn">
-            ⏭️ Skip Stop
-          </button>
-          <button class="mobile-secondary-btn" id="mobileMenuBtn">
-            ⚙️ Settings
-          </button>
-        </div>
-      </div>
-
-      <!-- Map Container -->
-      <div class="mobile-map-container">
-        <div id="mobileMap"></div>
-        
-        <!-- Map Controls -->
-        <div class="mobile-map-controls">
-          <button class="mobile-map-control-btn" id="mobileCurrentLocationBtn" title="Center on Current Location">
-            📍
-          </button>
-          <button class="mobile-map-control-btn" id="mobileFitRouteBtn" title="Show Full Route">
-            🗺️
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Route Overview Toggle Button -->
-    <button class="mobile-route-toggle" id="mobileRouteToggle">
-      📋 Route
-    </button>
-
-    <!-- Route Overview Panel (Slide-out) -->
-    <div class="mobile-route-overview" id="mobileRouteOverview">
-      <div class="mobile-route-panel">
-        <div class="mobile-route-header">
-          📋 Route Overview
-          <button class="mobile-route-close" id="mobileRouteClose">×</button>
-        </div>
-        <div class="mobile-route-list" id="mobileRouteList">
-          <!-- Route items will be populated by JavaScript -->
-          <div class="mobile-route-item">
-            <div class="mobile-route-number completed">✓</div>
-            <div class="mobile-route-address">456 Pine Street<br><small>Completed 2:30 PM</small></div>
-          </div>
-          <div class="mobile-route-item">
-            <div class="mobile-route-number completed">✓</div>
-            <div class="mobile-route-address">789 Elm Avenue<br><small>Completed 3:15 PM</small></div>
-          </div>
-          <div class="mobile-route-item">
-            <div class="mobile-route-number current">3</div>
-            <div class="mobile-route-address">123 Oak Street<br><small>Current destination</small></div>
-          </div>
-          <div class="mobile-route-item">
-            <div class="mobile-route-number next">4</div>
-            <div class="mobile-route-address">321 Maple Drive<br><small>Next stop</small></div>
-          </div>
-          <div class="mobile-route-item">
-            <div class="mobile-route-number pending">5</div>
-            <div class="mobile-route-address">654 Cedar Lane<br><small>Pending</small></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GPS Status Indicator -->
-    <div class="mobile-gps-status" id="mobileGpsStatus">
-      📍 GPS Active
-    </div>
-  </div>
 
   <!-- Global Geocoding Progress Indicator -->
   <div id="globalGeocodingProgress" class="global-progress-overlay">
@@ -327,6 +182,58 @@
     <div id="debugArea"></div>
     <div id="googleSheetError"></div>
     <div id="drawTooltip"></div>
+  </div>
+
+  <!-- User Preferences Modal -->
+  <div id="userPreferencesModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⚙️ User Preferences</h3>
+        <button type="button" id="closePreferencesModalBtn" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Home Location Section -->
+        <div style="margin-bottom: 24px;">
+          <label class="section-label" style="margin-bottom: 8px; display: block;">🏠 Preset Home Location</label>
+          <p style="margin-bottom: 12px; color: #666; font-size: 0.9rem;">Set your default starting address that can be quickly filled in route planning.</p>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="presetHomeAddress" class="clean-input" placeholder="123 Main St, City, State" style="flex: 3;" />
+            <button type="button" id="setHomeLocationBtn" class="primary-action-btn" style="white-space: nowrap; flex: 1; font-size: 0.9rem; padding: 8px 12px;">Set</button>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="useCurrentLocationBtn" class="secondary-btn" style="font-size: 0.85rem;">📍 Use Current Location</button>
+            <button type="button" id="clearHomeLocationBtn" class="secondary-btn" style="font-size: 0.85rem;">🗑️ Clear</button>
+          </div>
+        </div>
+
+        <!-- Quick Fill Section -->
+        <div style="margin-bottom: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+          <h4 style="margin: 0 0 8px 0; color: #333; font-size: 0.95rem;">Quick Fill Actions</h4>
+          <p style="margin: 0 0 12px 0; color: #666; font-size: 0.85rem;">Use your preset home location in route planning.</p>
+          <button type="button" id="fillStartingAddressBtn" class="primary-action-btn" style="width: 100%;">
+            🏠 Fill Starting Address with Home
+          </button>
+        </div>
+
+        <!-- Other Preferences -->
+        <div style="margin-bottom: 16px;">
+          <label class="section-label" style="margin-bottom: 8px; display: block;">🗺️ Map Preferences</label>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <input type="checkbox" id="autoShowHomeMarker" checked />
+            <label for="autoShowHomeMarker" style="font-size: 0.9rem;">Automatically show home marker when entering addresses</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="rememberLastLocation" checked />
+            <label for="rememberLastLocation" style="font-size: 0.9rem;">Remember last starting address between sessions</label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;">
+          <button type="button" id="cancelPreferencesBtn" class="secondary-btn">Cancel</button>
+          <button type="button" id="savePreferencesBtn" class="primary-action-btn">Save Preferences</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Excel History Slide-out Panels -->
@@ -478,6 +385,7 @@
     </div>
   </div>
 
+
   <!-- Our JavaScript Modules - Load in dependency order -->
   <script src="js/firebase-utils.js"></script>
   <script src="js/firebase-auth.js"></script>
@@ -497,6 +405,8 @@
   <script src="js/excel-data-table.js"></script>
   <script src="js/excel-operations.js"></script>
   <script src="js/excel-history.js"></script>
-  <script src="js/mobile-navigation.js"></script>
+  <script src="js/desktop-route-creator.js"></script>
+  <script src="js/user-preferences.js"></script>
+  <script src="js/mobile.js"></script>
 </body>
 </html>

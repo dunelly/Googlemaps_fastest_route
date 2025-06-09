@@ -4,5 +4,26 @@
     "express": "^5.1.0",
     "node-fetch": "^2.7.0",
     "xlsx": "^0.18.5"
-  }
+  },
+  "name": "routebeta2",
+  "version": "1.0.0",
+  "main": "google-sheets-proxy.js",
+  "devDependencies": {
+    "playwright": "^1.52.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dunelly/Googlemaps_fastest_route.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dunelly/Googlemaps_fastest_route/issues"
+  },
+  "homepage": "https://github.com/dunelly/Googlemaps_fastest_route#readme",
+  "description": ""
 }

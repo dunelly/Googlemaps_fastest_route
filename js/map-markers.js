@@ -1,7 +1,8 @@
 // Map Markers Module - Simplified marker display functionality
 
-// Global variable to track markers
+// Global variables to track markers
 let addressMarkersArray = [];
+let homeMarker = null;
 
 // Function to create marker popup content
 function createMarkerPopupContent(item, lastVisitFormatted, visitCount) {
@@ -86,6 +87,24 @@ function createCustomMarkerIcon(color) {
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34]
+  });
+}
+
+// Function to create custom home icon marker
+function createHomeMarkerIcon() {
+  const homeIcon = `
+    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 2L2 14h3v14h8v-8h6v8h8V14h3L16 2z" 
+            fill="#FF6B35" stroke="#fff" stroke-width="2"/>
+    </svg>
+  `;
+  
+  return L.divIcon({
+    html: homeIcon,
+    className: 'home-marker',
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
   });
 }
 
@@ -232,8 +251,75 @@ function updateMapMarkers() {
   }
 }
 
+// Function to display home marker for starting address
+function displayHomeMarker(address, lat, lng) {
+  if (!window.map) {
+    console.warn('[map-markers] Map not available for displayHomeMarker');
+    return;
+  }
+  
+  // Always remove existing home marker if it exists, to prevent duplicates
+  // This is now the central place for removing the old home marker before adding a new one.
+  if (homeMarker) {
+    console.log('[map-markers] Removing existing home marker before adding new one.');
+    homeMarker.remove();
+    homeMarker = null;
+  }
+  
+  // Create home marker
+  const homeIcon = createHomeMarkerIcon();
+  homeMarker = L.marker([lat, lng], { icon: homeIcon }).addTo(window.map);
+  
+  // Create popup content for home marker
+  const popupHtml = `
+    <div style="min-width: 200px;">
+      <strong>🏠 Starting Location</strong><br>
+      <strong>${address}</strong>
+      <div style="margin-top: 8px; padding: 8px; background: #fff3cd; border-radius: 4px; font-size: 0.9rem;">
+        <strong>Route Start Point</strong><br>
+        This is where your route begins and ends.
+      </div>
+    </div>
+  `;
+  
+  homeMarker.bindPopup(popupHtml);
+  homeMarker.customData = { address: address, isHome: true };
+  
+  console.log('[map-markers] Home marker displayed at:', address, lat, lng);
+}
+
+// Function to remove home marker
+function removeHomeMarker() {
+  if (homeMarker) {
+    homeMarker.remove();
+    homeMarker = null;
+    console.log('[map-markers] Home marker removed');
+  }
+}
+
+// Function to clear all markers including home marker
+function clearAllMarkers(preserveHomeMarker = false) {
+  // Clear address markers
+  if (addressMarkersArray && addressMarkersArray.length > 0) {
+    addressMarkersArray.forEach(marker => {
+      if (marker && typeof marker.remove === 'function') {
+        marker.remove();
+      }
+    });
+    addressMarkersArray = [];
+  }
+  
+  // Clear home marker only if not preserving it
+  if (!preserveHomeMarker) {
+    removeHomeMarker();
+  }
+  
+  console.log('[map-markers] All markers cleared', preserveHomeMarker ? '(home marker preserved)' : '');
+}
+
 // Make functions and variables globally available
 window.addressMarkersArray = addressMarkersArray;
+window.homeMarker = homeMarker;
 window.updateMapMarkers = updateMapMarkers;
 window.openNotesFromMap = openNotesFromMap;
 window.markVisitedFromMap = markVisitedFromMap;
@@ -242,3 +328,7 @@ window.highlightAddressOnMap = highlightAddressOnMap;
 window.createMarkerPopupContent = createMarkerPopupContent;
 window.getMarkerColor = getMarkerColor;
 window.createCustomMarkerIcon = createCustomMarkerIcon;
+window.createHomeMarkerIcon = createHomeMarkerIcon;
+window.displayHomeMarker = displayHomeMarker;
+window.removeHomeMarker = removeHomeMarker;
+window.clearAllMarkers = clearAllMarkers;

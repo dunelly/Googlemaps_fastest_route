@@ -49,11 +49,54 @@ function initializeBasicMap() {
     window.map = map;
     window.drawnItems = drawnItems;
     window.drawControl = drawControl;
+
+    // Request user's location to set home marker and center map
+    promptForUserLocation();
     
   } catch (error) {
     console.error("initializeBasicMap: ERROR during initialization!", error);
   }
   console.log("initializeBasicMap: Finished (or error caught)");
+}
+
+function promptForUserLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        console.log(`[map-core] User location obtained: Lat: ${lat}, Lng: ${lng}`);
+
+        if (window.map) {
+          window.map.setView([lat, lng], 13); // Center map on user's location
+          console.log("[map-core] Map centered on user's current location.");
+        }
+
+        // Removed call to displayHomeMarker here. Home icon will be handled by route planning or user preferences.
+        // if (typeof window.displayHomeMarker === 'function') {
+        //   window.displayHomeMarker("Your Current Location", lat, lng);
+        // } else {
+        //   console.warn("[map-core] displayHomeMarker function not found. Home marker not set.");
+        // }
+      },
+      (error) => {
+        console.warn(`[map-core] Error getting user location: ${error.message}`);
+        if (typeof showMessage === 'function') {
+          showMessage(`Could not get your location: ${error.message}. Default view will be used.`, 'warning');
+        }
+        // Optionally, set a default view if location is denied or fails
+        // if (window.map) {
+        //   window.map.setView([29.7604, -95.3698], 10); // Default view
+        // }
+      }
+    );
+  } else {
+    console.warn("[map-core] Geolocation is not supported by this browser.");
+    if (typeof showMessage === 'function') {
+      showMessage("Geolocation is not supported by your browser.", "warning");
+    }
+  }
 }
 
 function initializeGeocoding() {
@@ -223,6 +266,17 @@ function handleClearSelections() {
   if (typeof populateAddressSelection === 'function' && typeof currentlyDisplayedItems !== 'undefined') {
     populateAddressSelection(currentlyDisplayedItems);
   }
+  
+  // Clear lasso-selected addresses
+  window.selectedItemsInShape = [];
+  
+  // Don't clear home marker - it should persist since it represents the starting address
+  
+  // Update the Create Route button state
+  if (window.desktopRouteCreator) {
+    window.desktopRouteCreator.updateButtonState();
+  }
+  
   console.log("handleClearSelections: Selections cleared and address list repopulated.");
 }
 

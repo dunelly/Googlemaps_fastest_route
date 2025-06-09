@@ -137,10 +137,21 @@ function initializeDrawingFeatures() {
       }
     }
     
+    const copyBtn = document.getElementById('copySelectedBtn');
+    const markVisitedBtn = document.getElementById('markVisitedBtn');
+    
     if (copyBtn) copyBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
     if (markVisitedBtn) markVisitedBtn.style.display = selectedItemsInShape.length > 0 ? 'block' : 'none';
+    // Store selected addresses globally for route creation
+    window.selectedItemsInShape = selectedItemsInShape;
+    
     if (selectedItemsInShape.length > 0) {
       showMessage(`${selectedItemsInShape.length} addresses selected and added to destinations.`, 'success');
+      
+      // Update the Create Route button state
+      if (window.desktopRouteCreator) {
+        window.desktopRouteCreator.updateButtonState();
+      }
     }
   });
 

@@ -1,7 +1,16 @@
 // Route Optimization Module
 
+let debounceTimerStartAddress; // For debouncing start address input
+
 function initializeRouteForm() {
   const routeForm = document.getElementById('routeForm');
+  const manualStartAddressField = document.getElementById('manualStartAddress');
+
+  if (manualStartAddressField) {
+    manualStartAddressField.addEventListener('input', handleManualStartAddressChange);
+    manualStartAddressField.addEventListener('change', handleManualStartAddressChange);
+  }
+
   if (routeForm) {
     routeForm.onsubmit = async function(e) {
       console.log('ROUTE FORM SUBMITTED');
@@ -63,6 +72,14 @@ function initializeRouteForm() {
       }
 
       console.log('Addresses for optimization:', JSON.stringify(addresses));
+
+      // Geocode and display home marker for starting address
+      if (startAddressForRoute) {
+        console.log('[route-optimizer] About to geocode home marker for:', startAddressForRoute);
+        geocodeAndDisplayHomeMarker(startAddressForRoute);
+      } else {
+        console.log('[route-optimizer] No starting address provided for home marker');
+      }
 
       try {
         const response = await fetch('https://googlemaps-fastest-route-1.onrender.com/optimize-route', {
@@ -133,5 +150,72 @@ function initializeRouteForm() {
         showMessage('Failed to optimize route: ' + error.message, 'error');
       }
     };
+  }
+}
+
+// Debounced function to handle start address input changes
+async function handleManualStartAddressChange(event) {
+  clearTimeout(debounceTimerStartAddress);
+  const address = event.target.value.trim(); // Get the latest value directly
+
+  debounceTimerStartAddress = setTimeout(async () => {
+    if (address) {
+      console.log('[route-optimizer] Manual Start Address input changed to:', address);
+      // geocodeAndDisplayHomeMarker calls displayHomeMarker, which should handle clearing previous one
+      await geocodeAndDisplayHomeMarker(address);
+    } else {
+      console.log('[route-optimizer] Manual Start Address cleared.');
+      if (typeof window.removeHomeMarker === 'function') {
+        // Only remove if the address is truly empty
+        window.removeHomeMarker();
+      }
+    }
+  }, 500); // 500ms debounce time
+}
+
+// Function to geocode starting address and display home marker
+async function geocodeAndDisplayHomeMarker(address) {
+  console.log('[route-optimizer] Geocoding home address:', address);
+  console.log('[route-optimizer] Checking if window.displayHomeMarker exists:', typeof window.displayHomeMarker);
+  
+  try {
+    // Check localStorage cache first
+    const cachedResult = localStorage.getItem(`geocode_${address}`);
+    if (cachedResult) {
+      const coords = JSON.parse(cachedResult);
+      if (coords.lat && coords.lng && typeof window.displayHomeMarker === 'function') {
+        window.displayHomeMarker(address, coords.lat, coords.lng);
+        console.log('[route-optimizer] Used cached coordinates for home marker');
+        return;
+      }
+    }
+    
+    // Use Google Geocoding API
+    const apiKey = 'AIzaSyDQqCkBqmHRiX04Xtydb2v0IjxpssxzpQQ';
+    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+    
+    const response = await fetch(geocodeUrl);
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results.length > 0) {
+      const location = data.results[0].geometry.location;
+      const coords = { lat: location.lat, lng: location.lng };
+      
+      // Cache the result
+      localStorage.setItem(`geocode_${address}`, JSON.stringify(coords));
+      
+      // Display home marker
+      if (typeof window.displayHomeMarker === 'function') {
+        window.displayHomeMarker(address, coords.lat, coords.lng);
+        console.log('[route-optimizer] Home marker displayed for:', address);
+      }
+    } else {
+      console.warn('[route-optimizer] Failed to geocode home address:', data.status);
+      if (typeof showMessage === 'function') {
+        showMessage('Could not locate starting address on map', 'warning');
+      }
+    }
+  } catch (error) {
+    console.error('[route-optimizer] Error geocoding home address:', error);
   }
 }

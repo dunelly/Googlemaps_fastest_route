@@ -1,60 +1,12 @@
 // Address List Renderer Module - Handles complex address list rendering with visit status and notes
 
 function updateMiddleAddresses() {
-  const customStartAddressInput = document.getElementById('customStartAddress');
-  const customEndAddressInput = document.getElementById('customEndAddress');
-  const middleAddressesList = document.getElementById('middleAddressesList');
-  
-  if (!middleAddressesList) {
-    return; // Not on upload tab
-  }
-
-  const startAddr = customStartAddressInput ? customStartAddressInput.value.trim() : '';
-  const endAddr = customEndAddressInput ? customEndAddressInput.value.trim() : '';
-
-  // Preserve checked state
-  const prevChecked = {};
-  Array.from(middleAddressesList.querySelectorAll('input[type="checkbox"].address-checkbox')).forEach(cb => {
-    prevChecked[cb.value] = cb.checked;
-  });
-
-  middleAddressesList.innerHTML = '';
-
-  if (typeof currentlyDisplayedItems !== 'undefined' && currentlyDisplayedItems) {
-    currentlyDisplayedItems.forEach(item => {
-      if (item.address !== startAddr && item.address !== endAddr) {
-        const li = createAddressListItem(item, prevChecked);
-        middleAddressesList.appendChild(li);
-      }
-    });
-  }
+  // This function is now deprecated since we removed the checkbox selection
+  // Address list functionality is handled by other modules
+  console.log('[address-list-renderer] updateMiddleAddresses called - checkbox functionality removed');
 }
 
-function createAddressListItem(item, prevChecked) {
-  const li = document.createElement('li');
-  li.style.display = 'flex';
-  li.style.alignItems = 'center';
-  li.style.gap = '8px';
-  li.style.padding = '6px 0';
-  li.style.borderBottom = '1px solid #f0f0f0';
-  
-  // Checkbox
-  const cb = document.createElement('input');
-  cb.type = 'checkbox';
-  cb.className = 'address-checkbox';
-  cb.value = item.address;
-  cb.checked = !!prevChecked[item.address];
-  li.appendChild(cb);
-  
-  // Get visit data for this address
-  const visitData = getAddressVisitData(item.address);
-  
-  // Create address span with visit status
-  const span = createAddressSpan(item, visitData);
-  li.appendChild(span);
-  
-  return li;
-}
+// createAddressListItem function removed - no longer needed without checkboxes
 
 function getAddressVisitData(address) {
   let daysSince = null;
@@ -154,7 +106,19 @@ function applyVisitBasedStyling(span, daysSince) {
 
 function populateAddressSelection(itemsToDisplay) {
   console.log('[address-list-renderer] populateAddressSelection called. itemsToDisplay.length:', itemsToDisplay.length);
-  updateMiddleAddresses();
+  
+  // Trigger event for desktop route creator
+  document.dispatchEvent(new CustomEvent('addressesLoaded', { 
+    detail: { count: itemsToDisplay.length } 
+  }));
+  
+  // Also manually update button state as backup
+  setTimeout(() => {
+    if (window.desktopRouteCreator) {
+      window.desktopRouteCreator.updateButtonState();
+      console.log('[address-list-renderer] Manually updated Create Route button state');
+    }
+  }, 100);
 }
 
 // Make functions globally available

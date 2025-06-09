@@ -67,25 +67,14 @@ function initializeExcelHistory() {
 // Set up event listeners
 function setupExcelHistoryEvents() {
   try {
-    const excelHistoryBtn = document.getElementById('excel-history-btn');
+    // Excel history button removed - replaced with preferences button
     const closeHistoryBtn = document.getElementById('closeExcelHistoryBtn');
     const closeDataBtn = document.getElementById('closeExcelDataBtn');
     const deleteAllBtn = document.getElementById('deleteAllExcelBtn');
     const overlay = document.getElementById('excelHistoryOverlay');
     
     console.log('[excel-history] Setting up event listeners...');
-    console.log('[excel-history] Excel history button found:', !!excelHistoryBtn);
     console.log('[excel-history] Overlay found:', !!overlay);
-    
-    if (excelHistoryBtn) {
-      excelHistoryBtn.addEventListener('click', function(e) {
-        console.log('[excel-history] Button clicked!');
-        openExcelHistory();
-      });
-      console.log('[excel-history] Event listener added to button');
-    } else {
-      console.warn('[excel-history] Excel history button not found!');
-    }
     
     if (closeHistoryBtn) {
       closeHistoryBtn.addEventListener('click', closeExcelHistory);

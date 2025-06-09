@@ -50,10 +50,19 @@ async function loadExcelAddresses(excelId) {
         showMessage(`Geocoding ${addressesNeedingGeocode.length} addresses...`, 'info');
       }
       
-      // Geocode missing coordinates with progress
-      if (typeof geocodeAddressesWithProgress === 'function') {
+      // Geocode missing coordinates
+      if (typeof geocodeAddresses === 'function') {
         try {
-          const geocodedItems = await geocodeAddressesWithProgress(window.currentlyDisplayedItems);
+          console.log('[excel-operations] Starting geocoding process...');
+          const geocodedItems = await geocodeAddresses(window.currentlyDisplayedItems);
+          console.log('[excel-operations] Geocoding completed:', geocodedItems.length, 'items');
+          
+          // Check if geocoding was successful
+          const geocodedWithCoords = geocodedItems.filter(item => 
+            (item.latitude || item.lat) && (item.longitude || item.lng)
+          );
+          console.log('[excel-operations] Items with coordinates after geocoding:', geocodedWithCoords.length);
+          
           updateAllExcelItems(geocodedItems);
           updateCurrentlyDisplayedItems([...geocodedItems]);
           
@@ -61,6 +70,17 @@ async function loadExcelAddresses(excelId) {
           if (typeof displayAddressMarkers === 'function') {
             displayAddressMarkers(window.currentlyDisplayedItems);
             console.log('[excel-operations] Displayed all markers after geocoding');
+          }
+          
+          // Force update the Create Route button state
+          if (window.desktopRouteCreator) {
+            window.desktopRouteCreator.updateButtonState();
+            console.log('[excel-operations] Updated Create Route button state after geocoding');
+          }
+          
+          // Show success message
+          if (typeof showMessage === 'function') {
+            showMessage(`✅ Geocoded ${geocodedWithCoords.length} addresses successfully!`, 'success');
           }
           
           // Update the saved data with new coordinates

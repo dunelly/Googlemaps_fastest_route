@@ -365,3 +365,104 @@
 .delete-all-btn:hover {
   background: #c82333;
 }
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .excel-history-panel {
+    width: 100vw;
+    left: 0;
+    right: 0;
+  }
+  
+  .excel-data-panel {
+    width: 100vw;
+    left: 0;
+    right: 0;
+  }
+  
+  .panel-header {
+    padding: 16px 20px;
+  }
+  
+  .panel-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .close-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.8rem;
+  }
+  
+  .panel-content {
+    padding: 16px;
+  }
+  
+  .excel-action-btn {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .filter-select,
+  .filter-input {
+    width: 100%;
+    min-width: auto;
+    padding: 12px;
+    font-size: 1rem;
+  }
+  
+  .clear-filters-btn,
+  .show-selected-btn {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+  
+  .data-table {
+    font-size: 0.8rem;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-header {
+    padding: 12px 16px;
+  }
+  
+  .panel-content {
+    padding: 12px;
+  }
+  
+  .excel-file-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .excel-action-btn {
+    width: 100%;
+  }
+  
+  .data-table {
+    font-size: 0.75rem;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 8px 4px;
+  }
+}
