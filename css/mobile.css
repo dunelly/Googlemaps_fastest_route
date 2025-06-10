@@ -421,4 +421,76 @@
   #createRouteBtn {
     display: none !important;
   }
+  
+  /* Fix auth buttons sizing on mobile */
+  #subtle-login-bar {
+    position: fixed !important;
+    top: 60px !important; /* Below the 56px mobile tabs */
+    right: 8px !important;
+    z-index: 10001;
+  }
+  
+  #subtle-login-bar #show-login-btn {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+    min-height: 32px !important;
+    border-radius: 6px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+  }
+  
+  #subtle-login-bar #user-info {
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  #subtle-login-bar #user-email {
+    font-size: 0.7rem !important;
+    font-weight: 500 !important;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  #subtle-login-bar #user-preferences-btn {
+    padding: 4px 6px !important;
+    font-size: 0.8rem !important;
+    min-height: 28px !important;
+    min-width: 28px !important;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+    margin-left: 4px !important;
+  }
+  
+  #subtle-login-bar #logout-btn {
+    padding: 4px 8px !important;
+    font-size: 0.7rem !important;
+    min-height: 28px !important;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+    margin-left: 4px !important;
+  }
+  
+  /* Ensure auth buttons don't overlap mobile tab buttons */
+  .mobile-tab-header {
+    padding-right: 200px; /* Give space for auth buttons */
+  }
+  
+  
+  /* Adjust auth card positioning on mobile */
+  #firebaseui-auth-card {
+    top: 95px !important; /* Below auth buttons (60px + ~35px for button height) */
+    right: 8px !important;
+    left: 8px !important;
+    width: auto !important;
+  }
+  
+  #firebaseui-auth-card > div {
+    width: 100% !important;
+    max-width: none !important;
+  }
 }

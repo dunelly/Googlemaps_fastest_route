@@ -93,18 +93,24 @@ function createCustomMarkerIcon(color) {
 // Function to create custom home icon marker
 function createHomeMarkerIcon() {
   const homeIcon = `
-    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-      <path d="M16 2L2 14h3v14h8v-8h6v8h8V14h3L16 2z" 
+    <svg width="40" height="50" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
+      <!-- Marker drop shape -->
+      <path d="M20 5C12.8 5 7 10.8 7 18C7 28.5 20 45 20 45S33 28.5 33 18C33 10.8 27.2 5 20 5Z" 
             fill="#FF6B35" stroke="#fff" stroke-width="2"/>
+      <!-- Home icon inside -->
+      <g transform="translate(11, 11)">
+        <path d="M9 2L1 8v10h4v-6h8v6h4V8L9 2z" fill="#fff" stroke="none"/>
+        <rect x="7" y="14" width="4" height="4" fill="#fff"/>
+      </g>
     </svg>
   `;
   
   return L.divIcon({
     html: homeIcon,
     className: 'home-marker',
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32]
+    iconSize: [40, 50],
+    iconAnchor: [20, 45],
+    popupAnchor: [0, -45]
   });
 }
 
@@ -253,10 +259,14 @@ function updateMapMarkers() {
 
 // Function to display home marker for starting address
 function displayHomeMarker(address, lat, lng) {
+  console.log('[map-markers] displayHomeMarker called with:', address, lat, lng);
+  
   if (!window.map) {
     console.warn('[map-markers] Map not available for displayHomeMarker');
     return;
   }
+  
+  console.log('[map-markers] Map is available, proceeding...');
   
   // Always remove existing home marker if it exists, to prevent duplicates
   // This is now the central place for removing the old home marker before adding a new one.
@@ -267,8 +277,13 @@ function displayHomeMarker(address, lat, lng) {
   }
   
   // Create home marker
+  console.log('[map-markers] Creating home marker icon...');
   const homeIcon = createHomeMarkerIcon();
+  console.log('[map-markers] Home icon created:', homeIcon);
+  
+  console.log('[map-markers] Adding marker to map at coordinates [', lat, ',', lng, ']');
   homeMarker = L.marker([lat, lng], { icon: homeIcon }).addTo(window.map);
+  console.log('[map-markers] Marker added to map:', homeMarker);
   
   // Create popup content for home marker
   const popupHtml = `
@@ -285,7 +300,7 @@ function displayHomeMarker(address, lat, lng) {
   homeMarker.bindPopup(popupHtml);
   homeMarker.customData = { address: address, isHome: true };
   
-  console.log('[map-markers] Home marker displayed at:', address, lat, lng);
+  console.log('[map-markers] Home marker display completed successfully at:', address, lat, lng);
 }
 
 // Function to remove home marker

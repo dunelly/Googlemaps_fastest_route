@@ -393,7 +393,245 @@ function loadUserPreferences() {
   console.log('[user-preferences] Loaded preferences:', preferences);
   
   // Apply preferences
-  // (Currently these are just storage, but could be used to control behavior)
+  // Display preset home marker if available and auto-show is enabled
+  if (preferences.autoShowHomeMarker) {
+    displayPresetHomeMarkerOnStartup();
+  }
+  
+  // Also check if there's already a starting address in the field and display it
+  checkAndDisplayStartingAddressOnLoad();
+  
+  // If remember last location is enabled, restore it
+  if (preferences.rememberLastLocation) {
+    restoreLastStartingAddress();
+  }
+  
+  // Check if this is first time use and offer to set current location as home
+  checkFirstTimeUseAndOfferCurrentLocation();
+}
+
+// Check if starting address field has value and display marker
+async function checkAndDisplayStartingAddressOnLoad() {
+  // Wait a bit for DOM to be fully ready
+  setTimeout(async () => {
+    const startingAddressField = document.getElementById('manualStartAddress');
+    if (startingAddressField && startingAddressField.value.trim()) {
+      console.log('[user-preferences] Found existing starting address on load:', startingAddressField.value);
+      
+      // Use the desktop route creator's method to handle this
+      if (window.desktopRouteCreator && typeof window.desktopRouteCreator.handleStartingAddressInputChange === 'function') {
+        await window.desktopRouteCreator.handleStartingAddressInputChange(startingAddressField.value);
+      }
+    }
+  }, 200);
+}
+
+// Restore last starting address if remember option is enabled
+function restoreLastStartingAddress() {
+  const lastStartingAddress = localStorage.getItem('lastStartingAddress');
+  if (lastStartingAddress) {
+    const startingAddressField = document.getElementById('manualStartAddress');
+    if (startingAddressField && !startingAddressField.value.trim()) {
+      console.log('[user-preferences] Restoring last starting address:', lastStartingAddress);
+      startingAddressField.value = lastStartingAddress;
+      
+      // Trigger the input event to show home marker
+      setTimeout(() => {
+        const event = new Event('input', { bubbles: true, cancelable: true });
+        startingAddressField.dispatchEvent(event);
+      }, 300);
+    }
+  }
+}
+
+// Save starting address for remember feature
+function saveLastStartingAddress(address) {
+  const preferences = getUserPreferences();
+  if (preferences.rememberLastLocation && address && address.trim()) {
+    localStorage.setItem('lastStartingAddress', address.trim());
+    console.log('[user-preferences] Saved last starting address:', address);
+  }
+}
+
+// Check if this is first time use and offer to set current location as home
+function checkFirstTimeUseAndOfferCurrentLocation() {
+  const presetHome = getPresetHomeLocation();
+  const hasSeenLocationPrompt = localStorage.getItem('hasSeenLocationPrompt');
+  
+  // If no preset home and haven't shown location prompt before
+  if (!presetHome && !hasSeenLocationPrompt) {
+    console.log('[user-preferences] First time use detected, offering to set current location as home');
+    
+    // Wait for map to be ready, then offer location
+    setTimeout(() => {
+      offerCurrentLocationAsHome();
+    }, 2000); // Give time for map to load and user to see the interface
+  }
+}
+
+// Offer to use current location as home for first-time users
+function offerCurrentLocationAsHome() {
+  if (!navigator.geolocation) {
+    console.log('[user-preferences] Geolocation not available, skipping first-time location offer');
+    localStorage.setItem('hasSeenLocationPrompt', 'true');
+    return;
+  }
+  
+  // Mark that we've shown the prompt
+  localStorage.setItem('hasSeenLocationPrompt', 'true');
+  
+  // Create a friendly prompt
+  const useLocation = confirm(
+    '🏠 Welcome to SmashRoutes!\n\n' +
+    'Would you like to set your current location as your home address?\n' +
+    'This will help with route planning and can be changed later in Settings.'
+  );
+  
+  if (useLocation) {
+    console.log('[user-preferences] User agreed to use current location as home');
+    setCurrentLocationAsHomeQuietly();
+  } else {
+    console.log('[user-preferences] User declined to use current location as home');
+    if (typeof showMessage === 'function') {
+      showMessage('You can set a home location later in Settings (⚙️ button)', 'info');
+    }
+  }
+}
+
+// Set current location as home without showing the preferences modal
+function setCurrentLocationAsHomeQuietly() {
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      
+      console.log('[user-preferences] Got current location for home setup:', lat, lng);
+      
+      try {
+        // Reverse geocode to get address
+        const address = await reverseGeocodeCoordinates(lat, lng);
+        
+        if (address) {
+          // Save as preset home
+          const presetHome = {
+            address: address,
+            lat: lat,
+            lng: lng,
+            setDate: new Date().toISOString(),
+            setFromCurrentLocation: true
+          };
+          
+          localStorage.setItem(PRESET_HOME_KEY, JSON.stringify(presetHome));
+          
+          // Display home marker
+          if (window.map && typeof window.displayHomeMarker === 'function') {
+            window.displayHomeMarker(address, lat, lng);
+          }
+          
+          if (typeof showMessage === 'function') {
+            showMessage(`🏠 Home location set to: ${address}`, 'success');
+          }
+          
+          console.log('[user-preferences] Current location set as home automatically:', presetHome);
+          
+        } else {
+          console.warn('[user-preferences] Could not get address from current location');
+          if (typeof showMessage === 'function') {
+            showMessage('Could not determine your address. You can set it manually in Settings.', 'warning');
+          }
+        }
+        
+      } catch (error) {
+        console.error('[user-preferences] Error setting current location as home:', error);
+        if (typeof showMessage === 'function') {
+          showMessage('Error setting up home location. You can set it manually in Settings.', 'error');
+        }
+      }
+    },
+    (error) => {
+      console.warn('[user-preferences] Could not get current location for home setup:', error.message);
+      
+      let message = 'Could not access your location for home setup.';
+      if (error.code === error.PERMISSION_DENIED) {
+        message = 'Location access denied. You can set a home address manually in Settings.';
+      }
+      
+      if (typeof showMessage === 'function') {
+        showMessage(message, 'warning');
+      }
+    },
+    {
+      timeout: 10000, // 10 second timeout
+      enableHighAccuracy: false // Don't need high accuracy for this
+    }
+  );
+}
+
+// Display preset home marker on application startup
+async function displayPresetHomeMarkerOnStartup() {
+  console.log('[user-preferences] Checking for preset home location to display on startup...');
+  
+  const presetHome = getPresetHomeLocation();
+  if (!presetHome) {
+    console.log('[user-preferences] No preset home location found');
+    return;
+  }
+  
+  console.log('[user-preferences] Found preset home location:', presetHome);
+  
+  // If we have coordinates, display immediately
+  if (presetHome.lat && presetHome.lng && typeof presetHome.lat === 'number' && typeof presetHome.lng === 'number') {
+    console.log('[user-preferences] Displaying preset home marker with saved coordinates');
+    
+    // Wait for map to be ready
+    const waitForMap = () => {
+      if (window.map && typeof window.displayHomeMarker === 'function') {
+        window.displayHomeMarker(presetHome.address, presetHome.lat, presetHome.lng);
+        console.log('[user-preferences] Preset home marker displayed on startup');
+      } else {
+        // Wait a bit longer for map initialization
+        setTimeout(waitForMap, 100);
+      }
+    };
+    
+    waitForMap();
+    
+  } else if (presetHome.needsGeocoding || (!presetHome.lat || !presetHome.lng)) {
+    // Need to geocode the address first
+    console.log('[user-preferences] Preset home needs geocoding, attempting...');
+    
+    try {
+      const coords = await geocodeAddress(presetHome.address);
+      if (coords) {
+        // Update the stored preset with coordinates
+        const updatedPresetHome = {
+          ...presetHome,
+          lat: coords.lat,
+          lng: coords.lng,
+          needsGeocoding: false
+        };
+        
+        localStorage.setItem(PRESET_HOME_KEY, JSON.stringify(updatedPresetHome));
+        
+        // Wait for map to be ready
+        const waitForMap = () => {
+          if (window.map && typeof window.displayHomeMarker === 'function') {
+            window.displayHomeMarker(presetHome.address, coords.lat, coords.lng);
+            console.log('[user-preferences] Preset home marker displayed after geocoding');
+          } else {
+            setTimeout(waitForMap, 100);
+          }
+        };
+        
+        waitForMap();
+        
+      } else {
+        console.warn('[user-preferences] Failed to geocode preset home address on startup');
+      }
+    } catch (error) {
+      console.error('[user-preferences] Error geocoding preset home on startup:', error);
+    }
+  }
 }
 
 // Geocode address utility function
@@ -464,3 +702,4 @@ document.addEventListener('DOMContentLoaded', function() {
 window.openPreferencesModal = openPreferencesModal;
 window.getPresetHomeLocation = getPresetHomeLocation;
 window.getUserPreferences = getUserPreferences;
+window.saveLastStartingAddress = saveLastStartingAddress;

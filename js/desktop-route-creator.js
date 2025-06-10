@@ -44,6 +44,11 @@ class DesktopRouteCreator {
     const address = addressValue.trim();
     if (address) {
       console.log('[desktop-route-creator] Manual Start Address input changed to:', address);
+      
+      // Save this address for the "remember last location" feature
+      if (typeof window.saveLastStartingAddress === 'function') {
+        window.saveLastStartingAddress(address);
+      }
       // Geocode and display marker.
       // We need to create a temporary address object similar to what displayHomeMarkerForRoute expects.
       const tempStartAddress = {
@@ -61,8 +66,11 @@ class DesktopRouteCreator {
 
       // Now display the home marker if geocoding was successful
       if (tempStartAddress.lat && tempStartAddress.lng) {
+        console.log('[desktop-route-creator] Geocoding successful for starting address:', tempStartAddress.lat, tempStartAddress.lng);
         this.displayHomeMarkerForRoute([tempStartAddress]); // displayHomeMarkerForRoute expects an array
       } else {
+        console.warn('[desktop-route-creator] Geocoding failed for starting address:', address);
+        console.warn('[desktop-route-creator] Address object after geocoding:', tempStartAddress);
         // If geocoding failed, ensure any existing home marker is removed
         if (typeof window.removeHomeMarker === 'function') {
           window.removeHomeMarker();
@@ -206,6 +214,15 @@ class DesktopRouteCreator {
       console.log('📍 Displaying optimized route with', optimizedRoute.length, 'addresses...');
       this.displayOptimizedRoute(optimizedRoute);
       createRouteBtn.textContent = '✅ Route Created!';
+      
+      // Clear the box selection overlay after creating the route
+      if (typeof window.handleClearSelections === 'function') {
+        // Small delay to ensure route display is complete before clearing selections
+        setTimeout(() => {
+          window.handleClearSelections();
+          console.log('✅ Cleared lasso selection overlay after route creation');
+        }, 100);
+      }
       
       // Hide any progress overlays that might still be visible
       this.hideProgressOverlays();
@@ -354,14 +371,17 @@ class DesktopRouteCreator {
     
     this.optimizedRoute = optimizedRoute;
     
-    // Display home marker for starting address if it exists
-    this.displayHomeMarkerForRoute(optimizedRoute);
-    
     // Enhance existing markers with route information instead of creating new ones
     this.enhanceExistingMarkersWithRoute(optimizedRoute);
     
     // Draw route line connecting all stops
     this.drawRouteLine(optimizedRoute);
+    
+    // Display home marker for starting address AFTER other markers are set up
+    // Use setTimeout to ensure all other markers are rendered first
+    setTimeout(() => {
+      this.displayHomeMarkerForRoute(optimizedRoute);
+    }, 50);
     
     // Fit map to show entire route
     this.fitMapToRoute(optimizedRoute);
@@ -370,27 +390,48 @@ class DesktopRouteCreator {
   }
 
   displayHomeMarkerForRoute(optimizedRoute) {
+    console.log('🏠 displayHomeMarkerForRoute called with route:', optimizedRoute);
+    
     // Find the starting address in the route
     const startingAddress = optimizedRoute.find(addr => addr.isStartingAddress) || optimizedRoute[0];
     
     if (!startingAddress) {
       console.warn('🏠 No starting address found for home marker');
+      console.warn('🏠 Route:', optimizedRoute);
       return;
     }
+    
+    console.log('🏠 Found starting address:', startingAddress);
     
     // Get coordinates (handle both lat/lng and latitude/longitude formats)
     const lat = startingAddress.lat || startingAddress.latitude;
     const lng = startingAddress.lng || startingAddress.longitude;
     
+    console.log('🏠 Extracted coordinates - lat:', lat, 'lng:', lng, 'types:', typeof lat, typeof lng);
+    
     if (!lat || !lng || typeof lat !== 'number' || typeof lng !== 'number') {
       console.warn('🏠 Starting address has no valid coordinates for home marker:', startingAddress);
+      console.warn('🏠 Address object:', startingAddress);
+      return;
+    }
+    
+    // Always remove existing home marker before adding new one to prevent duplicates
+    if (typeof window.removeHomeMarker === 'function') {
+      console.log('🏠 Removing existing home marker...');
+      window.removeHomeMarker();
+    }
+    
+    // Check if map is available
+    if (!window.map) {
+      console.error('🏠 Map not available for home marker display');
       return;
     }
     
     // Display home marker using the global function
     if (typeof window.displayHomeMarker === 'function') {
-      console.log('🏠 Displaying home marker for starting address:', startingAddress.address);
+      console.log('🏠 Calling displayHomeMarker with:', startingAddress.address, lat, lng);
       window.displayHomeMarker(startingAddress.address, lat, lng);
+      console.log('🏠 displayHomeMarker call completed');
     } else {
       console.warn('🏠 displayHomeMarker function not available');
     }
@@ -463,9 +504,9 @@ class DesktopRouteCreator {
         <!-- Route number text or home icon -->
         ${isStart ? 
           // Home icon for starting address - simple house icon
-          `<g transform="translate(${size/2 - 7}, ${size/2 - 7})">
-            <path d="M7 1L1 7v6h3v-3h6v3h3V7L7 1z" fill="${textColor}" stroke="none"/>
-            <rect x="6" y="10" width="2" height="3" fill="${textColor}"/>
+          `<g transform="translate(${size/2 - 8}, ${size/2 - 8})">
+            <path d="M8 2L2 7v7h3v-4h6v4h3V7L8 2z" fill="${textColor}" stroke="none"/>
+            <rect x="7" y="10" width="2" height="4" fill="${textColor}"/>
           </g>` :
           // Route number for stops
           `<text x="${size/2}" y="${size/2}" text-anchor="middle" dy="0.35em" 
