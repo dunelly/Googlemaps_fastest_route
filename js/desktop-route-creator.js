@@ -9,6 +9,7 @@ class DesktopRouteCreator {
     this.routeMarkers = [];
     this.routePolyline = null;
     this.isCreatingRoute = false; // Add flag to prevent interference
+    this.routeCreationLock = false; // Additional lock for stronger prevention
     
     this.init();
   }
@@ -204,7 +205,6 @@ class DesktopRouteCreator {
   }
 
   getLoadedAddresses() {
-    console.log('📍 [DEBUG] getLoadedAddresses() called from:', new Error().stack.split('\n')[2]);
     const startingAddressField = document.getElementById('manualStartAddress');
     const startingAddressValue = startingAddressField ? startingAddressField.value.trim() : '';
     
@@ -241,7 +241,16 @@ class DesktopRouteCreator {
       addresses = addresses.concat(manualDestinations);
     } else if (window.selectedItemsInShape && window.selectedItemsInShape.length > 0) {
       console.log('📍 Adding lasso-selected addresses:', window.selectedItemsInShape.length);
-      addresses = addresses.concat(window.selectedItemsInShape);
+      // CRITICAL FIX: Create deep copies to prevent coordinate corruption between route creations
+      const copiedSelectedAddresses = window.selectedItemsInShape.map(addr => ({
+        ...addr, // Spread operator creates a shallow copy
+        lat: null, // Reset coordinates to force fresh geocoding
+        lng: null,
+        latitude: null, // Reset alternate coordinate fields too
+        longitude: null
+      }));
+      console.log('📍 Created fresh copies of lasso-selected addresses to prevent coordinate corruption');
+      addresses = addresses.concat(copiedSelectedAddresses);
     }
     // Note: No longer automatically falling back to all loaded Excel addresses
     // User must either enter manual destinations or use lasso tool to select addresses
@@ -254,13 +263,17 @@ class DesktopRouteCreator {
     const routeId = Date.now(); // Unique ID for this route creation
     console.log(`📍 [DEBUG] handleCreateRoute() function called - Route ID: ${routeId}`);
     
-    if (this.isCreatingRoute) {
-      console.log(`📍 [DEBUG] Route creation already in progress, ignoring duplicate call - Route ID: ${routeId}`);
+    // CRITICAL: Double-lock system to prevent any simultaneous route creation
+    if (this.isCreatingRoute || this.routeCreationLock) {
+      console.log(`📍 [DEBUG] Route creation BLOCKED - already in progress - Route ID: ${routeId}`);
+      console.log(`📍 [DEBUG] isCreatingRoute: ${this.isCreatingRoute}, routeCreationLock: ${this.routeCreationLock}`);
       return;
     }
     
+    // Set both locks immediately
     this.isCreatingRoute = true;
-    console.log(`🚀 Creating optimized route... - Route ID: ${routeId}`);
+    this.routeCreationLock = true;
+    console.log(`🚀 Creating optimized route with DOUBLE LOCK... - Route ID: ${routeId}`);
     
     // Prevent any other calls to getLoadedAddresses during route creation
     this.currentRouteId = routeId;
@@ -268,6 +281,10 @@ class DesktopRouteCreator {
     // Force clear any existing route first to prevent interference
     console.log(`📍 [DEBUG] Force clearing existing route before starting new one - Route ID: ${routeId}`);
     this.clearRoute();
+    
+    // Additional cleanup: Remove ALL polylines from map to prevent accumulation
+    this.forceCleanMap();
+    console.log(`📍 [DEBUG] Performed force map cleaning - Route ID: ${routeId}`);
     
     const loadedAddresses = this.getLoadedAddresses();
     console.log('📍 [DEBUG] ======= ROUTE CREATION START =======');
@@ -301,6 +318,8 @@ class DesktopRouteCreator {
       console.log('📍 [DEBUG] Exiting early - not enough addresses');
       alert('Please add at least one address to create a route.');
       this.isCreatingRoute = false;
+      this.routeCreationLock = false;
+      console.log('📍 [DEBUG] BOTH locks reset to false (early exit)');
       return;
     }
     
@@ -359,6 +378,8 @@ class DesktopRouteCreator {
         console.log('📍 [DEBUG] No valid addresses found after geocoding');
         alert('No addresses could be geocoded. Please check your addresses and try again.');
         this.isCreatingRoute = false;
+        this.routeCreationLock = false;
+        console.log('📍 [DEBUG] BOTH locks reset to false (no valid addresses)');
         return;
       }
       
@@ -381,9 +402,10 @@ class DesktopRouteCreator {
       createRouteBtn.textContent = '✅ Route Created!';
       console.log('📍 [DEBUG] Route display completed');
       
-      // Reset the creating flag immediately after route display is complete
+      // Reset BOTH locks immediately after route display is complete
       this.isCreatingRoute = false;
-      console.log('📍 [DEBUG] isCreatingRoute flag reset to false');
+      this.routeCreationLock = false;
+      console.log('📍 [DEBUG] BOTH locks reset to false (success case)');
       
       // Clear the box selection overlay after creating the route
       if (typeof window.handleClearSelections === 'function') {
@@ -409,9 +431,10 @@ class DesktopRouteCreator {
       console.error('❌ Error stack:', error.stack);
       alert('Failed to create route: ' + error.message + '. Please try again.');
       
-      // Reset the creating flag immediately on error
+      // Reset BOTH locks immediately on error
       this.isCreatingRoute = false;
-      console.log('📍 [DEBUG] isCreatingRoute flag reset to false (error case)');
+      this.routeCreationLock = false;
+      console.log('📍 [DEBUG] BOTH locks reset to false (error case)');
       
       // Hide any progress overlays in error case too
       this.hideProgressOverlays();
@@ -865,6 +888,23 @@ class DesktopRouteCreator {
     console.log('🗺️ [DEBUG] Route length:', route.length);
     console.log('🗺️ [DEBUG] Existing polyline before drawing:', !!this.routePolyline);
     
+    // CRITICAL: Force remove any existing polyline first to prevent accumulation
+    if (this.routePolyline && window.map) {
+      console.log('🗺️ [DEBUG] FORCE REMOVING existing polyline before creating new one');
+      window.map.removeLayer(this.routePolyline);
+      this.routePolyline = null;
+    }
+    
+    // Also remove any stray polylines that might exist on the map
+    if (window.map && window.map.eachLayer) {
+      window.map.eachLayer((layer) => {
+        if (layer instanceof L.Polyline && layer.options.dashArray === '10, 5') {
+          console.log('🗺️ [DEBUG] Found and removing stray polyline');
+          window.map.removeLayer(layer);
+        }
+      });
+    }
+    
     const routePoints = route
       .filter(address => {
         const lat = address.lat || address.latitude;
@@ -884,15 +924,15 @@ class DesktopRouteCreator {
     console.log('🗺️ [DEBUG] Number of valid points:', routePoints.length);
     
     if (routePoints.length > 1) {
-      console.log('🗺️ [DEBUG] Creating polyline with points:', routePoints);
+      console.log('🗺️ [DEBUG] Creating NEW polyline with points:', routePoints);
       this.routePolyline = L.polyline(routePoints, {
         color: '#007bff',
         weight: 4,
         opacity: 0.8,
         dashArray: '10, 5'
       }).addTo(window.map);
-      console.log('🗺️ [DEBUG] Polyline created and added to map');
-      console.log('🗺️ [DEBUG] Polyline bounds:', this.routePolyline.getBounds());
+      console.log('🗺️ [DEBUG] NEW polyline created and added to map');
+      console.log('🗺️ [DEBUG] NEW polyline bounds:', this.routePolyline.getBounds());
     } else {
       console.log('🗺️ [DEBUG] Not enough points for polyline:', routePoints.length);
     }
@@ -911,6 +951,34 @@ class DesktopRouteCreator {
       const group = new L.featureGroup(this.routeMarkers);
       window.map.fitBounds(group.getBounds().pad(0.1));
     }
+  }
+
+  forceCleanMap() {
+    console.log('🧹 [DEBUG] FORCE CLEANING MAP of all polylines...');
+    
+    if (!window.map || !window.map.eachLayer) {
+      console.log('🧹 [DEBUG] Map not available for cleaning');
+      return;
+    }
+    
+    let removedCount = 0;
+    const layersToRemove = [];
+    
+    window.map.eachLayer((layer) => {
+      if (layer instanceof L.Polyline) {
+        layersToRemove.push(layer);
+        removedCount++;
+      }
+    });
+    
+    layersToRemove.forEach(layer => {
+      window.map.removeLayer(layer);
+    });
+    
+    console.log(`🧹 [DEBUG] Force removed ${removedCount} polylines from map`);
+    
+    // Reset our polyline reference
+    this.routePolyline = null;
   }
 
   clearRoute() {
