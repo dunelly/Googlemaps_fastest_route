@@ -206,13 +206,23 @@ button:hover, button:focus {
   border-color: #4f8cff;
 }
 
-/* Leaflet Draw Icons */
+/* Leaflet Draw Icons - Enhanced and More Intuitive */
+
+/* Box Selection Tool - Enhanced with selection indicators */
 .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Crect x='4' y='4' width='18' height='18' rx='3' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3C!-- Main selection box --%3E%3Crect x='5' y='5' width='16' height='16' rx='2' fill='none' stroke='%23333' stroke-width='2' stroke-dasharray='3,2'/%3E%3C!-- Corner indicators --%3E%3Crect x='3' y='3' width='4' height='4' fill='%23333' rx='1'/%3E%3Crect x='19' y='3' width='4' height='4' fill='%23333' rx='1'/%3E%3Crect x='3' y='19' width='4' height='4' fill='%23333' rx='1'/%3E%3Crect x='19' y='19' width='4' height='4' fill='%23333' rx='1'/%3E%3C/svg%3E") !important;
   background-size: 22px 22px !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-color: #fff !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.leaflet-draw-toolbar .leaflet-draw-draw-rectangle:hover {
+  background-color: #f8f9fa !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-draw-rectangle span {
@@ -220,17 +230,73 @@ button:hover, button:focus {
   background: none !important;
 }
 
+/* Lasso Selection Tool - Improved lasso rope design */
 .leaflet-draw-toolbar .leaflet-draw-draw-polygon {
-  background-image: url("data:image/svg+xml,%3Csvg width='26' height='26' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 19 Q4 13 8 8 Q13 2 19 7 Q24 12 18 18 Q13 23 7 19 Z' fill='none' stroke='%23333' stroke-width='2.2'/%3E%3Ccircle cx='7' cy='19' r='2' fill='white' stroke='%23333' stroke-width='1.2'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='26' height='26' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3C!-- Lasso rope loop --%3E%3Cpath d='M8 6 Q4 6 4 10 Q4 14 8 14 L18 14 Q22 14 22 10 Q22 6 18 6 Q14 4 10 4 Q8 4 8 6 Z' fill='none' stroke='%23333' stroke-width='2.2' stroke-linecap='round'/%3E%3C!-- Lasso handle/grip --%3E%3Cpath d='M8 14 L6 18 Q5 20 7 20 Q9 20 8 18 L6 16' fill='none' stroke='%23333' stroke-width='2.2' stroke-linecap='round'/%3E%3C!-- Selection dots to indicate selection --%3E%3Ccircle cx='10' cy='10' r='1' fill='%23333'/%3E%3Ccircle cx='16' cy='10' r='1' fill='%23333'/%3E%3C/svg%3E") !important;
   background-size: 22px 22px !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-color: #fff !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.leaflet-draw-toolbar .leaflet-draw-draw-polygon:hover {
+  background-color: #f8f9fa !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
 }
 
 .leaflet-draw-toolbar .leaflet-draw-draw-polygon span {
   opacity: 0 !important;
   background: none !important;
+}
+
+/* Clear Button Icon Styling */
+.leaflet-draw-clear-all {
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+  background-color: #fff !important;
+}
+
+.leaflet-draw-clear-all:hover {
+  background-color: #f8f9fa !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Enhanced tooltips for drawing tools */
+.leaflet-draw-toolbar .leaflet-draw-draw-rectangle[title]:hover::after,
+.leaflet-draw-toolbar .leaflet-draw-draw-polygon[title]:hover::after,
+.leaflet-draw-clear-all[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10000;
+  margin-top: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Tooltip arrow */
+.leaflet-draw-toolbar .leaflet-draw-draw-rectangle[title]:hover::before,
+.leaflet-draw-toolbar .leaflet-draw-draw-polygon[title]:hover::before,
+.leaflet-draw-clear-all[title]:hover::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(0,0,0,0.9);
+  z-index: 10001;
 }
 
 /* Address List Styling */
@@ -361,5 +427,37 @@ button:hover, button:focus {
   input[type="file"] {
     min-height: 44px;
     padding: 8px;
+  }
+  
+  /* Enhanced drawing tool icons for mobile */
+  .leaflet-draw-toolbar .leaflet-draw-draw-rectangle,
+  .leaflet-draw-toolbar .leaflet-draw-draw-polygon,
+  .leaflet-draw-clear-all {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+  
+  /* Larger icons on mobile for better touch targets */
+  .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
+    background-size: 28px 28px !important;
+  }
+  
+  .leaflet-draw-toolbar .leaflet-draw-draw-polygon {
+    background-size: 28px 28px !important;
+  }
+  
+  .leaflet-draw-clear-all svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  
+  /* Simplified tooltips for mobile - position adjusted */
+  .leaflet-draw-toolbar .leaflet-draw-draw-rectangle[title]:hover::after,
+  .leaflet-draw-toolbar .leaflet-draw-draw-polygon[title]:hover::after,
+  .leaflet-draw-clear-all[title]:hover::after {
+    font-size: 14px;
+    padding: 8px 12px;
   }
 }

@@ -550,8 +550,7 @@ class DesktopRouteCreator {
     console.log('🗺️ [DEBUG] - existing routeMarkers:', this.routeMarkers.length);
     console.log('🗺️ [DEBUG] - existing routePolyline:', !!this.routePolyline);
     
-    // Clear any existing route
-    this.clearRoute();
+    // this.clearRoute(); // Redundant: clearRoute is already called at the start of handleCreateRoute
     
     this.optimizedRoute = optimizedRoute;
     
@@ -568,7 +567,7 @@ class DesktopRouteCreator {
     }, 50);
     
     // Fit map to show entire route
-    this.fitMapToRoute(optimizedRoute);
+    this.fitMapToRoute(); // Corrected: fitMapToRoute uses this.routeMarkers internally
     
     console.log(`✅ Route displayed with ${optimizedRoute.length} enhanced markers`);
   }
@@ -622,54 +621,89 @@ class DesktopRouteCreator {
   }
 
   enhanceExistingMarkersWithRoute(route) {
-    console.log('🎯 Enhancing existing markers with route information...');
-    
-    // Get existing markers from the addressMarkersArray
-    if (!window.addressMarkersArray || window.addressMarkersArray.length === 0) {
-      console.warn('⚠️ No existing address markers found, falling back to creating new markers');
-      this.createNumberedMarkers(route);
-      return;
+    console.log('🎯 Enhancing existing markers or creating new for route...');
+    this.routeMarkers = []; // Ensure it's clean before populating
+
+    if (!window.map) {
+        console.error('🗺️ Map not available for enhancing/creating markers.');
+        return;
     }
-    
-    // Create route order map for easy lookup
-    const routeOrderMap = new Map();
-    route.forEach((address, index) => {
-      const addressKey = address.address.toLowerCase().trim();
-      routeOrderMap.set(addressKey, {
-        order: index + 1,
-        isStart: address.isStartingAddress || index === 0,
-        address: address
-      });
-    });
-    
-    console.log('📍 Route order map created with', routeOrderMap.size, 'entries');
-    
-    // Enhance each existing marker that's part of the route
-    window.addressMarkersArray.forEach(marker => {
-      if (marker.customData && marker.customData.address) {
-        const markerAddressKey = marker.customData.address.toLowerCase().trim();
-        const routeInfo = routeOrderMap.get(markerAddressKey);
-        
-        if (routeInfo) {
-          console.log(`✅ Enhancing marker for ${marker.customData.address} - Route position ${routeInfo.order}`);
-          
-          // Update marker icon to show route number
-          const numberedIcon = this.createRouteNumberIcon(routeInfo.order, routeInfo.isStart);
-          marker.setIcon(numberedIcon);
-          
-          // Enhance popup content with route information
-          this.enhanceMarkerPopup(marker, routeInfo);
-          
-          // Store route info in marker
-          marker.routeInfo = routeInfo;
-          
-          // Add to route markers for cleanup
-          this.routeMarkers.push(marker);
+
+    // Create a map of existing markers from window.addressMarkersArray for quick lookup
+    const existingMarkerMap = new Map();
+    if (window.addressMarkersArray && window.addressMarkersArray.length > 0) {
+        window.addressMarkersArray.forEach(marker => {
+            if (marker.customData && marker.customData.address) {
+                const addressKey = marker.customData.address.toLowerCase().trim();
+                if (!existingMarkerMap.has(addressKey)) { // Keep the first one if duplicates exist
+                    existingMarkerMap.set(addressKey, marker);
+                }
+            }
+        });
+    }
+    console.log('📍 Existing marker map created with', existingMarkerMap.size, 'entries');
+
+    route.forEach((routeAddress, index) => {
+        const addressKey = routeAddress.address.toLowerCase().trim();
+        const routeInfoForPopup = { // Renamed to avoid conflict with marker.routeInfo
+            order: index + 1,
+            isStart: routeAddress.isStartingAddress || index === 0,
+            address: routeAddress // Full routeAddress object for popup/icon creation
+        };
+
+        const existingMarker = existingMarkerMap.get(addressKey);
+
+        if (existingMarker) {
+            console.log(`✅ Enhancing existing marker for ${routeAddress.address} - Route position ${routeInfoForPopup.order}`);
+            
+            const freshLat = routeAddress.lat || routeAddress.latitude;
+            const freshLng = routeAddress.lng || routeAddress.longitude;
+            if (freshLat != null && freshLng != null && typeof freshLat === 'number' && typeof freshLng === 'number') {
+                const currentMarkerPos = existingMarker.getLatLng();
+                const tolerance = 0.00001; 
+                if (Math.abs(currentMarkerPos.lat - freshLat) > tolerance || Math.abs(currentMarkerPos.lng - freshLng) > tolerance) {
+                    existingMarker.setLatLng([freshLat, freshLng]);
+                }
+            }
+            
+            existingMarker.setIcon(this.createRouteNumberIcon(routeInfoForPopup.order, routeInfoForPopup.isStart));
+            this.enhanceMarkerPopup(existingMarker, routeInfoForPopup);
+            existingMarker.routeInfo = routeInfoForPopup; // Store route-specific data
+            // existingMarker.wasCreatedForRoute = false; // Not strictly needed, absence of flag implies it was existing
+            this.routeMarkers.push(existingMarker);
+        } else {
+            // No existing marker found, create a new one for this route stop
+            console.log(`✨ Creating new route marker for ${routeAddress.address} - Route position ${routeInfoForPopup.order}`);
+            const lat = routeAddress.lat || routeAddress.latitude;
+            const lng = routeAddress.lng || routeAddress.longitude;
+
+            if (lat != null && lng != null && typeof lat === 'number' && typeof lng === 'number') {
+                const newMarkerIcon = this.createRouteNumberIcon(routeInfoForPopup.order, routeInfoForPopup.isStart);
+                const newMarker = L.marker([lat, lng], {
+                    icon: newMarkerIcon,
+                    zIndexOffset: 1000 
+                });
+
+                newMarker.customData = { 
+                    address: routeAddress.address,
+                    name: routeAddress.name,
+                    firstName: routeAddress.firstName,
+                    lastName: routeAddress.lastName,
+                    // Copy other relevant fields from routeAddress if needed by enhanceMarkerPopup
+                };
+                
+                this.enhanceMarkerPopup(newMarker, routeInfoForPopup);
+                newMarker.routeInfo = routeInfoForPopup; // Store route-specific data
+                newMarker.wasCreatedForRoute = true; // Flag for new markers
+                newMarker.addTo(window.map);
+                this.routeMarkers.push(newMarker);
+            } else {
+                console.warn(`⚠️ Could not create marker for ${routeAddress.address} - missing coordinates.`);
+            }
         }
-      }
     });
     
-    console.log(`✅ Enhanced ${this.routeMarkers.length} existing markers with route information`);
+    console.log(`✅ Populated this.routeMarkers with ${this.routeMarkers.length} markers for the current route.`);
   }
   
   createRouteNumberIcon(routeNumber, isStart = false) {
@@ -918,18 +952,52 @@ class DesktopRouteCreator {
     }
   }
 
-  fitMapToRoute(route) {
-    const routePoints = route
-      .filter(address => {
-        const lat = address.lat || address.latitude;
-        const lng = address.lng || address.longitude;
-        return lat && lng && typeof lat === 'number' && typeof lng === 'number';
-      })
-      .map(address => [address.lat || address.latitude, address.lng || address.longitude]);
-    
-    if (routePoints.length > 0) {
-      const group = new L.featureGroup(this.routeMarkers);
-      window.map.fitBounds(group.getBounds().pad(0.1));
+  fitMapToRoute() {
+    if (!window.map) {
+      console.warn('fitMapToRoute: Map not available.');
+      return;
+    }
+    if (!this.routeMarkers || this.routeMarkers.length === 0) {
+      console.warn('fitMapToRoute: No route markers available to fit map to.');
+      return;
+    }
+
+    const validMarkers = this.routeMarkers.filter(m => 
+        m && 
+        typeof m.getLatLng === 'function' && 
+        m.getLatLng() && // Check if getLatLng() returns a valid object
+        m.getLatLng().lat != null && // Check for non-null lat
+        m.getLatLng().lng != null   // Check for non-null lng
+    );
+
+    if (validMarkers.length === 0) {
+      console.warn('fitMapToRoute: No valid markers with coordinates found in this.routeMarkers.');
+      return;
+    }
+
+    if (validMarkers.length === 1) {
+      const singleValidMarker = validMarkers[0];
+      const pos = singleValidMarker.getLatLng();
+      console.log('fitMapToRoute: Only one valid marker, using setView to', pos);
+      window.map.setView(pos, 15); // Default zoom level for a single point
+      return;
+    }
+
+    // For 2+ valid markers
+    const group = new L.featureGroup(validMarkers);
+    const bounds = group.getBounds();
+
+    if (bounds && bounds.isValid()) {
+      console.log('fitMapToRoute: Multiple valid markers, using fitBounds.');
+      window.map.fitBounds(bounds.pad(0.1));
+    } else {
+      console.warn('fitMapToRoute: Bounds are invalid for the group of valid markers. Markers positions:', validMarkers.map(m => m.getLatLng()));
+      // Fallback: if bounds are invalid but we have points, try to set view to the first valid marker
+      if (validMarkers.length > 0) {
+        const firstMarkerPos = validMarkers[0].getLatLng();
+        console.warn('fitMapToRoute: Fallback - setting view to the first valid marker.');
+        window.map.setView(firstMarkerPos, 13); // Slightly zoomed out fallback
+      }
     }
   }
 
@@ -1038,21 +1106,27 @@ class DesktopRouteCreator {
     
     // Don't clear home marker - it should persist since it represents the starting address
     
-    // Restore original marker icons and popups for enhanced markers
+    // Restore original marker icons and popups for enhanced markers or remove newly created ones
     this.routeMarkers.forEach(marker => {
-      if (marker.routeInfo) {
-        // This is an enhanced existing marker, restore it
+      if (marker.wasCreatedForRoute) {
+        // This marker was created specifically for the route, remove it
+        console.log('🗑️ Removing marker created for route:', marker.customData ? marker.customData.address : 'unknown');
+        if (window.map) {
+          window.map.removeLayer(marker);
+        }
+      } else if (marker.routeInfo) { 
+        // This was an existing marker that was enhanced for the route
         console.log('🔄 Restoring original marker for', marker.customData.address);
         
         // Restore original icon
-        const originalColor = this.getOriginalMarkerColor(marker.customData);
+        const originalColor = this.getOriginalMarkerColor(marker.customData); // Assumes marker.customData exists
         const originalIcon = window.createCustomMarkerIcon ? window.createCustomMarkerIcon(originalColor) : null;
         if (originalIcon) {
           marker.setIcon(originalIcon);
         }
         
         // Restore original popup
-        if (typeof window.createMarkerPopupContent === 'function') {
+        if (typeof window.createMarkerPopupContent === 'function' && marker.customData) {
           const visitData = this.getVisitInfo(marker.customData.address);
           const popupContent = window.createMarkerPopupContent(
             marker.customData, 
@@ -1062,13 +1136,8 @@ class DesktopRouteCreator {
           marker.bindPopup(popupContent);
         }
         
-        // Remove route info
-        delete marker.routeInfo;
-      } else {
-        // This is a new route marker, remove it completely
-        if (window.map) {
-          window.map.removeLayer(marker);
-        }
+        delete marker.routeInfo; // Remove route-specific data
+        // delete marker.wasCreatedForRoute; // Not strictly necessary to delete this flag
       }
     });
     

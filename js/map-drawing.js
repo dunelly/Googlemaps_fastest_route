@@ -3,7 +3,7 @@
 function initializeDrawingFeatures() {
   if (!window.map || !window.L) return;
 
-  // Add custom clear button control
+  // Add custom clear button control with improved visual icon
   L.Control.ClearButton = L.Control.extend({
     options: { position: 'topleft' },
     onAdd: function(map) {
@@ -14,7 +14,32 @@ function initializeDrawingFeatures() {
       btn.title = 'Clear all drawn shapes and selections';
       btn.setAttribute('role', 'button');
       btn.setAttribute('aria-label', 'Clear all drawn shapes and selections');
-      btn.textContent = 'CLEAR';
+      
+      // Enhanced clear icon with better visual design
+      const clearIconSvg = `
+        <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: auto;">
+          <!-- Trash can base -->
+          <rect x="6" y="8" width="12" height="12" rx="2" fill="none" stroke="#333" stroke-width="2"/>
+          <!-- Trash can lid -->
+          <path d="M16 6L18 6M8 6L6 6M10 4L14 4" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+          <!-- X mark overlay to indicate clear/delete -->
+          <path d="M9 11L15 17M15 11L9 17" stroke="#d63384" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      `;
+      
+      btn.innerHTML = clearIconSvg;
+      btn.style.width = '34px';
+      btn.style.height = '34px';
+      btn.style.display = 'flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'center';
+      btn.style.background = '#fff';
+      btn.style.borderRadius = '4px';
+      btn.style.border = 'none';
+      btn.style.cursor = 'pointer';
+      btn.style.transition = 'all 0.2s ease';
+      btn.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)';
+      
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
       btn.onclick = function(e) {

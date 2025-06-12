@@ -44,6 +44,19 @@ function initializeBasicMap() {
     console.log("initializeBasicMap: DrawControl options defined");
     map.addControl(drawControl);
     console.log("initializeBasicMap: DrawControl added to map");
+    
+    // Enhanced tooltips for drawing tools
+    setTimeout(() => {
+      const rectangleBtn = document.querySelector('.leaflet-draw-draw-rectangle');
+      const polygonBtn = document.querySelector('.leaflet-draw-draw-polygon');
+      
+      if (rectangleBtn) {
+        rectangleBtn.title = '📦 Box Selection - Click and drag to select addresses in a rectangular area';
+      }
+      if (polygonBtn) {
+        polygonBtn.title = '🎯 Lasso Selection - Draw a custom shape to select addresses';
+      }
+    }, 100);
 
     // Make variables globally available after they're initialized
     window.map = map;
