@@ -107,7 +107,7 @@ function createHomeMarkerIcon() {
   
   return L.divIcon({
     html: homeIcon,
-    className: 'home-marker',
+    className: 'home-marker-icon',
     iconSize: [40, 50],
     iconAnchor: [20, 45],
     popupAnchor: [0, -45]
@@ -272,6 +272,13 @@ function displayHomeMarker(address, lat, lng) {
   // This is now the central place for removing the old home marker before adding a new one.
   if (homeMarker) {
     console.log('[map-markers] Removing existing home marker before adding new one.');
+    
+    // Remove event listeners for old marker
+    if (window.map && typeof window.map.off === 'function') {
+      window.map.off('zoomend');
+      window.map.off('moveend');
+    }
+    
     homeMarker.remove();
     homeMarker = null;
   }
@@ -282,7 +289,16 @@ function displayHomeMarker(address, lat, lng) {
   console.log('[map-markers] Home icon created:', homeIcon);
   
   console.log('[map-markers] Adding marker to map at coordinates [', lat, ',', lng, ']');
-  homeMarker = L.marker([lat, lng], { icon: homeIcon }).addTo(window.map);
+  homeMarker = L.marker([lat, lng], { 
+    icon: homeIcon,
+    interactive: true,
+    keyboard: false,
+    riseOnHover: true,
+    riseOffset: 250
+  }).addTo(window.map);
+  
+  // Ensure marker stays bound to coordinates during zoom/pan
+  homeMarker.setLatLng([lat, lng]);
   console.log('[map-markers] Marker added to map:', homeMarker);
   
   // Create popup content for home marker
@@ -298,7 +314,23 @@ function displayHomeMarker(address, lat, lng) {
   `;
   
   homeMarker.bindPopup(popupHtml);
-  homeMarker.customData = { address: address, isHome: true };
+  homeMarker.customData = { address: address, isHome: true, lat: lat, lng: lng };
+  
+  // Add event listener to maintain position during zoom
+  if (window.map && typeof window.map.on === 'function') {
+    window.map.on('zoomend', function() {
+      if (homeMarker && homeMarker.customData) {
+        homeMarker.setLatLng([homeMarker.customData.lat, homeMarker.customData.lng]);
+      }
+    });
+    
+    // Add event listener to maintain position during pan/move
+    window.map.on('moveend', function() {
+      if (homeMarker && homeMarker.customData) {
+        homeMarker.setLatLng([homeMarker.customData.lat, homeMarker.customData.lng]);
+      }
+    });
+  }
   
   console.log('[map-markers] Home marker display completed successfully at:', address, lat, lng);
 }
@@ -306,6 +338,12 @@ function displayHomeMarker(address, lat, lng) {
 // Function to remove home marker
 function removeHomeMarker() {
   if (homeMarker) {
+    // Remove event listeners to prevent memory leaks
+    if (window.map && typeof window.map.off === 'function') {
+      window.map.off('zoomend');
+      window.map.off('moveend');
+    }
+    
     homeMarker.remove();
     homeMarker = null;
     console.log('[map-markers] Home marker removed');

@@ -149,7 +149,7 @@ async function geocodeAndDisplayHomeMarker(address) {
     }
     
     // Use Google Geocoding API
-    const apiKey = 'AIzaSyDQqCkBqmHRiX04Xtydb2v0IjxpssxzpQQ';
+    const apiKey = 'AIzaSyAq-_o7JolKDWy943Q-dejkoqzPvJKIV2k';
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
     
     const response = await fetch(geocodeUrl);

@@ -665,15 +665,9 @@ class MobileNavigation {
         console.log('[Mobile] Opening Google Maps for:', current.address);
         console.log('[Mobile] Google Maps URL:', url);
         
-        // Open in new tab
-        const newWindow = window.open(url, '_blank');
-        
-        if (!newWindow) {
-            console.error('[Mobile] Failed to open Google Maps - popup blocked?');
-            alert('Could not open Google Maps. Please allow popups for this site.');
-        } else {
-            console.log('[Mobile] Google Maps opened successfully');
-        }
+        // Open in new tab - Note: Mobile browsers may return null even when successful
+        window.open(url, '_blank');
+        console.log('[Mobile] Google Maps navigation initiated');
     }
     
     /**

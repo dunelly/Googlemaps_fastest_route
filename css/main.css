@@ -389,19 +389,14 @@ label {
 }
 
 /* Home marker styles */
-.home-marker {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 50% !important;
-  background: rgba(255, 107, 53, 0.1) !important;
-  border: 2px solid #FF6B35 !important;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3) !important;
-  animation: homeMarkerPulse 2s ease-in-out infinite !important;
+.home-marker-icon {
+  position: relative !important;
+  z-index: 1000 !important;
 }
 
-.home-marker svg {
+.home-marker-icon svg {
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2)) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
 @keyframes homeMarkerPulse {

@@ -213,28 +213,59 @@ function useCurrentLocationAsHome() {
   console.log('[user-preferences] Getting current location for home...');
   
   if (!navigator.geolocation) {
+    console.error('[user-preferences] Geolocation not supported');
     if (typeof showMessage === 'function') {
       showMessage('Geolocation is not supported by your browser', 'error');
     }
     return;
   }
   
+  // Show loading message
+  if (typeof showMessage === 'function') {
+    showMessage('Getting your current location...', 'info');
+  }
+  
+  // Disable the button temporarily to prevent multiple clicks
+  const useCurrentBtn = document.getElementById('useCurrentLocationBtn');
+  if (useCurrentBtn) {
+    useCurrentBtn.disabled = true;
+    useCurrentBtn.textContent = '📍 Getting Location...';
+  }
+  
+  const enableButton = () => {
+    if (useCurrentBtn) {
+      useCurrentBtn.disabled = false;
+      useCurrentBtn.textContent = '📍 Use Current Location';
+    }
+  };
+  
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
       
-      console.log('[user-preferences] Current location obtained:', lat, lng);
+      console.log('[user-preferences] Current location obtained:', lat, lng, 'accuracy:', accuracy + 'm');
       
       try {
+        // Show processing message
+        if (typeof showMessage === 'function') {
+          showMessage('Converting location to address...', 'info');
+        }
+        
         // Reverse geocode to get address
         const address = await reverseGeocodeCoordinates(lat, lng);
         
         if (address) {
+          console.log('[user-preferences] Reverse geocoded address:', address);
+          
           // Update the form field
           const homeAddressField = document.getElementById('presetHomeAddress');
           if (homeAddressField) {
             homeAddressField.value = address;
+            console.log('[user-preferences] Updated form field with address');
+          } else {
+            console.error('[user-preferences] presetHomeAddress field not found!');
           }
           
           // Save as preset home
@@ -242,33 +273,69 @@ function useCurrentLocationAsHome() {
             address: address,
             lat: lat,
             lng: lng,
-            setDate: new Date().toISOString()
+            accuracy: accuracy,
+            setDate: new Date().toISOString(),
+            setFromCurrentLocation: true
           };
           
           localStorage.setItem(PRESET_HOME_KEY, JSON.stringify(presetHome));
+          console.log('[user-preferences] Saved preset home to localStorage:', presetHome);
           
           // Display home marker
           if (typeof window.displayHomeMarker === 'function') {
+            console.log('[user-preferences] Displaying home marker...');
             window.displayHomeMarker(address, lat, lng);
+          } else {
+            console.error('[user-preferences] displayHomeMarker function not available!');
           }
+          
+          // Auto-fill the starting address field on the main page
+          const startingAddressField = document.getElementById('manualStartAddress');
+          if (startingAddressField) {
+            console.log('[user-preferences] Auto-filling starting address field with current location');
+            startingAddressField.value = address;
+            
+            // Trigger input event to update any dependent logic (like displaying home marker)
+            const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+            startingAddressField.dispatchEvent(inputEvent);
+            
+            // Also save to recent addresses
+            if (typeof window.saveLastStartingAddress === 'function') {
+              window.saveLastStartingAddress(address);
+            }
+          } else {
+            console.warn('[user-preferences] manualStartAddress field not found for auto-fill');
+          }
+          
+          // Don't close the modal - let user save preferences manually
+          // closePreferencesModal();
+          
+          // Don't switch tabs automatically - let user control navigation
+          // const planRouteTab = document.getElementById('planRouteTab');
+          // if (planRouteTab && typeof switchTab === 'function') {
+          //   switchTab('planRoute');
+          // }
           
           if (typeof showMessage === 'function') {
-            showMessage('Current location set as home!', 'success');
+            showMessage(`Current location set as home and filled as starting address: ${address}. Click Save to apply preferences.`, 'success');
           }
           
-          console.log('[user-preferences] Current location set as home:', presetHome);
+          console.log('[user-preferences] Current location set as home successfully and auto-filled starting address:', presetHome);
           
         } else {
+          console.error('[user-preferences] Reverse geocoding returned null/empty');
           if (typeof showMessage === 'function') {
-            showMessage('Could not determine address from your location', 'error');
+            showMessage('Could not determine address from your location. Please try again or enter manually.', 'error');
           }
         }
         
       } catch (error) {
         console.error('[user-preferences] Error reverse geocoding:', error);
         if (typeof showMessage === 'function') {
-          showMessage('Error getting address from location', 'error');
+          showMessage('Error getting address from location: ' + error.message, 'error');
         }
+      } finally {
+        enableButton();
       }
     },
     (error) => {
@@ -277,19 +344,28 @@ function useCurrentLocationAsHome() {
       
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          message = 'Location access denied. Please enable location permissions.';
+          message = 'Location access denied. Please enable location permissions in your browser and try again.';
           break;
         case error.POSITION_UNAVAILABLE:
-          message = 'Location information unavailable.';
+          message = 'Location information unavailable. Please check your device settings.';
           break;
         case error.TIMEOUT:
-          message = 'Location request timed out.';
+          message = 'Location request timed out. Please try again.';
           break;
+        default:
+          message = `Location error (${error.code}): ${error.message}`;
       }
       
       if (typeof showMessage === 'function') {
         showMessage(message, 'error');
       }
+      
+      enableButton();
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 60000
     }
   );
 }
@@ -528,6 +604,22 @@ function setCurrentLocationAsHomeQuietly() {
             window.displayHomeMarker(address, lat, lng);
           }
           
+          // Auto-fill the starting address field on the main page
+          const startingAddressField = document.getElementById('manualStartAddress');
+          if (startingAddressField && !startingAddressField.value.trim()) {
+            console.log('[user-preferences] Auto-filling starting address field with current location (first-time setup)');
+            startingAddressField.value = address;
+            
+            // Trigger input event to update any dependent logic
+            const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+            startingAddressField.dispatchEvent(inputEvent);
+            
+            // Also save to recent addresses
+            if (typeof window.saveLastStartingAddress === 'function') {
+              window.saveLastStartingAddress(address);
+            }
+          }
+          
           if (typeof showMessage === 'function') {
             showMessage(`🏠 Home location set to: ${address}`, 'success');
           }
@@ -674,22 +766,42 @@ async function geocodeAddress(address) {
 // Reverse geocode coordinates to address
 async function reverseGeocodeCoordinates(lat, lng) {
   try {
+    console.log('[user-preferences] Starting reverse geocoding for:', lat, lng);
+    
     const apiKey = 'AIzaSyAq-_o7JolKDWy943Q-dejkoqzPvJKIV2k';
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+    
+    console.log('[user-preferences] Making reverse geocoding request to:', geocodeUrl);
     
     const response = await fetch(geocodeUrl);
     const data = await response.json();
     
+    console.log('[user-preferences] Reverse geocoding response:', data);
+    
     if (data.status === 'OK' && data.results.length > 0) {
       // Get the most specific address (usually the first result)
-      return data.results[0].formatted_address;
-    } else {
-      console.warn('[user-preferences] Reverse geocoding failed:', data.status);
+      const address = data.results[0].formatted_address;
+      console.log('[user-preferences] Reverse geocoding successful:', address);
+      return address;
+    } else if (data.status === 'ZERO_RESULTS') {
+      console.warn('[user-preferences] No address found for coordinates:', lat, lng);
       return null;
+    } else if (data.status === 'OVER_QUERY_LIMIT') {
+      console.error('[user-preferences] Google API quota exceeded');
+      throw new Error('Location service quota exceeded. Please try again later.');
+    } else if (data.status === 'REQUEST_DENIED') {
+      console.error('[user-preferences] Google API request denied');
+      throw new Error('Location service access denied. Please check API configuration.');
+    } else {
+      console.warn('[user-preferences] Reverse geocoding failed:', data.status, data.error_message);
+      throw new Error(`Location service error: ${data.status}`);
     }
   } catch (error) {
     console.error('[user-preferences] Reverse geocoding error:', error);
-    return null;
+    if (error.message.includes('quota') || error.message.includes('denied') || error.message.includes('service')) {
+      throw error; // Re-throw API-specific errors
+    }
+    throw new Error('Network error while getting address. Please check your internet connection.');
   }
 }
 

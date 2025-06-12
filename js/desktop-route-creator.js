@@ -8,6 +8,7 @@ class DesktopRouteCreator {
     this.optimizedRoute = null;
     this.routeMarkers = [];
     this.routePolyline = null;
+    this.isCreatingRoute = false; // Add flag to prevent interference
     
     this.init();
   }
@@ -35,6 +36,20 @@ class DesktopRouteCreator {
         this.handleStartingAddressInputChange(event.target.value);
         this.updateButtonState();
       });
+    }
+    
+    // Listen for destination field changes
+    this.setupDestinationFieldListeners();
+    
+    // Watch for dynamically added destination fields
+    const observer = new MutationObserver(() => {
+      this.setupDestinationFieldListeners();
+      this.updateButtonState();
+    });
+    
+    const destinationContainer = document.getElementById('destinationFields');
+    if (destinationContainer) {
+      observer.observe(destinationContainer, { childList: true, subtree: true });
     }
     
     console.log('📍 Desktop Route Creator initialized');
@@ -87,36 +102,98 @@ class DesktopRouteCreator {
   setupEventListeners() {
     const createRouteBtn = document.getElementById('createRouteBtn');
     if (createRouteBtn) {
-      createRouteBtn.addEventListener('click', () => this.handleCreateRoute());
+      console.log('📍 [DEBUG] Setting up create route button listener');
+      
+      // Add debouncing to prevent rapid clicks
+      let lastClickTime = 0;
+      const debounceDelay = 1000; // 1 second debounce
+      
+      createRouteBtn.addEventListener('click', (event) => {
+        const now = Date.now();
+        console.log('📍 [DEBUG] Create route button clicked!');
+        
+        // Prevent rapid clicks
+        if (now - lastClickTime < debounceDelay) {
+          console.log('📍 [DEBUG] Ignoring rapid click - debounce active');
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        
+        lastClickTime = now;
+        event.preventDefault();
+        event.stopPropagation();
+        this.handleCreateRoute();
+      });
+    } else {
+      console.error('📍 [DEBUG] Create route button not found during setup!');
     }
+  }
+
+  setupDestinationFieldListeners() {
+    // Add event listeners to destination fields that don't already have them
+    const destinationFields = document.querySelectorAll('.destination-field');
+    destinationFields.forEach(field => {
+      if (!field.hasAttribute('data-route-listener')) {
+        field.addEventListener('input', () => {
+          this.updateButtonState();
+        });
+        field.addEventListener('change', () => {
+          this.updateButtonState();
+        });
+        field.setAttribute('data-route-listener', 'true');
+      }
+    });
   }
 
 
   updateButtonState() {
     const createRouteBtn = document.getElementById('createRouteBtn');
     if (!createRouteBtn) return;
+    
+    // Don't update button state while creating a route
+    if (this.isCreatingRoute) {
+      console.log('📍 [DEBUG] Skipping button state update - route creation in progress');
+      return;
+    }
 
     // Check starting address
     const startingAddressField = document.getElementById('manualStartAddress');
     const hasStartingAddress = startingAddressField && startingAddressField.value.trim();
     
-    // Check if we have loaded addresses  
-    const loadedAddresses = this.getLoadedAddresses();
-    const hasAddresses = loadedAddresses.length > 0;
+    // Get all addresses using the updated method (but avoid during route creation)
+    console.log('📍 [DEBUG] updateButtonState calling getLoadedAddresses');
+    const allAddresses = this.getLoadedAddresses();
+    const totalAddresses = allAddresses.length;
+    const destinationCount = totalAddresses - (hasStartingAddress ? 1 : 0);
     
-    if (hasAddresses) {
+    // Check different types of address sources
+    const manualDestinations = document.querySelectorAll('.destination-field');
+    const manualDestinationCount = Array.from(manualDestinations).filter(field => field.value.trim()).length;
+    const hasManualDestinations = manualDestinationCount > 0;
+    const isLassoSelected = window.selectedItemsInShape && window.selectedItemsInShape.length > 0;
+    // Only consider Excel data if it's been explicitly selected via lasso tool
+    const hasExcelData = false; // Excel data no longer auto-included
+    
+    if (totalAddresses > 0) {
       createRouteBtn.disabled = false;
-      const isLassoSelected = window.selectedItemsInShape && window.selectedItemsInShape.length > 0;
-      const selectedCount = isLassoSelected ? window.selectedItemsInShape.length : (loadedAddresses.length - (hasStartingAddress ? 1 : 0));
       
       let buttonText = '🚀 Create Route';
-      if (hasStartingAddress && selectedCount > 0) {
-        buttonText = `🚀 Create Route (Start + ${selectedCount} stops)`;
+      if (hasStartingAddress && destinationCount > 0) {
+        let routeType = '';
+        if (hasManualDestinations) {
+          routeType = 'Manual';
+        } else if (isLassoSelected) {
+          routeType = 'Selected';
+        } else if (hasExcelData) {
+          routeType = 'All';
+        }
+        
+        buttonText = `🚀 Create Route (Start + ${destinationCount} ${routeType} stops)`;
       } else if (hasStartingAddress) {
         buttonText = `🚀 Create Route (Start only)`;
-      } else if (selectedCount > 0) {
-        const routeType = isLassoSelected ? 'Selected' : 'All';
-        buttonText = `🚀 Create Route (${selectedCount} ${routeType} stops)`;
+      } else if (destinationCount > 0) {
+        buttonText = `🚀 Create Route (${destinationCount} stops)`;
       }
       
       createRouteBtn.textContent = buttonText;
@@ -127,6 +204,7 @@ class DesktopRouteCreator {
   }
 
   getLoadedAddresses() {
+    console.log('📍 [DEBUG] getLoadedAddresses() called from:', new Error().stack.split('\n')[2]);
     const startingAddressField = document.getElementById('manualStartAddress');
     const startingAddressValue = startingAddressField ? startingAddressField.value.trim() : '';
     
@@ -143,48 +221,123 @@ class DesktopRouteCreator {
       console.log('📍 Added starting address:', startingAddressValue);
     }
     
-    // Add selected or all loaded addresses
-    if (window.selectedItemsInShape && window.selectedItemsInShape.length > 0) {
+    // Check for manually entered destination fields first
+    const destinationFields = document.querySelectorAll('.destination-field');
+    const manualDestinations = [];
+    destinationFields.forEach(field => {
+      const value = field.value.trim();
+      if (value) {
+        manualDestinations.push({
+          address: value,
+          isStartingAddress: false,
+          lat: null, // Will need geocoding
+          lng: null
+        });
+      }
+    });
+    
+    if (manualDestinations.length > 0) {
+      console.log('📍 Adding manually entered destinations:', manualDestinations.length);
+      addresses = addresses.concat(manualDestinations);
+    } else if (window.selectedItemsInShape && window.selectedItemsInShape.length > 0) {
       console.log('📍 Adding lasso-selected addresses:', window.selectedItemsInShape.length);
       addresses = addresses.concat(window.selectedItemsInShape);
-    } else {
-      // Fallback to all loaded addresses
-      const loadedAddresses = window.addresses || window.currentlyDisplayedItems || [];
-      addresses = addresses.concat(loadedAddresses);
     }
+    // Note: No longer automatically falling back to all loaded Excel addresses
+    // User must either enter manual destinations or use lasso tool to select addresses
     
+    console.log('📍 Total addresses collected:', addresses.length);
     return addresses;
   }
 
   async handleCreateRoute() {
-    console.log('🚀 Creating optimized route...');
+    const routeId = Date.now(); // Unique ID for this route creation
+    console.log(`📍 [DEBUG] handleCreateRoute() function called - Route ID: ${routeId}`);
     
-    const loadedAddresses = this.getLoadedAddresses();
-    console.log('📍 Loaded addresses:', loadedAddresses);
-    
-    if (loadedAddresses.length < 1) {
-      alert('Please add at least one address to create a route.');
+    if (this.isCreatingRoute) {
+      console.log(`📍 [DEBUG] Route creation already in progress, ignoring duplicate call - Route ID: ${routeId}`);
       return;
     }
+    
+    this.isCreatingRoute = true;
+    console.log(`🚀 Creating optimized route... - Route ID: ${routeId}`);
+    
+    // Prevent any other calls to getLoadedAddresses during route creation
+    this.currentRouteId = routeId;
+    
+    // Force clear any existing route first to prevent interference
+    console.log(`📍 [DEBUG] Force clearing existing route before starting new one - Route ID: ${routeId}`);
+    this.clearRoute();
+    
+    const loadedAddresses = this.getLoadedAddresses();
+    console.log('📍 [DEBUG] ======= ROUTE CREATION START =======');
+    console.log('📍 [DEBUG] Loaded addresses:', loadedAddresses);
+    console.log('📍 [DEBUG] Address count check - length:', loadedAddresses.length);
+    console.log('📍 [DEBUG] Address details:', loadedAddresses.map(addr => ({
+      address: addr.address,
+      lat: addr.lat || addr.latitude,
+      lng: addr.lng || addr.longitude,
+      isStartingAddress: addr.isStartingAddress,
+      latType: typeof (addr.lat || addr.latitude),
+      lngType: typeof (addr.lng || addr.longitude)
+    })));
+    
+    // Check if addresses are being reused from previous route
+    if (this.optimizedRoute && this.optimizedRoute.length > 0) {
+      console.log('📍 [DEBUG] WARNING: Previous optimizedRoute still exists!', this.optimizedRoute);
+      console.log('📍 [DEBUG] Comparing with new addresses...');
+      const addressComparison = loadedAddresses.map((newAddr, i) => {
+        const oldAddr = this.optimizedRoute[i];
+        return {
+          new: newAddr ? newAddr.address : 'undefined',
+          old: oldAddr ? oldAddr.address : 'undefined',
+          same: newAddr && oldAddr && newAddr.address === oldAddr.address
+        };
+      });
+      console.log('📍 [DEBUG] Address comparison:', addressComparison);
+    }
+    
+    if (loadedAddresses.length < 1) {
+      console.log('📍 [DEBUG] Exiting early - not enough addresses');
+      alert('Please add at least one address to create a route.');
+      this.isCreatingRoute = false;
+      return;
+    }
+    
+    console.log('📍 [DEBUG] Passed address count check, continuing...');
 
     // Show loading state
     const createRouteBtn = document.getElementById('createRouteBtn');
     const originalText = createRouteBtn.textContent;
     createRouteBtn.disabled = true;
     createRouteBtn.textContent = '⏳ Processing Route...';
+    console.log('📍 [DEBUG] Button state set to processing...');
 
     try {
+      console.log('📍 [DEBUG] Entering try block...');
       // Geocode any addresses that don't have coordinates (like the starting address)
       const addressesToGeocode = loadedAddresses.filter(addr => 
         !addr.lat || !addr.lng || typeof addr.lat !== 'number' || typeof addr.lng !== 'number'
       );
+      
+      console.log('📍 Addresses needing geocoding:', addressesToGeocode.length);
+      console.log('📍 Addresses to geocode:', addressesToGeocode.map(addr => addr.address));
       
       if (addressesToGeocode.length > 0) {
         console.log('🌍 Geocoding', addressesToGeocode.length, 'addresses...');
         createRouteBtn.textContent = '🌍 Geocoding Addresses...';
         
         if (typeof window.geocodeAddresses === 'function') {
+          console.log('🌍 Calling window.geocodeAddresses...');
           await window.geocodeAddresses(loadedAddresses);
+          console.log('🌍 Geocoding completed');
+          console.log('📍 Addresses after geocoding:', loadedAddresses.map(addr => ({
+            address: addr.address,
+            lat: addr.lat,
+            lng: addr.lng
+          })));
+        } else {
+          console.error('❌ window.geocodeAddresses function not available!');
         }
       }
       
@@ -196,24 +349,41 @@ class DesktopRouteCreator {
       );
       
       console.log('📍 Valid addresses with coordinates:', validAddresses.length, 'of', loadedAddresses.length);
+      console.log('📍 Valid addresses details:', validAddresses.map(addr => ({
+        address: addr.address,
+        lat: addr.lat || addr.latitude,
+        lng: addr.lng || addr.longitude
+      })));
       
       if (validAddresses.length === 0) {
+        console.log('📍 [DEBUG] No valid addresses found after geocoding');
         alert('No addresses could be geocoded. Please check your addresses and try again.');
+        this.isCreatingRoute = false;
         return;
       }
       
+      console.log('📍 [DEBUG] About to optimize route...');
       // Optimize the route if we have multiple addresses
       let optimizedRoute = validAddresses;
       if (validAddresses.length > 1) {
         console.log('🔄 Optimizing route order...');
         createRouteBtn.textContent = '🔄 Optimizing Route Order...';
         optimizedRoute = await this.optimizeRouteOrder(validAddresses);
+        console.log('📍 [DEBUG] Route optimization completed');
+      } else {
+        console.log('📍 [DEBUG] Single address - skipping optimization');
       }
       
       // Display the optimized route
+      console.log('📍 [DEBUG] About to display optimized route...');
       console.log('📍 Displaying optimized route with', optimizedRoute.length, 'addresses...');
       this.displayOptimizedRoute(optimizedRoute);
       createRouteBtn.textContent = '✅ Route Created!';
+      console.log('📍 [DEBUG] Route display completed');
+      
+      // Reset the creating flag immediately after route display is complete
+      this.isCreatingRoute = false;
+      console.log('📍 [DEBUG] isCreatingRoute flag reset to false');
       
       // Clear the box selection overlay after creating the route
       if (typeof window.handleClearSelections === 'function') {
@@ -227,7 +397,7 @@ class DesktopRouteCreator {
       // Hide any progress overlays that might still be visible
       this.hideProgressOverlays();
       
-      // Reset button after 2 seconds
+      // Reset button text after 2 seconds
       setTimeout(() => {
         createRouteBtn.textContent = originalText;
         createRouteBtn.disabled = false;
@@ -235,7 +405,13 @@ class DesktopRouteCreator {
       
     } catch (error) {
       console.error('❌ Route creation failed:', error);
-      alert('Failed to create route. Please try again.');
+      console.error('❌ Error details:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      alert('Failed to create route: ' + error.message + '. Please try again.');
+      
+      // Reset the creating flag immediately on error
+      this.isCreatingRoute = false;
+      console.log('📍 [DEBUG] isCreatingRoute flag reset to false (error case)');
       
       // Hide any progress overlays in error case too
       this.hideProgressOverlays();
@@ -362,9 +538,14 @@ class DesktopRouteCreator {
   }
 
   displayOptimizedRoute(optimizedRoute) {
-    console.log('🗺️ Displaying optimized route on map...');
-    console.log('📍 Route data:', optimizedRoute);
-    console.log('🗺️ Map available:', !!window.map);
+    console.log('🗺️ [DEBUG] =======  DISPLAYING OPTIMIZED ROUTE =======');
+    console.log('🗺️ [DEBUG] Route data received:', optimizedRoute);
+    console.log('🗺️ [DEBUG] Route length:', optimizedRoute.length);
+    console.log('🗺️ [DEBUG] Map available:', !!window.map);
+    console.log('🗺️ [DEBUG] Current state before clearing:');
+    console.log('🗺️ [DEBUG] - existing optimizedRoute:', this.optimizedRoute);
+    console.log('🗺️ [DEBUG] - existing routeMarkers:', this.routeMarkers.length);
+    console.log('🗺️ [DEBUG] - existing routePolyline:', !!this.routePolyline);
     
     // Clear any existing route
     this.clearRoute();
@@ -679,24 +860,52 @@ class DesktopRouteCreator {
   }
 
   drawRouteLine(route) {
+    console.log('🗺️ [DEBUG] ======= DRAWING ROUTE LINE =======');
+    console.log('🗺️ [DEBUG] Input route for line drawing:', route);
+    console.log('🗺️ [DEBUG] Route length:', route.length);
+    console.log('🗺️ [DEBUG] Existing polyline before drawing:', !!this.routePolyline);
+    
     const routePoints = route
-      .filter(address => (address.latitude || address.lat) && (address.longitude || address.lng))
-      .map(address => [address.latitude || address.lat, address.longitude || address.lng]);
+      .filter(address => {
+        const lat = address.lat || address.latitude;
+        const lng = address.lng || address.longitude;
+        const isValid = lat && lng && typeof lat === 'number' && typeof lng === 'number';
+        console.log('🗺️ [DEBUG] Address:', address.address, 'lat:', lat, 'lng:', lng, 'valid:', isValid);
+        return isValid;
+      })
+      .map(address => {
+        const lat = address.lat || address.latitude;
+        const lng = address.lng || address.longitude;
+        console.log('🗺️ [DEBUG] Mapping to point:', [lat, lng]);
+        return [lat, lng];
+      });
+    
+    console.log('🗺️ [DEBUG] Final route points for polyline:', routePoints);
+    console.log('🗺️ [DEBUG] Number of valid points:', routePoints.length);
     
     if (routePoints.length > 1) {
+      console.log('🗺️ [DEBUG] Creating polyline with points:', routePoints);
       this.routePolyline = L.polyline(routePoints, {
         color: '#007bff',
         weight: 4,
         opacity: 0.8,
         dashArray: '10, 5'
       }).addTo(window.map);
+      console.log('🗺️ [DEBUG] Polyline created and added to map');
+      console.log('🗺️ [DEBUG] Polyline bounds:', this.routePolyline.getBounds());
+    } else {
+      console.log('🗺️ [DEBUG] Not enough points for polyline:', routePoints.length);
     }
   }
 
   fitMapToRoute(route) {
     const routePoints = route
-      .filter(address => (address.latitude || address.lat) && (address.longitude || address.lng))
-      .map(address => [address.latitude || address.lat, address.longitude || address.lng]);
+      .filter(address => {
+        const lat = address.lat || address.latitude;
+        const lng = address.lng || address.longitude;
+        return lat && lng && typeof lat === 'number' && typeof lng === 'number';
+      })
+      .map(address => [address.lat || address.latitude, address.lng || address.longitude]);
     
     if (routePoints.length > 0) {
       const group = new L.featureGroup(this.routeMarkers);
@@ -705,7 +914,10 @@ class DesktopRouteCreator {
   }
 
   clearRoute() {
-    console.log('🗑️ Clearing route display...');
+    console.log('🗑️ [DEBUG] Starting route clearance...');
+    console.log('🗑️ [DEBUG] Current optimizedRoute:', this.optimizedRoute);
+    console.log('🗑️ [DEBUG] Current routeMarkers count:', this.routeMarkers.length);
+    console.log('🗑️ [DEBUG] Current routePolyline exists:', !!this.routePolyline);
     
     // Don't clear home marker - it should persist since it represents the starting address
     
@@ -747,11 +959,23 @@ class DesktopRouteCreator {
     
     // Remove route line
     if (this.routePolyline && window.map) {
+      console.log('🗑️ [DEBUG] Removing existing polyline from map');
       window.map.removeLayer(this.routePolyline);
       this.routePolyline = null;
+      console.log('🗑️ [DEBUG] Polyline removed and set to null');
+    } else if (this.routePolyline) {
+      console.log('🗑️ [DEBUG] Polyline exists but no map to remove from');
+      this.routePolyline = null;
+    } else {
+      console.log('🗑️ [DEBUG] No existing polyline to remove');
     }
     
     this.optimizedRoute = null;
+    
+    console.log('🗑️ [DEBUG] Route clearance completed');
+    console.log('🗑️ [DEBUG] Final state - routeMarkers:', this.routeMarkers.length);
+    console.log('🗑️ [DEBUG] Final state - routePolyline:', this.routePolyline);
+    console.log('🗑️ [DEBUG] Final state - optimizedRoute:', this.optimizedRoute);
     
     // Update button state
     this.updateButtonState();
