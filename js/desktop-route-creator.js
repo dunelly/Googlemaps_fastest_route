@@ -10,6 +10,7 @@ class DesktopRouteCreator {
     this.routePolyline = null;
     this.isCreatingRoute = false; // Add flag to prevent interference
     this.routeCreationLock = false; // Additional lock for stronger prevention
+    this.coordinateCache = new Map(); // Cache coordinates by address to prevent re-geocoding
     
     this.init();
   }
@@ -286,33 +287,26 @@ class DesktopRouteCreator {
     this.forceCleanMap();
     console.log(`📍 [DEBUG] Performed force map cleaning - Route ID: ${routeId}`);
     
-    const loadedAddresses = this.getLoadedAddresses();
-    console.log('📍 [DEBUG] ======= ROUTE CREATION START =======');
-    console.log('📍 [DEBUG] Loaded addresses:', loadedAddresses);
-    console.log('📍 [DEBUG] Address count check - length:', loadedAddresses.length);
-    console.log('📍 [DEBUG] Address details:', loadedAddresses.map(addr => ({
-      address: addr.address,
-      lat: addr.lat || addr.latitude,
-      lng: addr.lng || addr.longitude,
-      isStartingAddress: addr.isStartingAddress,
-      latType: typeof (addr.lat || addr.latitude),
-      lngType: typeof (addr.lng || addr.longitude)
-    })));
+    const rawAddresses = this.getLoadedAddresses();
     
-    // Check if addresses are being reused from previous route
-    if (this.optimizedRoute && this.optimizedRoute.length > 0) {
-      console.log('📍 [DEBUG] WARNING: Previous optimizedRoute still exists!', this.optimizedRoute);
-      console.log('📍 [DEBUG] Comparing with new addresses...');
-      const addressComparison = loadedAddresses.map((newAddr, i) => {
-        const oldAddr = this.optimizedRoute[i];
-        return {
-          new: newAddr ? newAddr.address : 'undefined',
-          old: oldAddr ? oldAddr.address : 'undefined',
-          same: newAddr && oldAddr && newAddr.address === oldAddr.address
-        };
-      });
-      console.log('📍 [DEBUG] Address comparison:', addressComparison);
-    }
+    // CRITICAL: Create completely isolated copies to prevent ANY geocoding pollution
+    const loadedAddresses = rawAddresses.map(addr => ({
+      address: addr.address,
+      isStartingAddress: addr.isStartingAddress || false,
+      lat: null, // Always start fresh to prevent coordinate drift
+      lng: null,
+      latitude: null,
+      longitude: null,
+      // Copy other properties but not coordinates
+      firstName: addr.firstName,
+      lastName: addr.lastName,
+      name: addr.name,
+      id: addr.id
+    }));
+    
+    console.log('📍 [DEBUG] ======= ROUTE CREATION START =======');
+    console.log('📍 [DEBUG] Created isolated address copies:', loadedAddresses.length);
+    console.log('📍 [DEBUG] All coordinates reset to prevent drift between route creations');
     
     if (loadedAddresses.length < 1) {
       console.log('📍 [DEBUG] Exiting early - not enough addresses');
@@ -334,31 +328,17 @@ class DesktopRouteCreator {
 
     try {
       console.log('📍 [DEBUG] Entering try block...');
-      // Geocode any addresses that don't have coordinates (like the starting address)
-      const addressesToGeocode = loadedAddresses.filter(addr => 
-        !addr.lat || !addr.lng || typeof addr.lat !== 'number' || typeof addr.lng !== 'number'
-      );
+      // Use isolated geocoding that doesn't pollute the source objects
+      console.log('🌍 Starting isolated geocoding process...');
+      createRouteBtn.textContent = '🌍 Geocoding Addresses...';
       
-      console.log('📍 Addresses needing geocoding:', addressesToGeocode.length);
-      console.log('📍 Addresses to geocode:', addressesToGeocode.map(addr => addr.address));
-      
-      if (addressesToGeocode.length > 0) {
-        console.log('🌍 Geocoding', addressesToGeocode.length, 'addresses...');
-        createRouteBtn.textContent = '🌍 Geocoding Addresses...';
-        
-        if (typeof window.geocodeAddresses === 'function') {
-          console.log('🌍 Calling window.geocodeAddresses...');
-          await window.geocodeAddresses(loadedAddresses);
-          console.log('🌍 Geocoding completed');
-          console.log('📍 Addresses after geocoding:', loadedAddresses.map(addr => ({
-            address: addr.address,
-            lat: addr.lat,
-            lng: addr.lng
-          })));
-        } else {
-          console.error('❌ window.geocodeAddresses function not available!');
-        }
-      }
+      await this.geocodeAddressesIsolated(loadedAddresses);
+      console.log('🌍 Isolated geocoding completed');
+      console.log('📍 Addresses after isolated geocoding:', loadedAddresses.map(addr => ({
+        address: addr.address,
+        lat: addr.lat,
+        lng: addr.lng
+      })));
       
       // Filter out addresses that still don't have coordinates
       const validAddresses = loadedAddresses.filter(addr => 
@@ -950,6 +930,75 @@ class DesktopRouteCreator {
     if (routePoints.length > 0) {
       const group = new L.featureGroup(this.routeMarkers);
       window.map.fitBounds(group.getBounds().pad(0.1));
+    }
+  }
+
+  async geocodeAddressesIsolated(addresses) {
+    const apiKey = "AIzaSyAq-_o7JolKDWy943Q-dejkoqzPvJKIV2k";
+    
+    for (const address of addresses) {
+      const addressKey = address.address.toLowerCase().trim();
+      
+      // Check our isolated cache first
+      if (this.coordinateCache.has(addressKey)) {
+        const cached = this.coordinateCache.get(addressKey);
+        address.lat = cached.lat;
+        address.lng = cached.lng;
+        console.log('🌍 Using cached coordinates for:', address.address);
+        continue;
+      }
+      
+      // Check localStorage cache
+      const localCacheKey = `geocode_${addressKey}`;
+      const cachedResult = localStorage.getItem(localCacheKey);
+      if (cachedResult) {
+        try {
+          const coords = JSON.parse(cachedResult);
+          if (coords.lat && coords.lng) {
+            address.lat = coords.lat;
+            address.lng = coords.lng;
+            this.coordinateCache.set(addressKey, coords);
+            console.log('🌍 Using localStorage cached coordinates for:', address.address);
+            continue;
+          }
+        } catch (e) {
+          console.warn('🌍 Failed to parse cached coordinates for:', address.address);
+        }
+      }
+      
+      // Geocode via API
+      console.log('🌍 Geocoding via API:', address.address);
+      try {
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address.address)}&key=${apiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === "OK" && data.results && data.results[0]) {
+          const location = data.results[0].geometry.location;
+          const coords = { lat: location.lat, lng: location.lng };
+          
+          // Set coordinates on the isolated copy
+          address.lat = coords.lat;
+          address.lng = coords.lng;
+          
+          // Cache for future use
+          this.coordinateCache.set(addressKey, coords);
+          localStorage.setItem(localCacheKey, JSON.stringify(coords));
+          
+          console.log('🌍 Geocoded and cached:', address.address, coords);
+        } else {
+          console.warn('🌍 Failed to geocode:', address.address, data.status);
+          address.lat = null;
+          address.lng = null;
+        }
+      } catch (error) {
+        console.error('🌍 Geocoding error for:', address.address, error);
+        address.lat = null;
+        address.lng = null;
+      }
+      
+      // Rate limiting
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
   }
 
