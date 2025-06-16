@@ -33,7 +33,7 @@ function initializeBasicMap() {
     drawControl = new L.Control.Draw({
       edit: false,
       draw: {
-        polygon: true,
+        polygon: false,
         polyline: false,
         rectangle: true,
         circle: false,
@@ -45,16 +45,18 @@ function initializeBasicMap() {
     map.addControl(drawControl);
     console.log("initializeBasicMap: DrawControl added to map");
     
-    // Enhanced tooltips for drawing tools
+    // Simple tooltips for drawing tools
     setTimeout(() => {
       const rectangleBtn = document.querySelector('.leaflet-draw-draw-rectangle');
-      const polygonBtn = document.querySelector('.leaflet-draw-draw-polygon');
+      const clearBtn = document.querySelector('.leaflet-draw-clear-all');
       
       if (rectangleBtn) {
-        rectangleBtn.title = '📦 Box Selection - Click and drag to select addresses in a rectangular area';
+        rectangleBtn.title = 'Box Select - Click and drag to select addresses in a rectangular area';
+        rectangleBtn.setAttribute('aria-label', 'Box selection tool');
       }
-      if (polygonBtn) {
-        polygonBtn.title = '🎯 Lasso Selection - Draw a custom shape to select addresses';
+      if (clearBtn) {
+        clearBtn.title = 'Clear All - Remove all selections and drawn shapes';
+        clearBtn.setAttribute('aria-label', 'Clear all selections');
       }
     }, 100);
 

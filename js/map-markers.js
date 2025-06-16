@@ -6,8 +6,34 @@ let homeMarker = null;
 
 // Function to create marker popup content
 function createMarkerPopupContent(item, lastVisitFormatted, visitCount) {
+  
   let popupHtml = `<div style="min-width: 220px;">`;
-  if (item.name) popupHtml += `<strong>${item.name}</strong><br>`;
+  
+  // Try multiple possible name fields
+  let displayName = null;
+  if (item.name) {
+    displayName = item.name;
+  } else if (item['Borrower Name']) {
+    displayName = item['Borrower Name'];
+  } else if (item.borrowerName) {
+    displayName = item.borrowerName;
+  } else if (item['Property Owner']) {
+    displayName = item['Property Owner'];
+  } else if (item.propertyOwner) {
+    displayName = item.propertyOwner;
+  } else if (item.owner) {
+    displayName = item.owner;
+  } else if (item.firstName && item.lastName) {
+    displayName = `${item.firstName} ${item.lastName}`;
+  } else if (item.firstName) {
+    displayName = item.firstName;
+  } else if (item.lastName) {
+    displayName = item.lastName;
+  }
+  
+  if (displayName) {
+    popupHtml += `<strong>${displayName}</strong><br>`;
+  }
   popupHtml += `<strong>${item.address}</strong>`;
   if (item.auctionDateFormatted) popupHtml += `<br><span style="color:#0077b6;">(${item.auctionDateFormatted})</span>`;
   
@@ -20,17 +46,46 @@ function createMarkerPopupContent(item, lastVisitFormatted, visitCount) {
   }
   popupHtml += `</div>`;
 
-  // Add Visited Today button
+  // Add inline notes section
+  const currentNote = window.getNoteForAddress ? window.getNoteForAddress(item.address) : '';
+  const isAuthenticated = firebase.auth().currentUser;
+  
+  popupHtml += `<div style="margin: 10px 0;">`;
+  popupHtml += `<div style="display: flex; align-items: center; margin-bottom: 4px;">`;
+  popupHtml += `<strong style="font-size: 0.9rem; color: #2c3e50;">📝 Notes:</strong>`;
+  popupHtml += `</div>`;
+  
+  if (isAuthenticated) {
+    const uniqueId = 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const placeholder = 'Click to add notes...';
+    const displayText = currentNote || placeholder;
+    
+    popupHtml += `<div id="${uniqueId}_container" style="position: relative;">`;
+    popupHtml += `<textarea id="${uniqueId}" 
+                   style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; resize: vertical; background: ${currentNote ? '#fff' : '#f8f9fa'}; color: ${currentNote ? '#333' : '#999'};"
+                   placeholder="${placeholder}"
+                   onfocus="this.style.background='#fff'; this.style.color='#333'; if(!this.value.trim()) this.placeholder='';"
+                   onblur="window.handleNoteBlur('${item.address.replace(/'/g, "\\'")}', '${uniqueId}');"
+                   >${currentNote}</textarea>`;
+    popupHtml += `<div id="${uniqueId}_status" style="font-size: 0.8rem; color: #666; margin-top: 2px; min-height: 16px;"></div>`;
+    popupHtml += `</div>`;
+  } else {
+    popupHtml += `<div style="padding: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; color: #666; text-align: center;">`;
+    if (currentNote) {
+      popupHtml += `"${currentNote}"<br><small style="color: #999;">Sign in to edit notes</small>`;
+    } else {
+      popupHtml += `<small>Sign in to add notes</small>`;
+    }
+    popupHtml += `</div>`;
+  }
+  
+  popupHtml += `</div>`;
+
+  // Add Visited Today button (removed Notes button since it's now inline)
   popupHtml += `<div style="margin-top: 10px; display: flex; gap: 8px;">`;
   popupHtml += `<button onclick="markVisitedFromMap('${item.address.replace(/'/g, "\\'")}'); return false;" 
                  style="flex: 1; padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;">
-                 ✅ Visited Today
-               </button>`;
-
-  // Add Notes button
-  popupHtml += `<button onclick="openNotesFromMap('${item.address.replace(/'/g, "\\'")}'); return false;" 
-                 style="flex: 1; padding: 8px 12px; background: #4285F4; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
-                 📝 Notes
+                 ✅ Check In
                </button>`;
 
   // Add "Add to Route" button
@@ -221,6 +276,12 @@ function markVisitedFromMap(address) {
       // Clear the global address after successful recording
       window.currentAddress = null;
       // The map will refresh automatically via updateMapMarkers in visit-tracker.js
+      
+      // Also refresh route markers if they exist
+      if (window.markerManager && typeof window.markerManager.refreshRouteMarkers === 'function') {
+        console.log('[map-markers] Refreshing route markers after visit');
+        window.markerManager.refreshRouteMarkers();
+      }
     }).catch(error => {
       console.error('[map-markers] Error marking visit:', error);
       if (typeof showMessage === 'function') {
@@ -243,7 +304,7 @@ function highlightAddressOnMap(address) {
   addressMarkersArray.forEach(function(marker) {
     if (marker.customData && marker.customData.address === address) {
       // Pan to marker and open popup
-      window.map.setView(marker.getLatLng(), 15);
+      window.map.setView(marker.getLatLng(), 14);
       marker.openPopup();
     }
   });

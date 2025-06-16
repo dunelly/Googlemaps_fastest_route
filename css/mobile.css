@@ -41,8 +41,10 @@
 
 .mobile-tab-header {
   display: flex;
-  height: 56px;
+  height: 64px;
   align-items: center;
+  padding: 0 8px;
+  background: white;
 }
 
 .mobile-tab-btn {
@@ -50,37 +52,218 @@
   background: none;
   border: none;
   height: 100%;
-  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
   font-weight: 500;
-  color: #666;
+  color: #8E8E93;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border-radius: 12px;
+  margin: 0 4px;
 }
 
 .mobile-tab-btn.active {
-  color: #007bff;
+  color: #007AFF;
+  background: rgba(0, 122, 255, 0.08);
 }
 
 .mobile-tab-btn.active::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 20%;
-  right: 20%;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
   height: 3px;
-  background: #007bff;
-  border-radius: 3px 3px 0 0;
+  background: #007AFF;
+  border-radius: 2px;
 }
 
 .mobile-tab-btn:active {
-  background: rgba(0,123,255,0.05);
+  transform: scale(0.96);
+  background: rgba(0, 122, 255, 0.12);
+}
+
+.tab-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
+
+.tab-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+/* Auth Container */
+.auth-container {
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.auth-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: #F2F2F7;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.auth-btn:active {
+  transform: scale(0.92);
+  background: #E5E5EA;
+}
+
+.auth-icon {
+  width: 20px;
+  height: 20px;
+  color: #8E8E93;
+  stroke-width: 2.5;
+}
+
+/* Mobile Auth Menu */
+.mobile-auth-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+}
+
+.mobile-auth-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mobile-auth-popup {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 320px;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #F2F2F7;
+}
+
+.auth-popup-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1C1C1E;
+}
+
+.close-popup-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: #F2F2F7;
+  border: none;
+  font-size: 18px;
+  color: #8E8E93;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-popup-btn:active {
+  transform: scale(0.9);
+  background: #E5E5EA;
+}
+
+.auth-popup-content {
+  padding: 16px 20px 20px;
+}
+
+.user-info {
+  margin-bottom: 20px;
+}
+
+.user-email {
+  font-size: 14px;
+  color: #8E8E93;
+  font-weight: 500;
+}
+
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-action-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: #F2F2F7;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1C1C1E;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-action-btn:active {
+  transform: scale(0.96);
+  background: #E5E5EA;
+}
+
+.auth-action-btn.logout {
+  background: #FF3B30;
+  color: white;
+}
+
+.auth-action-btn.logout:active {
+  background: #D70015;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Mobile Tab Content */
 .mobile-tab-content {
   position: absolute;
-  top: 56px;
+  top: 64px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -422,68 +605,14 @@
     display: none !important;
   }
   
-  /* Fix auth buttons sizing on mobile */
+  /* Hide desktop auth buttons on mobile since they're integrated into tab header */
   #subtle-login-bar {
-    position: fixed !important;
-    top: 60px !important; /* Below the 56px mobile tabs */
-    right: 8px !important;
-    z-index: 10001;
+    display: none !important;
   }
-  
-  #subtle-login-bar #show-login-btn {
-    padding: 6px 12px !important;
-    font-size: 0.8rem !important;
-    min-height: 32px !important;
-    border-radius: 6px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-  }
-  
-  #subtle-login-bar #user-info {
-    display: flex !important;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  #subtle-login-bar #user-email {
-    font-size: 0.7rem !important;
-    font-weight: 500 !important;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  #subtle-login-bar #user-preferences-btn {
-    padding: 4px 6px !important;
-    font-size: 0.8rem !important;
-    min-height: 28px !important;
-    min-width: 28px !important;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    background: #f8f9fa;
-    margin-left: 4px !important;
-  }
-  
-  #subtle-login-bar #logout-btn {
-    padding: 4px 8px !important;
-    font-size: 0.7rem !important;
-    min-height: 28px !important;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    background: #f8f9fa;
-    margin-left: 4px !important;
-  }
-  
-  /* Ensure auth buttons don't overlap mobile tab buttons */
-  .mobile-tab-header {
-    padding-right: 200px; /* Give space for auth buttons */
-  }
-  
   
   /* Adjust auth card positioning on mobile */
   #firebaseui-auth-card {
-    top: 95px !important; /* Below auth buttons (60px + ~35px for button height) */
+    top: 70px !important; /* Below mobile tab header (64px + margin) */
     right: 8px !important;
     left: 8px !important;
     width: auto !important;

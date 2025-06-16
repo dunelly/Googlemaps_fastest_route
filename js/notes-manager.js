@@ -329,10 +329,126 @@ function switchNotesToAddress(address) {
   }
 }
 
+// Get note text for a specific address
+function getNoteForAddress(address) {
+  if (!window.userNotes || !address) return '';
+  
+  const addressHash = generateAddressHash(address);
+  const noteData = window.userNotes[addressHash];
+  return noteData ? noteData.note : '';
+}
+
+// Save note directly without overlay
+async function saveNoteDirectly(address, noteText) {
+  if (!notesCurrentUser || !address) {
+    throw new Error('User not authenticated or address missing');
+  }
+  
+  const addressHash = generateAddressHash(address);
+  const trimmedNote = noteText.trim();
+  
+  try {
+    if (trimmedNote) {
+      // Save note
+      const noteData = {
+        address: address,
+        note: trimmedNote,
+        lastModified: new Date().toISOString(),
+        userId: notesCurrentUser.uid
+      };
+      
+      await FirebaseUtils.saveUserData('addressNotes', addressHash, noteData);
+      
+      // Update local cache
+      userNotes[addressHash] = noteData;
+      window.userNotes = userNotes;
+      
+      // Refresh markers to show updated notes
+      if (window.markerManager && typeof window.markerManager.refreshRouteMarkers === 'function') {
+        window.markerManager.refreshRouteMarkers();
+      }
+      
+      console.log('[notes-manager] Note saved directly for:', address);
+      return true;
+    } else {
+      // Delete note if empty
+      await FirebaseUtils.deleteUserData('addressNotes', addressHash);
+      delete userNotes[addressHash];
+      window.userNotes = userNotes;
+      
+      // Refresh markers to show updated notes
+      if (window.markerManager && typeof window.markerManager.refreshRouteMarkers === 'function') {
+        window.markerManager.refreshRouteMarkers();
+      }
+      
+      console.log('[notes-manager] Note deleted for:', address);
+      return true;
+    }
+  } catch (error) {
+    console.error('[notes-manager] Error saving note directly:', error);
+    throw error;
+  }
+}
+
+// Handle note blur event for inline editing
+async function handleNoteBlur(address, textareaId) {
+  const textarea = document.getElementById(textareaId);
+  const statusDiv = document.getElementById(textareaId + '_status');
+  
+  if (!textarea) return;
+  
+  const currentNote = textarea.value.trim();
+  const originalNote = getNoteForAddress(address);
+  
+  // Only save if the note has changed
+  if (currentNote !== originalNote) {
+    if (statusDiv) {
+      statusDiv.textContent = 'Saving...';
+      statusDiv.style.color = '#007bff';
+    }
+    
+    try {
+      await saveNoteDirectly(address, currentNote);
+      
+      if (statusDiv) {
+        statusDiv.textContent = currentNote ? 'Saved ✓' : 'Note cleared ✓';
+        statusDiv.style.color = '#28a745';
+        
+        // Clear status after 2 seconds
+        setTimeout(() => {
+          if (statusDiv) {
+            statusDiv.textContent = '';
+          }
+        }, 2000);
+      }
+      
+      // Update textarea styling based on content
+      if (currentNote) {
+        textarea.style.background = '#fff';
+        textarea.style.color = '#333';
+      } else {
+        textarea.style.background = '#f8f9fa';
+        textarea.style.color = '#999';
+        textarea.placeholder = 'Click to add notes...';
+      }
+      
+    } catch (error) {
+      if (statusDiv) {
+        statusDiv.textContent = 'Failed to save';
+        statusDiv.style.color = '#dc3545';
+      }
+      console.error('[notes-manager] Failed to save note inline:', error);
+    }
+  }
+}
+
 // Make functions globally available
 window.openNotesOverlay = openNotesOverlay;
 window.switchNotesToAddress = switchNotesToAddress;
 window.updateNotesOverlayContent = updateNotesOverlayContent;
+window.getNoteForAddress = getNoteForAddress;
+window.saveNoteDirectly = saveNoteDirectly;
+window.handleNoteBlur = handleNoteBlur;
 
 // Initialize when DOM is loaded
 if (document.readyState === 'loading') {

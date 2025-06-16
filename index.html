@@ -119,14 +119,24 @@
                 <button type="button" id="addDestinationBtn" class="add-destination-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
                   + Add Destination
                 </button>
-                <button type="submit" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
-                  🚀 Get Optimized Route
+                <button type="button" id="createRouteBtn" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                  🗺️ Create Route
+                </button>
+                <button type="button" id="clearRouteBtn" class="secondary-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                  🗑️ Clear Route
                 </button>
               </div>
               <div style="text-align: center;">
-                <button type="button" id="createRouteBtn" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 1.1rem; padding: 12px 24px;">
-                  🗺️ Create Route
+                <button type="submit" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 1.1rem; padding: 12px 24px;">
+                  🗺️ Navigate with Google Maps
                 </button>
+                <div id="routeNavigationControls">
+                    <button id="prevStopBtn" class="secondary-btn">⬅️ Prev</button>
+                    <div id="currentStopDisplay">
+                        No active route
+                    </div>
+                    <button id="nextStopBtn" class="secondary-btn">Next ➡️</button>
+                </div>
               </div>
             </div>
             
@@ -310,7 +320,7 @@
           </div>
         </div>
 
-        <!-- Step 2: Column Mapping -->
+        <!-- Step 2: Column Mappsing -->
         <div id="uploadStep2" class="upload-step" style="display: none;">
           <div style="margin-bottom: 16px; padding: 12px; background: #fffbe7; border: 1px solid #ffe082; border-radius: 6px;">
             <p style="margin: 0; color: #8a6914; font-weight: 500;">📋 Select the columns that contain your data:</p>
@@ -386,6 +396,7 @@
   </div>
 
 
+
   <!-- Our JavaScript Modules - Load in dependency order -->
   <script src="js/firebase-utils.js"></script>
   <script src="js/firebase-auth.js"></script>
@@ -405,8 +416,33 @@
   <script src="js/excel-data-table.js"></script>
   <script src="js/excel-operations.js"></script>
   <script src="js/excel-history.js"></script>
+  <!-- Route Planning Modules (load order matters) -->
+  <script src="js/modules/route-manager.js"></script>
+  <script src="js/modules/marker-manager.js"></script>
+  <script src="js/modules/navigation-controller.js"></script>
+  <script src="js/modules/address-collector.js"></script>
   <script src="js/desktop-route-creator.js"></script>
+  
+  <!-- Debug: Check modules after loading -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🔍 DEBUG: Checking module availability...');
+      console.log('  - RouteManager:', typeof window.RouteManager);
+      console.log('  - MarkerManager:', typeof window.MarkerManager);
+      console.log('  - NavigationController:', typeof window.NavigationController);
+      console.log('  - AddressCollector:', typeof window.AddressCollector);
+      console.log('  - desktopRouteCreator:', typeof window.desktopRouteCreator);
+      
+      setTimeout(() => {
+        console.log('🔍 DEBUG: Checking again after 500ms...');
+        console.log('  - desktopRouteCreator:', typeof window.desktopRouteCreator);
+        console.log('  - Instance:', window.desktopRouteCreator);
+      }, 500);
+    });
+  </script>
+  
   <script src="js/user-preferences.js"></script>
+  <script src="js/icon-switcher.js"></script>
   <script src="js/mobile.js"></script>
 </body>
 </html>

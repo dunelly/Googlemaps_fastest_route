@@ -15,15 +15,43 @@ function initializeDrawingFeatures() {
       btn.setAttribute('role', 'button');
       btn.setAttribute('aria-label', 'Clear all drawn shapes and selections');
       
-      // Enhanced clear icon with better visual design
+      // Multiple clear icon options - defaulting to Option 1: Modern Clean
+      const clearIconOptions = {
+        option1: `
+          <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: auto;">
+            <!-- Modern clean trash can -->
+            <rect x="7" y="9" width="10" height="10" rx="1.5" fill="none" stroke="#6366f1" stroke-width="2"/>
+            <path d="M9 6L15 6M11 4L13 4" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+            <!-- Clean X overlay -->
+            <path d="M10 12L14 16M14 12L10 16" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        `,
+        option2: `
+          <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: auto;">
+            <!-- Broom sweeping -->
+            <path d="M4 20L8 16L12 20L8 24Z" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
+            <rect x="8" y="4" width="2" height="12" rx="1" fill="#8b5cf6"/>
+            <!-- Dust particles -->
+            <circle cx="14" cy="18" r="1" fill="#6b7280" opacity="0.6"/>
+            <circle cx="16" cy="16" r="0.8" fill="#6b7280" opacity="0.4"/>
+            <circle cx="18" cy="19" r="0.6" fill="#6b7280" opacity="0.3"/>
+          </svg>
+        `,
+        option3: `
+          <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: auto;">
+            <!-- Reset/refresh arrows -->
+            <path d="M12 4V2L9 5L12 8V6A6 6 0 1 1 6 12H4A8 8 0 1 0 12 4Z" fill="#10b981" stroke="#059669" stroke-width="0.5"/>
+            <path d="M12 20V22L15 19L12 16V18A6 6 0 1 1 18 12H20A8 8 0 1 0 12 20Z" fill="#10b981" stroke="#059669" stroke-width="0.5"/>
+          </svg>
+        `
+      };
+      
+      // Simple clear icon
       const clearIconSvg = `
-        <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: auto;">
-          <!-- Trash can base -->
+        <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: auto;">
           <rect x="6" y="8" width="12" height="12" rx="2" fill="none" stroke="#333" stroke-width="2"/>
-          <!-- Trash can lid -->
           <path d="M16 6L18 6M8 6L6 6M10 4L14 4" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-          <!-- X mark overlay to indicate clear/delete -->
-          <path d="M9 11L15 17M15 11L9 17" stroke="#d63384" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M9 11L15 17M15 11L9 17" stroke="#d63384" stroke-width="2" stroke-linecap="round"/>
         </svg>
       `;
       
@@ -38,7 +66,7 @@ function initializeDrawingFeatures() {
       btn.style.border = 'none';
       btn.style.cursor = 'pointer';
       btn.style.transition = 'all 0.2s ease';
-      btn.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)';
+      btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
       
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
@@ -88,13 +116,10 @@ function setupDrawingEventHandlers() {
       // Keep rectangle tool active for enhanced mode
       console.log('[map-drawing] Enhanced rectangle created, keeping tool active');
     } else {
-      // Disable drawing mode after drawing (original behavior for lasso)
+      // Disable drawing mode after drawing
       if (window.drawControl && window.drawControl._toolbars && window.drawControl._toolbars.draw && window.drawControl._toolbars.draw._modes) {
         if (event.layerType === 'rectangle' && window.drawControl._toolbars.draw._modes.rectangle && window.drawControl._toolbars.draw._modes.rectangle.handler) {
           window.drawControl._toolbars.draw._modes.rectangle.handler.disable();
-        }
-        if (event.layerType === 'polygon' && window.drawControl._toolbars.draw._modes.polygon && window.drawControl._toolbars.draw._modes.polygon.handler) {
-          window.drawControl._toolbars.draw._modes.polygon.handler.disable();
         }
       }
     }

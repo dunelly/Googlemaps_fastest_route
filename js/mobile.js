@@ -54,11 +54,26 @@ class MobileNavigation {
                 <div class="mobile-tabs">
                     <div class="mobile-tab-header">
                         <button class="mobile-tab-btn active" data-tab="route">
-                            📍 Route
+                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <span class="tab-label">Route</span>
                         </button>
                         <button class="mobile-tab-btn" data-tab="files">
-                            📁 Files
+                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span class="tab-label">Files</span>
                         </button>
+                        <div class="auth-container">
+                            <button class="auth-btn" id="mobile-auth-btn">
+                                <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -106,7 +121,10 @@ class MobileNavigation {
                                     </div>
                                     <div class="control-row">
                                         <button class="mobile-nav-btn complete" id="mobile-complete-btn">
-                                            ✓ Mark Complete
+                                            ✅ Check In
+                                        </button>
+                                        <button class="mobile-nav-btn" id="mobile-notes-btn">
+                                            📝 Notes
                                         </button>
                                     </div>
                                 </div>
@@ -189,6 +207,8 @@ class MobileNavigation {
         document.addEventListener('click', (e) => {
             if (e.target.matches('.mobile-tab-btn')) {
                 this.switchTab(e.target.dataset.tab);
+            } else if (e.target.matches('#mobile-auth-btn') || e.target.closest('#mobile-auth-btn')) {
+                this.handleAuthClick();
             }
         });
         
@@ -201,7 +221,9 @@ class MobileNavigation {
             } else if (e.target.matches('#mobile-navigate-btn')) {
                 this.openGoogleMaps();
             } else if (e.target.matches('#mobile-complete-btn')) {
-                this.markComplete();
+                this.checkIn();
+            } else if (e.target.matches('#mobile-notes-btn')) {
+                this.openNotes();
             }
         });
         
@@ -382,6 +404,59 @@ class MobileNavigation {
         }, 500);
     }
     
+    /**
+     * Handle mobile auth button click
+     */
+    handleAuthClick() {
+        // Check if user is signed in
+        const user = firebase.auth().currentUser;
+        
+        if (user) {
+            // User is signed in - show user menu
+            this.showUserMenu();
+        } else {
+            // User not signed in - trigger sign in
+            const desktopSignInBtn = document.getElementById('show-login-btn');
+            if (desktopSignInBtn) {
+                desktopSignInBtn.click();
+            }
+        }
+    }
+
+    /**
+     * Show user menu when authenticated
+     */
+    showUserMenu() {
+        // Create a simple mobile-friendly menu
+        const menu = document.createElement('div');
+        menu.className = 'mobile-auth-menu';
+        menu.innerHTML = `
+            <div class="mobile-auth-overlay" onclick="this.parentElement.remove()">
+                <div class="mobile-auth-popup">
+                    <div class="auth-popup-header">
+                        <h3>Account</h3>
+                        <button class="close-popup-btn" onclick="this.closest('.mobile-auth-menu').remove()">×</button>
+                    </div>
+                    <div class="auth-popup-content">
+                        <div class="user-info">
+                            <span class="user-email">${firebase.auth().currentUser?.email || ''}</span>
+                        </div>
+                        <div class="auth-actions">
+                            <button class="auth-action-btn" onclick="document.getElementById('user-preferences-btn')?.click(); this.closest('.mobile-auth-menu').remove();">
+                                ⚙️ Settings
+                            </button>
+                            <button class="auth-action-btn logout" onclick="document.getElementById('logout-btn')?.click(); this.closest('.mobile-auth-menu').remove();">
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(menu);
+    }
+
     /**
      * Load addresses from selected file
      */
@@ -574,6 +649,12 @@ class MobileNavigation {
         this.showDestinationCard();
         this.updateDestinationDisplay();
         
+        // Sync with desktop navigation controller
+        if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
+            // Make sure desktop navigation is at the same position
+            window.desktopRouteCreator.navigationController.currentStopIndex = this.currentPosition;
+        }
+        
         console.log('[Mobile] Navigation activated with', this.currentRoute.length, 'stops');
     }
     
@@ -611,17 +692,41 @@ class MobileNavigation {
         document.getElementById('mobile-progress').textContent = 
             `Stop ${this.currentPosition + 1} of ${this.currentRoute.length} • ${progress}% Complete`;
         
-        // Update address
-        document.getElementById('mobile-address').textContent = current.address || 'Unknown Address';
+        // Get name using same logic as desktop markers
+        let displayName = null;
+        if (current.name) {
+            displayName = current.name;
+        } else if (current['Borrower Name']) {
+            displayName = current['Borrower Name'];
+        } else if (current.borrowerName) {
+            displayName = current.borrowerName;
+        } else if (current['Property Owner']) {
+            displayName = current['Property Owner'];
+        } else if (current.propertyOwner) {
+            displayName = current.propertyOwner;
+        } else if (current.owner) {
+            displayName = current.owner;
+        } else if (current.firstName && current.lastName) {
+            displayName = `${current.firstName} ${current.lastName}`;
+        } else if (current.firstName) {
+            displayName = current.firstName;
+        } else if (current.lastName) {
+            displayName = current.lastName;
+        }
         
-        // Update details
+        // Update address with name if available
+        const addressText = current.address || 'Unknown Address';
+        if (displayName) {
+            document.getElementById('mobile-address').innerHTML = `<strong>${displayName}</strong><br>${addressText}`;
+        } else {
+            document.getElementById('mobile-address').textContent = addressText;
+        }
+        
+        // Update details (city/state only, name now shown above)
         const details = [];
         if (current.city) details.push(current.city);
         if (current.state) details.push(current.state);
-        if (current.firstName || current.lastName) {
-            details.push(`${current.firstName || ''} ${current.lastName || ''}`.trim());
-        }
-        document.getElementById('mobile-details').textContent = details.join(' • ');
+        document.getElementById('mobile-details').textContent = details.join(', ');
         
         // Update button states
         document.getElementById('mobile-prev-btn').disabled = this.currentPosition === 0;
@@ -632,9 +737,19 @@ class MobileNavigation {
      * Navigate to previous stop
      */
     navigatePrevious() {
-        if (this.currentPosition > 0) {
-            this.currentPosition--;
+        // Use desktop navigation controller which handles map centering
+        if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
+            window.desktopRouteCreator.navigationController.navigateToPreviousStop();
+            
+            // Sync mobile position with desktop controller
+            this.currentPosition = window.desktopRouteCreator.navigationController.currentStopIndex;
             this.updateDestinationDisplay();
+        } else {
+            // Fallback to mobile-only navigation
+            if (this.currentPosition > 0) {
+                this.currentPosition--;
+                this.updateDestinationDisplay();
+            }
         }
     }
     
@@ -642,9 +757,19 @@ class MobileNavigation {
      * Navigate to next stop
      */
     navigateNext() {
-        if (this.currentPosition < this.currentRoute.length - 1) {
-            this.currentPosition++;
+        // Use desktop navigation controller which handles map centering
+        if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
+            window.desktopRouteCreator.navigationController.navigateToNextStop();
+            
+            // Sync mobile position with desktop controller
+            this.currentPosition = window.desktopRouteCreator.navigationController.currentStopIndex;
             this.updateDestinationDisplay();
+        } else {
+            // Fallback to mobile-only navigation
+            if (this.currentPosition < this.currentRoute.length - 1) {
+                this.currentPosition++;
+                this.updateDestinationDisplay();
+            }
         }
     }
     
@@ -671,9 +796,9 @@ class MobileNavigation {
     }
     
     /**
-     * Mark current stop as complete
+     * Check in at current stop
      */
-    markComplete() {
+    checkIn() {
         const current = this.currentRoute[this.currentPosition];
         if (!current) return;
         
@@ -694,10 +819,35 @@ class MobileNavigation {
     }
     
     /**
+     * Open notes for current stop
+     */
+    openNotes() {
+        const current = this.currentRoute[this.currentPosition];
+        if (!current) {
+            console.error('[Mobile] No current address for notes');
+            return;
+        }
+        
+        const address = current.address;
+        console.log('[Mobile] Opening notes for:', address);
+        
+        // Set global current address for notes system
+        window.currentAddress = address;
+        
+        // Use existing notes system
+        if (typeof openNotesFromMap === 'function') {
+            openNotesFromMap(address);
+        } else {
+            console.error('[Mobile] Notes system not available');
+            alert('Notes system not available. Please try again.');
+        }
+    }
+    
+    /**
      * Handle route completion
      */
     handleRouteComplete() {
-        alert('🎉 Route Complete!\n\nAll destinations have been visited.');
+        alert('🎉 Route Complete!\n\nAll destinations have been checked in.');
         this.hideDestinationCard();
         this.navigationActive = false;
     }

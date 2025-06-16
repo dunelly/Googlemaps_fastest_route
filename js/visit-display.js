@@ -95,9 +95,19 @@ function updateMapMarkers() {
   }
 }
 
+// Get complete visit information for an address
+function getVisitInfo(address) {
+  return {
+    visitCount: getVisitCount(address),
+    lastVisitFormatted: getLastVisitFormatted(address),
+    daysSince: getDaysSinceLastVisit(address)
+  };
+}
+
 // Make functions globally available
 window.getDaysSinceLastVisit = getDaysSinceLastVisit;
 window.getVisitCount = getVisitCount;
 window.getLastVisitFormatted = getLastVisitFormatted;
+window.getVisitInfo = getVisitInfo;
 window.updateVisitDisplay = updateVisitDisplay;
 window.updateMapMarkers = updateMapMarkers;
