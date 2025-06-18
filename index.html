@@ -71,7 +71,7 @@
           <h1 style="display: flex; align-items: center; gap: 12px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 2.2rem; color: #1a2330; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             🚗 Smash Routes
           </h1>
-          <a href="#" class="sign-in-link">Sign in</a>
+          
         </div>
 
         <form id="routeForm">
@@ -115,6 +115,7 @@
             
             <!-- Always Visible Action Buttons -->
             <div class="form-section" style="background: #f8f9fa; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;">
+              <!-- First Row: Add Destination and Create Route -->
               <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;">
                 <button type="button" id="addDestinationBtn" class="add-destination-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
                   + Add Destination
@@ -122,20 +123,24 @@
                 <button type="button" id="createRouteBtn" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
                   🗺️ Create Route
                 </button>
-                <button type="button" id="clearRouteBtn" class="secondary-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+              </div>
+              <!-- Second Row: Clear Route and Navigate -->
+              <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;">
+                <button type="button" id="clearRouteBtn" class="destructive-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
                   🗑️ Clear Route
+                </button>
+                <button type="submit" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                  🗺️ Navigate with Google Maps
                 </button>
               </div>
               <div style="text-align: center;">
-                <button type="submit" class="primary-action-btn" style="box-shadow: 0 2px 6px rgba(0,0,0,0.1); font-size: 1.1rem; padding: 12px 24px;">
-                  🗺️ Navigate with Google Maps
-                </button>
                 <div id="routeNavigationControls">
                     <button id="prevStopBtn" class="secondary-btn">⬅️ Prev</button>
                     <div id="currentStopDisplay">
                         No active route
                     </div>
                     <button id="nextStopBtn" class="secondary-btn">Next ➡️</button>
+                    <button id="endRouteBtn" class="secondary-btn" style="margin-left: 8px;">🏁 End Route</button>
                 </div>
               </div>
             </div>
@@ -148,7 +153,7 @@
             <div id="excelHistorySection" class="form-section">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h3 style="margin: 0; color: #333;">📊 Excel Files</h3>
-                <button type="button" id="deleteAllExcelBtn" class="secondary-btn" style="background: #dc3545; color: white;" title="Delete All Excel Files">🗑️ Delete All</button>
+                <button type="button" id="deleteAllExcelBtn" class="destructive-btn" title="Delete All Excel Files">🗑️ Delete All</button>
               </div>
               <div id="excelHistoryList" class="excel-history-list">
                 <!-- Excel files will be populated here -->
@@ -360,26 +365,19 @@
   <!-- Notes Overlay -->
   <div id="notesOverlay" class="notes-overlay">
     <div class="notes-header">
-      <h3 id="notesAddressTitle">Add Note</h3>
+      <div id="notesCustomerInfo" class="customer-info">
+        <span id="notesCustomerName">Customer Name</span> • <span id="notesAddressText">Address</span>
+      </div>
       <button id="closeNotesBtn" class="close-notes-btn">×</button>
     </div>
     <div class="notes-content">
-      <div class="notes-address">
-        <strong>Address:</strong>
-        <span id="notesAddressText"></span>
-      </div>
       <div class="notes-input-section">
         <label for="noteTextarea">Note:</label>
-        <textarea id="noteTextarea" placeholder="Add your note here..." rows="8"></textarea>
-        <div class="notes-meta">
-          <span id="noteTimestamp"></span>
-          <span id="noteCharCount">0/500</span>
-        </div>
+        <textarea id="noteTextarea" placeholder="Add your note here..." rows="12"></textarea>
       </div>
       <div class="visit-tracking-section">
         <div class="visit-info">
           <div id="visitStats" class="visit-stats"></div>
-          <button id="markVisitedBtn" class="mark-visited-btn">📍 Visited Today</button>
         </div>
         <div id="visitHistory" class="visit-history" style="display: none;">
           <h4>Visit History:</h4>
@@ -389,7 +387,6 @@
       
       <div class="notes-actions">
         <button id="saveNoteBtn" class="primary-action-btn">Save Note</button>
-        <button id="deleteNoteBtn" class="secondary-btn" style="background: #dc3545; color: white;">Delete Note</button>
         <button id="cancelNoteBtn" class="secondary-btn">Cancel</button>
       </div>
     </div>
