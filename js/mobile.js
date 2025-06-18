@@ -11,6 +11,11 @@ class MobileNavigation {
         this.navigationActive = false;
         this.mobileInterface = null;
         
+        // Performance optimization tracking
+        this._mapResizeTimeout = null;
+        this._navigating = false; // Debounce flag
+        this.cachedElements = {}; // Cache DOM elements
+        
         this.init();
     }
     
@@ -55,10 +60,16 @@ class MobileNavigation {
                     <div class="mobile-tab-header">
                         <button class="mobile-tab-btn active" data-tab="route">
                             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3h6l2 3h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                            </svg>
+                            <span class="tab-label">Route</span>
+                        </button>
+                        <button class="mobile-tab-btn" data-tab="map">
+                            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                                 <circle cx="12" cy="10" r="3"/>
                             </svg>
-                            <span class="tab-label">Route</span>
+                            <span class="tab-label">Map</span>
                         </button>
                         <button class="mobile-tab-btn" data-tab="files">
                             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -69,8 +80,9 @@ class MobileNavigation {
                         <div class="auth-container">
                             <button class="auth-btn" id="mobile-auth-btn">
                                 <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="12" cy="7" r="4"/>
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
                                 </svg>
                             </button>
                         </div>
@@ -79,52 +91,89 @@ class MobileNavigation {
                 
                 <!-- Mobile Tab Content -->
                 <div class="mobile-tab-content">
-                    <!-- Route Navigation Tab -->
+                    <!-- Route Planning Tab (Manual Input) -->
                     <div class="mobile-tab-pane active" id="mobile-route-tab">
                         <div class="mobile-route-tab">
+                            <!-- Manual Address Input Section -->
+                            <div class="mobile-address-input" id="mobile-address-input">
+                                <div class="mobile-input-header">
+                                    <h3>Plan Your Route</h3>
+                                    <p>Enter starting address and destinations</p>
+                                </div>
+                                
+                                <!-- Starting Address -->
+                                <div class="mobile-input-group">
+                                    <label>Starting Address</label>
+                                    <input type="text" id="mobile-start-address" class="mobile-address-field" placeholder="Enter your starting location">
+                                </div>
+                                
+                                <!-- Destination Fields -->
+                                <div class="mobile-input-group">
+                                    <label>Destinations</label>
+                                    <div class="mobile-destinations" id="mobile-destinations">
+                                        <div class="mobile-destination-row">
+                                            <input type="text" class="mobile-address-field mobile-destination-field" placeholder="Destination 1">
+                                            <button class="mobile-remove-btn" style="display: none;">×</button>
+                                        </div>
+                                    </div>
+                                    <button class="mobile-add-btn" id="mobile-add-destination">+ Add Destination</button>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="mobile-input-actions">
+                                    <button class="mobile-action-btn secondary" id="mobile-paste-addresses">📋 Paste</button>
+                                    <button class="mobile-action-btn primary" id="mobile-create-route-manual">🗺️ Create Route</button>
+                                    <button class="mobile-action-btn secondary" id="mobile-clear-all">🗑️ Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Map Tab (Loaded Addresses) -->
+                    <div class="mobile-tab-pane" id="mobile-map-tab">
+                        <div class="mobile-map-tab">
                             <div class="mobile-map-container">
                                 <!-- Map will be moved here -->
                             </div>
                             
-                            <!-- Create Route Button (shown when addresses loaded) -->
+                            <!-- Create Route Button (shown when Excel addresses loaded) -->
                             <div class="mobile-create-route-btn" id="mobile-create-route-container">
                                 <button class="mobile-nav-btn primary" id="mobile-create-route-btn">
-                                    🗺️ Create Route
+                                    🗺️ Create Route from Files
                                 </button>
                             </div>
                             
                             <!-- Destination Card (hidden initially) -->
                             <div class="destination-card" id="mobile-destination-card">
                                 <div class="destination-header">
-                                    <div class="destination-progress" id="mobile-progress">
-                                        Stop 1 of 8 • 12% Complete
-                                    </div>
-                                    <div class="destination-address" id="mobile-address">
-                                        123 Main Street
-                                    </div>
-                                    <div class="destination-details" id="mobile-details">
-                                        Houston, TX 77025
+                                    <div class="destination-info-row">
+                                        <span class="progress-count" id="mobile-progress">13/23</span>
+                                        <span class="address-street" id="mobile-address">5243 Castlebury Meadows Dr</span>
+                                        <span class="customer-name" id="mobile-details">Amber Evans</span>
                                     </div>
                                 </div>
                                 
                                 <div class="destination-controls">
                                     <div class="control-row">
                                         <button class="mobile-nav-btn" id="mobile-prev-btn">
-                                            ← Prev
-                                        </button>
-                                        <button class="mobile-nav-btn primary" id="mobile-navigate-btn">
-                                            🗺️ Navigate
+                                            <span class="icon">←</span>
+                                            <span class="label">Prev</span>
                                         </button>
                                         <button class="mobile-nav-btn" id="mobile-next-btn">
-                                            Next →
+                                            <span class="icon">→</span>
+                                            <span class="label">Next</span>
                                         </button>
-                                    </div>
-                                    <div class="control-row">
-                                        <button class="mobile-nav-btn complete" id="mobile-complete-btn">
-                                            ✅ Check In
+                                        <button class="mobile-nav-btn complete" id="mobile-checkin-notes-btn">
+                                            <span class="icon">📝</span>
+                                            <span class="label">Check In</span>
                                         </button>
-                                        <button class="mobile-nav-btn" id="mobile-notes-btn">
-                                            📝 Notes
+                                        <button class="mobile-nav-btn primary" id="mobile-navigate-btn">
+                                            <span class="icon">🗺️</span>
+                                            <span class="label">Navigate</span>
+                                        </button>
+                                        <button class="mobile-nav-btn" id="mobile-end-route-btn" style="background: #dc3545; color: white;">
+                                            <span class="icon">🏁</span>
+                                            <span class="label">End Route</span>
                                         </button>
                                     </div>
                                 </div>
@@ -205,10 +254,22 @@ class MobileNavigation {
     bindEvents() {
         // Tab switching
         document.addEventListener('click', (e) => {
-            if (e.target.matches('.mobile-tab-btn')) {
-                this.switchTab(e.target.dataset.tab);
-            } else if (e.target.matches('#mobile-auth-btn') || e.target.closest('#mobile-auth-btn')) {
+            // Handle tab button clicks (including clicks on SVG children)
+            const tabBtn = e.target.closest('.mobile-tab-btn');
+            if (tabBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.switchTab(tabBtn.dataset.tab);
+                return;
+            }
+            
+            // Handle auth button clicks
+            const authBtn = e.target.closest('#mobile-auth-btn');
+            if (authBtn) {
+                e.preventDefault();
+                e.stopPropagation();
                 this.handleAuthClick();
+                return;
             }
         });
         
@@ -220,16 +281,30 @@ class MobileNavigation {
                 this.navigateNext();
             } else if (e.target.matches('#mobile-navigate-btn')) {
                 this.openGoogleMaps();
+            } else if (e.target.matches('#mobile-checkin-notes-btn')) {
+                this.checkInWithNotes();
             } else if (e.target.matches('#mobile-complete-btn')) {
                 this.checkIn();
             } else if (e.target.matches('#mobile-notes-btn')) {
                 this.openNotes();
+            } else if (e.target.matches('#mobile-end-route-btn')) {
+                this.endRoute();
+            } else if (e.target.matches('#mobile-add-destination')) {
+                this.addDestinationField();
+            } else if (e.target.matches('.mobile-remove-btn')) {
+                this.removeDestinationField(e.target);
+            } else if (e.target.matches('#mobile-create-route-manual')) {
+                this.createRouteFromManualInput();
+            } else if (e.target.matches('#mobile-paste-addresses')) {
+                this.pasteAddresses();
+            } else if (e.target.matches('#mobile-clear-all')) {
+                this.clearAllFields();
             }
         });
         
         // File actions
         document.addEventListener('click', (e) => {
-            console.log('[Mobile] Click detected on:', e.target.id, e.target.className);
+            // Removed excessive click logging for performance
             
             if (e.target.matches('.mobile-load-addresses-btn')) {
                 const fileId = e.target.dataset.fileId;
@@ -239,9 +314,28 @@ class MobileNavigation {
                 e.preventDefault();
                 e.stopPropagation();
                 
+                // Ensure desktop button state is updated before trying to click it
+                if (window.desktopRouteCreator && typeof window.desktopRouteCreator._updateButtonState === 'function') {
+                    console.log('[Mobile] Updating desktop button state before route creation');
+                    window.desktopRouteCreator._updateButtonState();
+                }
+                
                 // Try clicking the desktop create route button directly
                 const desktopBtn = document.getElementById('createRouteBtn');
                 if (desktopBtn) {
+                    if (desktopBtn.disabled) {
+                        console.warn('[Mobile] Desktop create route button is disabled - checking addresses');
+                        // Check if we have addresses loaded
+                        if (window.addresses && window.addresses.length > 0) {
+                            console.log('[Mobile] Addresses available, force enabling desktop button');
+                            desktopBtn.disabled = false;
+                            desktopBtn.textContent = '🗺️ Create Route';
+                        } else {
+                            console.error('[Mobile] No addresses available for route creation');
+                            alert('No addresses loaded. Please load addresses from the Files tab first.');
+                            return;
+                        }
+                    }
                     console.log('[Mobile] Triggering desktop create route button');
                     desktopBtn.click();
                 } else {
@@ -271,6 +365,21 @@ class MobileNavigation {
                         addresses: window.desktopRouteCreator.optimizedRoute,
                         type: 'mobile-auto-detect'
                     });
+                }
+            } else if (!this.navigationActive) {
+                // If no optimized route and not navigating, ensure create button is shown when appropriate
+                const hasLoadedAddresses = window.addresses && window.addresses.length > 0;
+                const hasLassoedAddresses = window.selectedItemsInShape && window.selectedItemsInShape.length > 0;
+                
+                if ((hasLoadedAddresses || hasLassoedAddresses) && document.querySelector('.mobile-tab-btn.active')?.dataset.tab === 'map') {
+                    const createBtn = document.getElementById('mobile-create-route-btn');
+                    if (createBtn && (createBtn.textContent.includes('Creating') || createBtn.textContent.includes('⏳'))) {
+                        // Reset stuck button state
+                        console.log('[Mobile] Resetting stuck create button state');
+                        createBtn.textContent = '🗺️ Create Route from Files';
+                        createBtn.disabled = false;
+                        this.showCreateRouteButton();
+                    }
                 }
             }
         }, 1000);
@@ -325,21 +434,32 @@ class MobileNavigation {
         });
         document.getElementById(`mobile-${tabName}-tab`).classList.add('active');
         
-        // Resize map if switching to route tab
-        if (tabName === 'route' && window.map) {
-            setTimeout(() => {
-                console.log('[Mobile] Resizing map after tab switch to route');
+        // Handle map tab specific operations
+        if (tabName === 'map' && window.map) {
+            // Clear any pending resize operations
+            if (this._mapResizeTimeout) {
+                clearTimeout(this._mapResizeTimeout);
+            }
+            
+            this._mapResizeTimeout = setTimeout(() => {
+                console.log('[Mobile] Resizing map after tab switch to map');
                 window.map.invalidateSize();
                 
                 // Re-fit the map to show all content properly
-                setTimeout(() => {
-                    if (window.addresses && window.addresses.length > 0) {
-                        if (typeof window.fitMapToAddresses === 'function') {
-                            window.fitMapToAddresses();
-                        }
+                if (window.addresses && window.addresses.length > 0) {
+                    if (typeof window.fitMapToAddresses === 'function') {
+                        window.fitMapToAddresses();
                     }
-                }, 200);
-            }, 100);
+                }
+                
+                // Show drawing controls on map tab
+                this.showDrawingControls();
+                
+                this._mapResizeTimeout = null;
+            }, 150);
+        } else {
+            // Hide drawing controls on non-map tabs
+            this.hideDrawingControls();
         }
     }
     
@@ -480,8 +600,8 @@ class MobileNavigation {
                 await loadExcelAddresses(fileId);
             }
             
-            // Switch to route tab
-            this.switchTab('route');
+            // Switch to map tab to show loaded addresses
+            this.switchTab('map');
             
             // Show create route button after addresses are loaded
             setTimeout(() => {
@@ -511,8 +631,8 @@ class MobileNavigation {
     handleAddressesLoaded() {
         // Ensure map shows all addresses
         if (window.map && window.addresses && window.addresses.length > 0) {
-            // Switch to route tab
-            this.switchTab('route');
+            // Switch to map tab to show loaded addresses
+            this.switchTab('map');
             
             // Show create route button
             this.showCreateRouteButton();
@@ -556,15 +676,16 @@ class MobileNavigation {
      * Create route from all loaded addresses (same logic as desktop)
      */
     async createRoute() {
+        const btn = document.getElementById('mobile-create-route-btn');
+        const originalText = btn ? btn.textContent : '';
+        
         try {
             console.log('[Mobile] 🚀 Creating optimized route...');
             console.log('[Mobile] desktopRouteCreator exists:', !!window.desktopRouteCreator);
             console.log('[Mobile] handleCreateRoute exists:', !!(window.desktopRouteCreator && window.desktopRouteCreator.handleCreateRoute));
             
             // Show loading on button
-            const btn = document.getElementById('mobile-create-route-btn');
             if (btn) {
-                const originalText = btn.textContent;
                 btn.textContent = '⏳ Creating Route...';
                 btn.disabled = true;
             }
@@ -590,10 +711,11 @@ class MobileNavigation {
                         });
                     } else {
                         console.warn('[Mobile] No optimized route found after creation');
-                        // Reset button
+                        // Reset button to original state
                         if (btn) {
-                            btn.textContent = '🗺️ Create Route';
+                            btn.textContent = originalText || '🗺️ Create Route from Files';
                             btn.disabled = false;
+                            this.showCreateRouteButton();
                         }
                     }
                 }, 1000);
@@ -602,9 +724,9 @@ class MobileNavigation {
                 console.error('[Mobile] Desktop route creator not available');
                 console.log('[Mobile] window.desktopRouteCreator:', window.desktopRouteCreator);
                 
-                // Reset button
+                // Reset button to original state
                 if (btn) {
-                    btn.textContent = '🗺️ Create Route';
+                    btn.textContent = originalText || '🗺️ Create Route from Files';
                     btn.disabled = false;
                 }
                 
@@ -624,11 +746,11 @@ class MobileNavigation {
             console.error('[Mobile] Error creating route:', error);
             alert('Error creating route. Please try again.');
             
-            // Reset button
-            const btn = document.getElementById('mobile-create-route-btn');
+            // Reset button to original state on error
             if (btn) {
-                btn.textContent = '🗺️ Create Route';
+                btn.textContent = originalText || '🗺️ Create Route from Files';
                 btn.disabled = false;
+                this.showCreateRouteButton();
             }
         }
     }
@@ -638,15 +760,28 @@ class MobileNavigation {
      */
     handleRouteCreated(routeData) {
         console.log('[Mobile] handleRouteCreated called with:', routeData);
+        console.log('[Mobile] First route address data:', routeData.addresses[0]);
+        console.log('[Mobile] First route address keys:', Object.keys(routeData.addresses[0]));
+        
+        // Check second address (should be from Excel)
+        if (routeData.addresses.length > 1) {
+            console.log('[Mobile] Second route address data:', routeData.addresses[1]);
+            console.log('[Mobile] Second route address keys:', Object.keys(routeData.addresses[1]));
+        }
+        
         this.currentRoute = routeData.addresses || [];
         this.currentPosition = 0;
         this.navigationActive = true;
         
-        // Hide create route button first
+        // Hide address input panel
+        this.hideAddressInput();
+        
+        // Hide create route button
         this.hideCreateRouteButton();
         
-        // Then show destination card
+        // Show destination card and hide drawing controls during navigation
         this.showDestinationCard();
+        this.hideDrawingControls();
         this.updateDestinationDisplay();
         
         // Sync with desktop navigation controller
@@ -714,6 +849,56 @@ class MobileNavigation {
             displayName = current.lastName;
         }
         
+        // If no name found in route data, look up from currently loaded Excel data
+        if (!displayName && typeof window.currentlyDisplayedItems !== 'undefined' && 
+            window.currentlyDisplayedItems && Array.isArray(window.currentlyDisplayedItems)) {
+          
+          console.log('[Mobile] No name in route data, looking up from Excel data for:', current.address);
+          
+          // Find matching address in Excel data
+          const matchingItem = window.currentlyDisplayedItems.find(item => {
+            if (!item || !item.address) return false;
+            const itemAddr = item.address.toLowerCase().trim();
+            const currentAddr = current.address.toLowerCase().trim();
+            
+            // Try exact match first
+            if (itemAddr === currentAddr) return true;
+            
+            // Try partial match (remove common suffixes)
+            const cleanItem = itemAddr.replace(/, usa$|, tx$|, texas$/i, '').trim();
+            const cleanCurrent = currentAddr.replace(/, usa$|, tx$|, texas$/i, '').trim();
+            
+            return cleanItem === cleanCurrent;
+          });
+          
+          if (matchingItem) {
+            // Use same name detection logic
+            if (matchingItem.name) {
+              displayName = matchingItem.name;
+            } else if (matchingItem['Borrower Name']) {
+              displayName = matchingItem['Borrower Name'];
+            } else if (matchingItem.borrowerName) {
+              displayName = matchingItem.borrowerName;
+            } else if (matchingItem['Property Owner']) {
+              displayName = matchingItem['Property Owner'];
+            } else if (matchingItem.propertyOwner) {
+              displayName = matchingItem.propertyOwner;
+            } else if (matchingItem.owner) {
+              displayName = matchingItem.owner;
+            } else if (matchingItem.firstName && matchingItem.lastName) {
+              displayName = `${matchingItem.firstName} ${matchingItem.lastName}`;
+            } else if (matchingItem.firstName) {
+              displayName = matchingItem.firstName;
+            } else if (matchingItem.lastName) {
+              displayName = matchingItem.lastName;
+            }
+            
+            console.log('[Mobile] Found name from Excel lookup:', displayName);
+          } else {
+            console.log('[Mobile] No matching address found in Excel data');
+          }
+        }
+        
         // Update address with name if available
         const addressText = current.address || 'Unknown Address';
         if (displayName) {
@@ -737,40 +922,107 @@ class MobileNavigation {
      * Navigate to previous stop
      */
     navigatePrevious() {
-        // Use desktop navigation controller which handles map centering
-        if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
-            window.desktopRouteCreator.navigationController.navigateToPreviousStop();
-            
-            // Sync mobile position with desktop controller
-            this.currentPosition = window.desktopRouteCreator.navigationController.currentStopIndex;
-            this.updateDestinationDisplay();
-        } else {
-            // Fallback to mobile-only navigation
-            if (this.currentPosition > 0) {
-                this.currentPosition--;
-                this.updateDestinationDisplay();
-            }
+        // Prevent rapid clicks
+        if (this._navigating || this.currentPosition === 0) return;
+        
+        this._navigating = true;
+        
+        // Immediate visual feedback
+        const prevBtn = this.getCachedElement('mobile-prev-btn');
+        if (prevBtn) {
+            prevBtn.style.opacity = '0.5';
+            prevBtn.disabled = true;
         }
+        
+        try {
+            // Use desktop navigation controller which handles map centering
+            if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
+                window.desktopRouteCreator.navigationController.navigateToPreviousStop();
+                
+                // Sync mobile position with desktop controller
+                this.currentPosition = window.desktopRouteCreator.navigationController.currentStopIndex;
+                this.updateDestinationDisplay();
+            } else {
+                // Fallback to mobile-only navigation
+                if (this.currentPosition > 0) {
+                    this.currentPosition--;
+                    this.updateDestinationDisplay();
+                }
+            }
+        } catch (error) {
+            console.error('[Mobile] Navigation error:', error);
+        }
+        
+        // Reset navigation state
+        setTimeout(() => {
+            this._navigating = false;
+            if (prevBtn) {
+                prevBtn.style.opacity = '';
+                prevBtn.disabled = this.currentPosition === 0;
+            }
+        }, 300);
     }
     
     /**
      * Navigate to next stop
      */
     navigateNext() {
-        // Use desktop navigation controller which handles map centering
-        if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
-            window.desktopRouteCreator.navigationController.navigateToNextStop();
-            
-            // Sync mobile position with desktop controller
-            this.currentPosition = window.desktopRouteCreator.navigationController.currentStopIndex;
-            this.updateDestinationDisplay();
-        } else {
-            // Fallback to mobile-only navigation
-            if (this.currentPosition < this.currentRoute.length - 1) {
-                this.currentPosition++;
-                this.updateDestinationDisplay();
-            }
+        // Prevent rapid clicks
+        if (this._navigating || this.currentPosition >= this.currentRoute.length - 1) return;
+        
+        this._navigating = true;
+        
+        // Immediate visual feedback
+        const nextBtn = this.getCachedElement('mobile-next-btn');
+        if (nextBtn) {
+            nextBtn.style.opacity = '0.5';
+            nextBtn.disabled = true;
         }
+        
+        try {
+            // Use desktop navigation controller which handles map centering
+            if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
+                window.desktopRouteCreator.navigationController.navigateToNextStop();
+                
+                // Sync mobile position with desktop controller
+                this.currentPosition = window.desktopRouteCreator.navigationController.currentStopIndex;
+                this.updateDestinationDisplay();
+            } else {
+                // Fallback to mobile-only navigation
+                if (this.currentPosition < this.currentRoute.length - 1) {
+                    this.currentPosition++;
+                    this.updateDestinationDisplay();
+                }
+            }
+        } catch (error) {
+            console.error('[Mobile] Navigation error:', error);
+        }
+        
+        // Reset navigation state
+        setTimeout(() => {
+            this._navigating = false;
+            if (nextBtn) {
+                nextBtn.style.opacity = '';
+                nextBtn.disabled = this.currentPosition >= this.currentRoute.length - 1;
+            }
+        }, 300);
+    }
+    
+    /**
+     * Get cached DOM element to reduce queries
+     */
+    getCachedElement(id) {
+        if (!this.cachedElements[id]) {
+            this.cachedElements[id] = document.getElementById(id);
+        }
+        return this.cachedElements[id];
+    }
+    
+    /**
+     * Clear element cache when DOM changes
+     */
+    clearElementCache() {
+        this.cachedElements = {};
     }
     
     /**
@@ -844,12 +1096,404 @@ class MobileNavigation {
     }
     
     /**
+     * Combined check in and notes - opens notes interface and marks as visited
+     */
+    checkInWithNotes() {
+        const current = this.currentRoute[this.currentPosition];
+        if (!current) {
+            console.error('[Mobile] No current address for check-in with notes');
+            return;
+        }
+        
+        const address = current.address;
+        console.log('[Mobile] Check in with notes for:', address);
+        
+        // Set global current address for notes system
+        window.currentAddress = address;
+        
+        // Mark as visited using existing system
+        if (window.markAddressAsVisited) {
+            window.markAddressAsVisited(current.id || current.address);
+        }
+        
+        // Open notes interface
+        if (typeof openNotesFromMap === 'function') {
+            openNotesFromMap(address);
+        } else {
+            console.error('[Mobile] Notes system not available');
+            alert('Notes system not available. Please try again.');
+        }
+        
+        // Note: We don't auto-advance here since user is taking notes
+        // They can use Prev/Next buttons after adding notes
+    }
+    
+    /**
      * Handle route completion
      */
     handleRouteComplete() {
         alert('🎉 Route Complete!\n\nAll destinations have been checked in.');
         this.hideDestinationCard();
         this.navigationActive = false;
+    }
+    
+    /**
+     * End route and return to normal view
+     */
+    endRoute() {
+        console.log('[Mobile] Ending route');
+        
+        // Use desktop navigation controller to end route
+        if (window.desktopRouteCreator && window.desktopRouteCreator.navigationController) {
+            window.desktopRouteCreator.navigationController.endRoute();
+        }
+        
+        // Clear mobile navigation state completely
+        this.hideDestinationCard();
+        this.navigationActive = false;
+        this.currentRoute = [];
+        this.currentPosition = 0;
+        
+        // Clear optimized route from desktop route creator
+        if (window.desktopRouteCreator) {
+            window.desktopRouteCreator.optimizedRoute = null;
+        }
+        
+        // Always switch to map tab after ending route
+        console.log('[Mobile] Ending route - switching to map tab');
+        this.switchTab('map');
+        
+        // Check if we have loaded addresses to show create route button
+        const hasLoadedAddresses = window.addresses && window.addresses.length > 0;
+        const hasLassoedAddresses = window.selectedItemsInShape && window.selectedItemsInShape.length > 0;
+        
+        console.log('[Mobile] After route end - hasLoadedAddresses:', hasLoadedAddresses, 'hasLassoedAddresses:', hasLassoedAddresses);
+        
+        if (hasLoadedAddresses || hasLassoedAddresses) {
+            console.log('[Mobile] Showing create route button - addresses available');
+            this.showCreateRouteButton();
+        } else {
+            console.log('[Mobile] Hiding create route button - no addresses available');
+            this.hideCreateRouteButton();
+        }
+        
+        // Show drawing controls again when on map tab
+        if (document.querySelector('.mobile-tab-btn.active')?.dataset.tab === 'map') {
+            this.showDrawingControls();
+        }
+        
+        // Force comprehensive button state update with multiple attempts to ensure it sticks
+        const updateButtonState = () => {
+            if (window.desktopRouteCreator && typeof window.desktopRouteCreator._updateButtonState === 'function') {
+                console.log('[Mobile] Force updating button state after route end');
+                window.desktopRouteCreator._updateButtonState();
+                
+                // Ensure desktop button text is properly reset
+                const desktopBtn = document.getElementById('createRouteBtn');
+                if (desktopBtn) {
+                    if (hasLoadedAddresses || hasLassoedAddresses) {
+                        desktopBtn.textContent = '🗺️ Create Route';
+                        desktopBtn.disabled = false;
+                        console.log('[Mobile] Desktop button enabled with addresses available');
+                    } else {
+                        desktopBtn.textContent = 'Create Route';
+                        desktopBtn.disabled = true;
+                        console.log('[Mobile] Desktop button disabled - no addresses');
+                    }
+                }
+                
+                // Also ensure mobile button is in correct state
+                const mobileBtn = document.getElementById('mobile-create-route-btn');
+                if (mobileBtn && (hasLoadedAddresses || hasLassoedAddresses)) {
+                    mobileBtn.textContent = '🗺️ Create Route from Files';
+                    mobileBtn.disabled = false;
+                    console.log('[Mobile] Mobile button enabled with addresses available');
+                }
+            }
+        };
+        
+        // Update button state immediately and with delays to handle any async operations
+        updateButtonState();
+        setTimeout(updateButtonState, 100);
+        setTimeout(updateButtonState, 300);
+        
+        console.log('[Mobile] Route ended successfully');
+    }
+    
+    /**
+     * Add new destination field
+     */
+    addDestinationField() {
+        const container = document.getElementById('mobile-destinations');
+        const fieldCount = container.querySelectorAll('.mobile-destination-row').length;
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'mobile-destination-row';
+        newRow.innerHTML = `
+            <input type="text" class="mobile-address-field mobile-destination-field" placeholder="Destination ${fieldCount + 1}">
+            <button class="mobile-remove-btn">×</button>
+        `;
+        
+        container.appendChild(newRow);
+        
+        // Update remove button visibility
+        this.updateRemoveButtons();
+        
+        // Focus new field
+        const newInput = newRow.querySelector('.mobile-address-field');
+        newInput.focus();
+        
+        // Scroll to new field
+        newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    /**
+     * Remove destination field
+     */
+    removeDestinationField(button) {
+        const row = button.closest('.mobile-destination-row');
+        if (row) {
+            row.remove();
+            this.updateRemoveButtons();
+            this.updateDestinationPlaceholders();
+        }
+    }
+    
+    /**
+     * Update remove button visibility and placeholder text
+     */
+    updateRemoveButtons() {
+        const rows = document.querySelectorAll('.mobile-destination-row');
+        
+        rows.forEach((row, index) => {
+            const removeBtn = row.querySelector('.mobile-remove-btn');
+            const input = row.querySelector('.mobile-destination-field');
+            
+            // Show remove button if more than 1 field
+            removeBtn.style.display = rows.length > 1 ? 'flex' : 'none';
+            
+            // Update placeholder
+            input.placeholder = `Destination ${index + 1}`;
+        });
+    }
+    
+    /**
+     * Update destination placeholders
+     */
+    updateDestinationPlaceholders() {
+        const inputs = document.querySelectorAll('.mobile-destination-field');
+        inputs.forEach((input, index) => {
+            input.placeholder = `Destination ${index + 1}`;
+        });
+    }
+    
+    /**
+     * Create route from manual input
+     */
+    async createRouteFromManualInput() {
+        console.log('[Mobile] Creating route from manual input');
+        
+        // Get all input values
+        const startingAddress = document.getElementById('mobile-start-address').value.trim();
+        const destinationInputs = document.querySelectorAll('.mobile-destination-field');
+        const destinations = Array.from(destinationInputs)
+            .map(input => input.value.trim())
+            .filter(value => value.length > 0);
+        
+        // Validation
+        if (!startingAddress) {
+            alert('Please enter a starting address');
+            document.getElementById('mobile-start-address').focus();
+            return;
+        }
+        
+        if (destinations.length === 0) {
+            alert('Please enter at least one destination');
+            document.querySelector('.mobile-destination-field').focus();
+            return;
+        }
+        
+        console.log('[Mobile] Manual input - Start:', startingAddress);
+        console.log('[Mobile] Manual input - Destinations:', destinations);
+        
+        // Update desktop fields with mobile values
+        this.syncToDesktopFields(startingAddress, destinations);
+        
+        // Hide input panel and show map
+        this.hideAddressInput();
+        
+        // Use desktop route creator
+        if (window.desktopRouteCreator && typeof window.desktopRouteCreator.handleCreateRoute === 'function') {
+            try {
+                await window.desktopRouteCreator.handleCreateRoute();
+                console.log('[Mobile] Route created successfully from manual input');
+            } catch (error) {
+                console.error('[Mobile] Error creating route:', error);
+                alert('Error creating route. Please try again.');
+                this.showAddressInput();
+            }
+        } else {
+            console.error('[Mobile] Desktop route creator not available');
+            alert('Route creation system not available. Please try refreshing the page.');
+            this.showAddressInput();
+        }
+    }
+    
+    /**
+     * Sync mobile input values to desktop fields
+     */
+    syncToDesktopFields(startingAddress, destinations) {
+        // Set starting address
+        const startField = document.getElementById('manualStartAddress');
+        if (startField) {
+            startField.value = startingAddress;
+        }
+        
+        // Clear existing destination fields
+        const destinationContainer = document.getElementById('destinationFields');
+        if (destinationContainer) {
+            destinationContainer.innerHTML = '';
+            
+            // Add destination fields
+            destinations.forEach((destination, index) => {
+                const fieldHtml = `
+                    <div class="destination-input-container" style="position: relative; margin-bottom: 12px;">
+                        <input type="text" class="clean-input destination-input destination-field" 
+                               value="${destination}" placeholder="Destination ${index + 1}" 
+                               style="width: 100%; padding-right: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+                        <button type="button" class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">×</button>
+                    </div>
+                `;
+                destinationContainer.insertAdjacentHTML('beforeend', fieldHtml);
+            });
+        }
+    }
+    
+    /**
+     * Paste addresses from clipboard
+     */
+    async pasteAddresses() {
+        try {
+            if (!navigator.clipboard) {
+                alert('Clipboard access not available. Please enter addresses manually.');
+                return;
+            }
+            
+            const text = await navigator.clipboard.readText();
+            if (!text.trim()) {
+                alert('Clipboard is empty');
+                return;
+            }
+            
+            // Split by lines and filter out empty lines
+            const lines = text.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            
+            if (lines.length === 0) {
+                alert('No valid addresses found in clipboard');
+                return;
+            }
+            
+            // First line as starting address if current starting address is empty
+            const startField = document.getElementById('mobile-start-address');
+            let addressIndex = 0;
+            
+            if (!startField.value.trim() && lines.length > 0) {
+                startField.value = lines[0];
+                addressIndex = 1;
+            }
+            
+            // Clear existing destinations
+            document.getElementById('mobile-destinations').innerHTML = '';
+            
+            // Add remaining lines as destinations
+            for (let i = addressIndex; i < lines.length; i++) {
+                if (i === addressIndex) {
+                    // Update the first destination field
+                    const firstRow = document.createElement('div');
+                    firstRow.className = 'mobile-destination-row';
+                    firstRow.innerHTML = `
+                        <input type="text" class="mobile-address-field mobile-destination-field" value="${lines[i]}" placeholder="Destination 1">
+                        <button class="mobile-remove-btn" style="display: none;">×</button>
+                    `;
+                    document.getElementById('mobile-destinations').appendChild(firstRow);
+                } else {
+                    // Add additional destination fields
+                    this.addDestinationField();
+                    const lastInput = document.querySelector('.mobile-destination-row:last-child .mobile-destination-field');
+                    lastInput.value = lines[i];
+                }
+            }
+            
+            this.updateRemoveButtons();
+            console.log('[Mobile] Pasted', lines.length, 'addresses from clipboard');
+            
+        } catch (error) {
+            console.error('[Mobile] Error pasting addresses:', error);
+            alert('Failed to paste addresses. Please enter them manually.');
+        }
+    }
+    
+    /**
+     * Clear all input fields
+     */
+    clearAllFields() {
+        // Clear starting address
+        document.getElementById('mobile-start-address').value = '';
+        
+        // Reset to single destination field
+        document.getElementById('mobile-destinations').innerHTML = `
+            <div class="mobile-destination-row">
+                <input type="text" class="mobile-address-field mobile-destination-field" placeholder="Destination 1">
+                <button class="mobile-remove-btn" style="display: none;">×</button>
+            </div>
+        `;
+        
+        this.updateRemoveButtons();
+        console.log('[Mobile] Cleared all address fields');
+    }
+    
+    /**
+     * Hide address input panel
+     */
+    hideAddressInput() {
+        const panel = document.getElementById('mobile-address-input');
+        if (panel) {
+            panel.classList.add('hidden');
+        }
+    }
+    
+    /**
+     * Show address input panel
+     */
+    showAddressInput() {
+        const panel = document.getElementById('mobile-address-input');
+        if (panel) {
+            panel.classList.remove('hidden');
+        }
+    }
+    
+    /**
+     * Show drawing controls for mobile map interaction
+     */
+    showDrawingControls() {
+        const drawingControls = document.querySelector('.leaflet-control-container .leaflet-top.leaflet-left');
+        if (drawingControls) {
+            drawingControls.style.display = 'block';
+            console.log('[Mobile] Drawing controls shown for map tab');
+        }
+    }
+    
+    /**
+     * Hide drawing controls when not on map tab
+     */
+    hideDrawingControls() {
+        const drawingControls = document.querySelector('.leaflet-control-container .leaflet-top.leaflet-left');
+        if (drawingControls) {
+            drawingControls.style.display = 'none';
+            console.log('[Mobile] Drawing controls hidden for non-map tab');
+        }
     }
     
     /**

@@ -17,6 +17,10 @@ class DesktopRouteCreator {
     this.lastProcessedSignature = null;
     this.optimizedRoute = null;
     
+    // Performance optimization tracking
+    this._buttonNotFoundLogged = false;
+    this._lastButtonState = null;
+    
     // Initialize the system
     this.init();
   }
@@ -127,7 +131,11 @@ class DesktopRouteCreator {
   _updateButtonState() {
     const createRouteBtn = document.getElementById('createRouteBtn');
     if (!createRouteBtn) {
-      console.log('🔍 DesktopRouteCreator: Create route button not found in DOM');
+      // Only log this error once to avoid spam
+      if (!this._buttonNotFoundLogged) {
+        console.log('🔍 DesktopRouteCreator: Create route button not found in DOM');
+        this._buttonNotFoundLogged = true;
+      }
       return;
     }
 
@@ -139,29 +147,73 @@ class DesktopRouteCreator {
     }
 
     try {
-      // Simple check: enable if user has typed anything in start address or destination fields
+      // Check for manual inputs
       const startingAddressField = document.getElementById('manualStartAddress');
       const destinationFields = document.querySelectorAll('.destination-field');
       
       const hasStartingAddress = startingAddressField && startingAddressField.value.trim().length > 0;
       const hasDestinations = Array.from(destinationFields).some(field => field.value.trim().length > 0);
       
-      console.log('🔍 DesktopRouteCreator: Simple validation:', {
-        hasStartingAddress,
-        hasDestinations,
-        startingValue: startingAddressField ? startingAddressField.value : 'none',
-        destinationCount: destinationFields.length
-      });
+      // Also check for loaded Excel addresses
+      const hasLoadedAddresses = window.addresses && window.addresses.length > 0;
+      
+      // Check for lassoed addresses from map selection
+      const hasLassoedAddresses = window.selectedItemsInShape && window.selectedItemsInShape.length > 0;
+      
+      // Check if we're currently in navigation mode
+      const isNavigating = this.navigationController && this.navigationController.isNavigationActive;
+      
+      // Check if we have an active optimized route
+      const hasActiveRoute = this.optimizedRoute && this.optimizedRoute.length > 0;
+      
+      // Only log validation details when state changes or in debug mode
+      const currentState = hasStartingAddress || hasLoadedAddresses || hasLassoedAddresses || isNavigating;
+      if (this._lastButtonState !== currentState || window.DEBUG_ROUTE_CREATOR) {
+        console.log('🔍 DesktopRouteCreator: Validation check:', {
+          hasStartingAddress,
+          hasDestinations,
+          hasLoadedAddresses,
+          hasLassoedAddresses,
+          isNavigating,
+          hasActiveRoute,
+          loadedAddressCount: hasLoadedAddresses ? window.addresses.length : 0,
+          lassoedAddressCount: hasLassoedAddresses ? window.selectedItemsInShape.length : 0
+        });
+        this._lastButtonState = currentState;
+      }
 
-      // Enable button if user has entered at least a starting address
-      if (hasStartingAddress) {
+      // If we're currently navigating, disable the create route button
+      if (isNavigating) {
+        createRouteBtn.disabled = true;
+        createRouteBtn.textContent = '🧭 Navigating...';
+        if (this._lastButtonState !== currentState || window.DEBUG_ROUTE_CREATOR) {
+          console.log('🧭 DesktopRouteCreator: Button disabled - currently navigating');
+        }
+        return;
+      }
+
+      // Enable button if user has any type of addresses: manual, loaded Excel, or lassoed
+      // But make sure we're not stuck with a stale optimized route
+      if (hasStartingAddress || hasLoadedAddresses || hasLassoedAddresses) {
         createRouteBtn.disabled = false;
         createRouteBtn.textContent = '🗺️ Create Route';
-        console.log('✅ DesktopRouteCreator: Button enabled - has starting address');
+        
+        // Only log state changes, not every validation
+        if (this._lastButtonState !== currentState || window.DEBUG_ROUTE_CREATOR) {
+          if (hasLoadedAddresses) {
+            console.log('✅ DesktopRouteCreator: Button enabled - has loaded addresses');
+          } else if (hasLassoedAddresses) {
+            console.log('✅ DesktopRouteCreator: Button enabled - has lassoed addresses');
+          } else {
+            console.log('✅ DesktopRouteCreator: Button enabled - has manual starting address');
+          }
+        }
       } else {
         createRouteBtn.disabled = true;
         createRouteBtn.textContent = 'Create Route';
-        console.log('⚠️ DesktopRouteCreator: Button disabled - no starting address');
+        if (this._lastButtonState !== currentState || window.DEBUG_ROUTE_CREATOR) {
+          console.log('⚠️ DesktopRouteCreator: Button disabled - no addresses available');
+        }
       }
 
     } catch (error) {
