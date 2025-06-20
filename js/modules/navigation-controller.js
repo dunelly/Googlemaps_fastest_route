@@ -15,19 +15,53 @@ class NavigationController {
     const nextBtn = document.getElementById('nextStopBtn');
     const endBtn = document.getElementById('endRouteBtn');
 
+    // Enhanced event handling with better debugging and touch support
     if (prevBtn) {
-      prevBtn.addEventListener('click', () => this.navigateToPreviousStop());
+      const prevHandler = (event) => {
+        console.log('🔄 NavigationController: Previous button clicked');
+        event.stopPropagation();
+        event.preventDefault();
+        if (!prevBtn.disabled) {
+          this.navigateToPreviousStop();
+        } else {
+          console.log('⚠️ NavigationController: Previous button is disabled');
+        }
+      };
+      prevBtn.addEventListener('click', prevHandler);
+      prevBtn.addEventListener('touchstart', prevHandler, { passive: false });
     }
 
     if (nextBtn) {
-      nextBtn.addEventListener('click', () => this.navigateToNextStop());
+      const nextHandler = (event) => {
+        console.log('🔄 NavigationController: Next button clicked');
+        event.stopPropagation();
+        event.preventDefault();
+        if (!nextBtn.disabled) {
+          this.navigateToNextStop();
+        } else {
+          console.log('⚠️ NavigationController: Next button is disabled');
+        }
+      };
+      nextBtn.addEventListener('click', nextHandler);
+      nextBtn.addEventListener('touchstart', nextHandler, { passive: false });
     }
 
     if (endBtn) {
-      endBtn.addEventListener('click', () => this.endRoute());
+      const endHandler = (event) => {
+        console.log('🔄 NavigationController: End Route button clicked');
+        event.stopPropagation();
+        event.preventDefault();
+        if (!endBtn.disabled) {
+          this.endRoute();
+        } else {
+          console.log('⚠️ NavigationController: End Route button is disabled');
+        }
+      };
+      endBtn.addEventListener('click', endHandler);
+      endBtn.addEventListener('touchstart', endHandler, { passive: false });
     }
 
-    console.log('📍 NavigationController: Controls initialized');
+    console.log('📍 NavigationController: Controls initialized with enhanced event handling');
   }
 
   // Start navigation for a route
@@ -59,14 +93,16 @@ class NavigationController {
 
   // Navigate to previous stop
   navigateToPreviousStop() {
+    console.log('🚀 NavigationController: navigateToPreviousStop() called');
+    
     if (!this.isNavigationActive) {
-      console.warn('NavigationController: Navigation not active');
+      console.warn('❌ NavigationController: Navigation not active');
       return;
     }
 
     const route = this.routeManager.getCurrentRoute();
     if (!route || this.currentStopIndex <= 0) {
-      console.log('NavigationController: Already at first stop');
+      console.log('❌ NavigationController: Already at first stop or no route');
       return;
     }
 
@@ -77,19 +113,21 @@ class NavigationController {
     // Show notification
     this.showNavigationFeedback('⏪ Previous', route[this.currentStopIndex]);
     
-    console.log('⏪ NavigationController: Moved to previous stop:', this.currentStopIndex);
+    console.log('✅ NavigationController: Successfully moved to previous stop:', this.currentStopIndex);
   }
 
   // Navigate to next stop
   navigateToNextStop() {
+    console.log('🚀 NavigationController: navigateToNextStop() called');
+    
     if (!this.isNavigationActive) {
-      console.warn('NavigationController: Navigation not active');
+      console.warn('❌ NavigationController: Navigation not active');
       return;
     }
 
     const route = this.routeManager.getCurrentRoute();
     if (!route || this.currentStopIndex >= route.length - 1) {
-      console.log('NavigationController: Already at last stop');
+      console.log('❌ NavigationController: Already at last stop or no route');
       return;
     }
 
@@ -100,7 +138,7 @@ class NavigationController {
     // Show notification
     this.showNavigationFeedback('⏩ Next', route[this.currentStopIndex]);
     
-    console.log('⏩ NavigationController: Moved to next stop:', this.currentStopIndex);
+    console.log('✅ NavigationController: Successfully moved to next stop:', this.currentStopIndex);
   }
 
   // Set active stop and handle map movement
@@ -307,6 +345,7 @@ class NavigationController {
 
   // End route and return to normal map view
   endRoute() {
+    console.log('🚀 NavigationController: endRoute() called');
     console.log('🏁 NavigationController: Ending route');
     
     // Stop navigation
@@ -315,11 +354,13 @@ class NavigationController {
     // Clear route display
     if (this.markerManager && typeof this.markerManager.clearRoute === 'function') {
       this.markerManager.clearRoute();
+      console.log('✅ NavigationController: Cleared route markers');
     }
     
     // Clear route data from route manager
     if (this.routeManager && typeof this.routeManager.clearRoute === 'function') {
       this.routeManager.clearRoute();
+      console.log('✅ NavigationController: Cleared route data');
     }
     
     // Show all addresses again

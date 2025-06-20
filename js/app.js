@@ -69,10 +69,11 @@ function showMessage(msg, type = "info") {
     messageContainer.id = 'cleanMessageArea';
     messageContainer.style.cssText = `
       position: fixed;
-      top: 20px;
+      top: ${window.innerWidth <= 768 ? '80px' : '20px'};
       right: 20px;
+      left: ${window.innerWidth <= 768 ? '20px' : 'auto'};
       z-index: 10000;
-      max-width: 400px;
+      max-width: ${window.innerWidth <= 768 ? 'none' : '400px'};
       padding: 12px 16px;
       border-radius: 8px;
       font-size: 0.9rem;
@@ -107,13 +108,13 @@ function showMessage(msg, type = "info") {
     ? '1.5px solid #ffe082'
     : '1.5px solid #b3c6e6';
     
-  // Auto-hide success messages after 3 seconds
+  // Auto-hide success messages after 1.5 seconds
   if (type === 'success') {
     setTimeout(() => {
       if (messageContainer) {
         messageContainer.style.display = 'none';
       }
-    }, 3000);
+    }, 1500);
   }
   
   // Also update hidden message area for compatibility

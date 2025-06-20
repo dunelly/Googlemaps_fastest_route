@@ -206,9 +206,23 @@ button:hover, button:focus {
   border-color: #4f8cff;
 }
 
-/* Leaflet Draw Icons - Simple Icons Only */
+/* Destructive Button Styling */
+.destructive-btn {
+  background-color: #dc3545; /* Red */
+  color: white !important;
+  border: none; 
+  /* Inherits padding, font-size, border-radius etc. from base button style */
+}
 
-/* Box Selection Tool - Clean rectangle icon */
+.destructive-btn:hover, .destructive-btn:focus {
+  background-color: #c82333; /* Darker red */
+  color: white !important;
+  /* Inherits transform and box-shadow from base button:hover style */
+}
+
+
+/* Leaflet Draw Icons - Simple Icons Only - Commented out to prefer styles from main.css */
+/*
 .leaflet-draw-toolbar .leaflet-draw-draw-rectangle {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Crect x='3' y='3' width='14' height='14' rx='1' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E") !important;
   background-size: 18px 18px !important;
@@ -231,7 +245,6 @@ button:hover, button:focus {
   background: none !important;
 }
 
-/* Clear Button Icon Styling */
 .leaflet-draw-clear-all {
   border-radius: 4px !important;
   transition: all 0.2s ease !important;
@@ -245,7 +258,6 @@ button:hover, button:focus {
   box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
 }
 
-/* Enhanced tooltips for drawing tools */
 .leaflet-draw-toolbar .leaflet-draw-draw-rectangle[title]:hover::after,
 .leaflet-draw-clear-all[title]:hover::after {
   content: attr(title);
@@ -264,7 +276,6 @@ button:hover, button:focus {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* Tooltip arrow */
 .leaflet-draw-toolbar .leaflet-draw-draw-rectangle[title]:hover::before,
 .leaflet-draw-clear-all[title]:hover::before {
   content: '';
@@ -276,6 +287,7 @@ button:hover, button:focus {
   border-bottom-color: rgba(0,0,0,0.9);
   z-index: 10001;
 }
+*/
 
 /* Address List Styling */
 .address-checklist {
@@ -483,9 +495,21 @@ button:hover, button:focus {
 }
 
 #prevStopBtn,
-#nextStopBtn {
+#nextStopBtn,
+#endRouteBtn {
   flex-shrink: 0; /* Prevent buttons from shrinking too much */
   padding: 8px 12px; /* Ensure consistent padding with other secondary buttons */
+}
+
+#endRouteBtn {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+}
+
+#endRouteBtn:hover {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
 }
 
 #prevStopBtn:disabled,
@@ -503,22 +527,58 @@ button:hover, button:focus {
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 10002; /* Higher than login UI (10001) */
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 12px 16px;
+  
+  /* Fix desktop layout - compact centered buttons */
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-width: 80vw;
+  flex-wrap: nowrap;
+}
+
+/* Navigation Button Active States for Better Feedback */
+#prevStopBtn:active,
+#nextStopBtn:active,
+#endRouteBtn:active {
+  transform: scale(0.95);
+  background-color: #0056b3 !important;
+  transition: all 0.1s ease;
+}
+
+#endRouteBtn:active {
+  background-color: #c82333 !important;
 }
 
 /* Mobile specific positioning */
 @media (max-width: 768px) {
-  #routeNavigationControls {
+  #routeNavigationControls.active {
     position: fixed !important;
     top: auto;
     bottom: 20px;
     left: 16px;
     right: 16px;
     transform: none;
+    z-index: 10002 !important;
+    
+    /* Mobile layout - spread buttons across full width */
+    justify-content: space-between;
+    width: auto;
+    max-width: none;
+  }
+  
+  /* Enhanced touch feedback for mobile */
+  #prevStopBtn,
+  #nextStopBtn,
+  #endRouteBtn {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   }
 }
