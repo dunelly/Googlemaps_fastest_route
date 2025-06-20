@@ -17,8 +17,14 @@ function initializeMapSystem() {
 function initializeBasicMap() {
   console.log("initializeBasicMap: Starting");
   try {
-    map = L.map('map').setView([29.7604, -95.3698], 10);
+    map = L.map('map', {
+      zoomControl: false // Disable default zoom control
+    }).setView([29.7604, -95.3698], 10);
     console.log("initializeBasicMap: L.map created");
+
+    // Add zoom control to topright
+    L.control.zoom({ position: 'topright' }).addTo(map);
+    console.log("initializeBasicMap: Zoom control added to topright");
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

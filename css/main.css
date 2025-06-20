@@ -276,33 +276,52 @@ label {
   display: none !important;
 }
 
-/* Ensure clear button text is visible */
-.leaflet-draw-clear-all span {
-  display: inline !important;
-  color: white !important;
-  font-weight: 700 !important;
-}
-
-/* Beautiful Clear Button Styling */
+/* Beautiful Clear Button Styling - REVISED FOR CLEAR TRASH ICON */
 .leaflet-draw-clear-all {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important; /* Keeping the red theme for destructive action */
   border: 2px solid #ff5252 !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-  color: white !important;
-  font-weight: 600 !important;
-  font-size: 11px !important;
-  letter-spacing: 0.5px !important;
-  width: 60px !important;
-  height: 40px !important;
-  margin: 0 4px 4px 0 !important;
+  width: 40px !important;  /* Consistent with other drawing tools */
+  height: 40px !important; /* Consistent with other drawing tools */
+  margin: 0 4px 4px 0 !important; /* Consistent spacing */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  text-decoration: none !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative !important;
   overflow: hidden !important;
+  text-decoration: none !important; /* Ensure no text decoration if any text remains */
+}
+
+/* Hide any default text or conflicting content within the button */
+.leaflet-draw-clear-all span, 
+.leaflet-draw-clear-all .sr-only { /* Target screen-reader only text too if present */
+  display: none !important;
+  opacity: 0 !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important; /* Take it out of flow */
+  left: -9999px !important; /* Move it off-screen */
+}
+
+/* Add a CLEARER Trash Can Icon using ::before */
+.leaflet-draw-clear-all::before {
+  content: '' !important;
+  position: absolute !important; /* Centered within the button */
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 18px !important;  /* Adjust size for visual balance */
+  height: 18px !important; /* Adjust size for visual balance */
+  /* SVG for a standard trash can - white fill */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFFFFF'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  transition: all 0.3s ease !important;
 }
 
 .leaflet-draw-clear-all:hover {
@@ -310,7 +329,10 @@ label {
   border-color: #e53e3e !important;
   box-shadow: 0 6px 20px rgba(255, 107, 107, 0.35), 0 4px 8px rgba(0, 0, 0, 0.15) !important;
   transform: translateY(-2px) !important;
-  color: white !important;
+}
+
+.leaflet-draw-clear-all:hover::before {
+  /* Optional: slightly change icon on hover, e.g., scale or different fill if needed */
 }
 
 .leaflet-draw-clear-all:active {
@@ -318,7 +340,8 @@ label {
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3) !important;
 }
 
-/* Simple clear button text styling */
+/* Removed redundant/conflicting text styling for .leaflet-draw-clear-all */
+/*
 .leaflet-draw-clear-all {
   text-align: center !important;
   line-height: 40px !important;
@@ -327,6 +350,7 @@ label {
   font-weight: 700 !important;
   letter-spacing: 0.8px !important;
 }
+*/
 
 /* Add subtle animation ripple effect - but not for clear button */
 .leaflet-draw-draw-rectangle::after,

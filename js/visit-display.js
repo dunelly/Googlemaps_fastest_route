@@ -95,6 +95,47 @@ function updateMapMarkers() {
   }
 }
 
+// Update single marker color without refreshing all markers
+function updateSingleMarkerColor(address) {
+  console.log(`[visit-display] Updating single marker for: ${address}`);
+  
+  if (!window.addressMarkersArray) {
+    console.log('[visit-display] No markers array found, falling back to full refresh');
+    updateMapMarkers();
+    return;
+  }
+  
+  // Find the marker for this address
+  const marker = window.addressMarkersArray.find(m => {
+    return m.address && m.address.toLowerCase().trim() === address.toLowerCase().trim();
+  });
+  
+  if (marker && marker.leafletMarker) {
+    // Get updated visit info
+    const visitInfo = getVisitInfo(address);
+    const daysSince = visitInfo.daysSince;
+    
+    // Determine new color based on visit status
+    let newColor = '#2E86AB'; // Default blue (Never visited)
+    if (daysSince === 0) {
+      newColor = '#28a745'; // Green (Visited today)
+    } else if (daysSince !== null && daysSince <= 3) {
+      newColor = '#0096FF'; // Light blue (1-3 days ago)
+    } else if (daysSince !== null && daysSince <= 7) {
+      newColor = '#6a994e'; // Green-blue (4-7 days ago)
+    } else if (daysSince !== null && daysSince <= 14) {
+      newColor = '#1B4D72'; // Dark blue (8-14 days ago)
+    }
+    
+    // Update marker color
+    marker.leafletMarker.setStyle({ fillColor: newColor, color: newColor });
+    console.log(`[visit-display] Updated marker color to ${newColor} for ${address}`);
+  } else {
+    console.log(`[visit-display] Marker not found for ${address}, falling back to full refresh`);
+    updateMapMarkers();
+  }
+}
+
 // Get complete visit information for an address
 function getVisitInfo(address) {
   return {
@@ -111,3 +152,4 @@ window.getLastVisitFormatted = getLastVisitFormatted;
 window.getVisitInfo = getVisitInfo;
 window.updateVisitDisplay = updateVisitDisplay;
 window.updateMapMarkers = updateMapMarkers;
+window.updateSingleMarkerColor = updateSingleMarkerColor;

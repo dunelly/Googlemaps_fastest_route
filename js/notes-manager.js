@@ -135,8 +135,29 @@ function updateNotesOverlayContent(address) {
   const addressHash = generateAddressHash(address);
   const existingNote = userNotes[addressHash];
   
-  // Update address display
+  // Find customer name from currentlyDisplayedItems
+  let customerName = 'Customer';
+  if (window.currentlyDisplayedItems && Array.isArray(window.currentlyDisplayedItems)) {
+    const matchingItem = window.currentlyDisplayedItems.find(item => {
+      if (item.address) {
+        const itemAddr = item.address.toLowerCase().trim();
+        const currentAddr = address.toLowerCase().trim();
+        return itemAddr.includes(currentAddr) || currentAddr.includes(itemAddr);
+      }
+      return false;
+    });
+    
+    if (matchingItem) {
+      customerName = matchingItem.name || matchingItem.customer || matchingItem.Customer || 'Customer';
+    }
+  }
+  
+  // Update customer name and address display
+  const customerNameEl = document.getElementById('notesCustomerName');
   const addressText = document.getElementById('notesAddressText');
+  if (customerNameEl) {
+    customerNameEl.textContent = customerName;
+  }
   if (addressText) {
     addressText.textContent = address;
   }

@@ -165,6 +165,14 @@ function initializeDrawingFeatures() {
       if (window.desktopRouteCreator) {
         window.desktopRouteCreator.updateButtonState();
       }
+      
+      // For mobile: switch to map tab and show create route button
+      if (window.mobileNavigation && typeof window.mobileNavigation.switchTab === 'function') {
+        window.mobileNavigation.switchTab('map');
+        if (typeof window.mobileNavigation.showCreateRouteButton === 'function') {
+          window.mobileNavigation.showCreateRouteButton();
+        }
+      }
     }
   });
 
@@ -300,8 +308,10 @@ function displayAddressMarkers(itemsToDisplayOnMap) {
       showMessage(`${plottedCount} plotted. ${notPlotted > 0 ? notPlotted + ' not geocoded.' : ''}`, notPlotted > 0 ? 'warning' : 'success');
     }
   } else {
-    if (typeof showMessage === 'function') {
-      showMessage('No coordinates to plot.', 'warning');
+    // Only show "No coordinates to plot" if there were items to begin with, but none were plottable.
+    // If itemsToDisplayOnMap was empty, don't show any message.
+    if (itemsToDisplayOnMap.length > 0 && typeof showMessage === 'function') {
+      showMessage('No coordinates to plot for the provided addresses.', 'warning'); // Slightly more descriptive
     }
   }
 }

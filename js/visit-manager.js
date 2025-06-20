@@ -35,35 +35,6 @@ function initializeVisitTracker() {
 function setupVisitTracking() {
   console.log('[visit-manager] Setting up visit tracking...');
   
-  // Function to attach event listener with retry
-  function attachEventListener(buttonId, handler, description) {
-    const button = document.getElementById(buttonId);
-    if (button) {
-      console.log(`[visit-manager] Found ${description} button, attaching listener`);
-      button.addEventListener('click', handler);
-      return true;
-    } else {
-      console.log(`[visit-manager] ${description} button not found: ${buttonId} - will skip this button`);
-      return false;
-    }
-  }
-  
-  // Handle single address visits (from notes overlay)
-  const singleHandler = async function() {
-    console.log('[visit-manager] Single address mark visited button clicked');
-    
-    if (window.currentAddress) {
-      try {
-        await markAddressAsVisited();
-      } catch (error) {
-        console.error('Error marking single address as visited:', error);
-        showMessage('Error recording visit: ' + error.message, 'error');
-      }
-    } else {
-      showMessage('No address selected', 'warning');
-    }
-  };
-  
   // Handle bulk address visits (from address list) - only if bulk button exists
   const bulkHandler = async function() {
     console.log('[visit-manager] Bulk mark visited button clicked');
@@ -75,48 +46,18 @@ function setupVisitTracking() {
     }
   };
   
-  // Try to attach listeners immediately
-  const singleAttached = attachEventListener('markVisitedBtn', singleHandler, 'single visit');
-  
   // Check if bulk visit button exists before trying to attach
   const bulkButton = document.getElementById('markSelectedVisitedBtn');
-  let bulkAttached = false;
   if (bulkButton) {
-    bulkAttached = attachEventListener('markSelectedVisitedBtn', bulkHandler, 'bulk visit');
+    console.log('[visit-manager] Found bulk visit button, attaching listener');
+    bulkButton.addEventListener('click', bulkHandler);
   } else {
     console.log('[visit-manager] Bulk visit button not found - feature not available in current UI');
   }
   
-  // Only set up observers if the single visit button wasn't found
-  if (!singleAttached) {
-    console.log('[visit-manager] Single visit button not found, setting up observer...');
-    
-    // Set up mutation observer to watch for dynamic button creation
-    const observer = new MutationObserver(function(mutations) {
-      let shouldCheck = false;
-      mutations.forEach(function(mutation) {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          shouldCheck = true;
-        }
-      });
-      
-      if (shouldCheck && !singleAttached) {
-        attachEventListener('markVisitedBtn', singleHandler, 'single visit (retry)');
-      }
-    });
-    
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-    
-    // Also try again after a short delay
-    setTimeout(() => {
-      if (!singleAttached) {
-        attachEventListener('markVisitedBtn', singleHandler, 'single visit (delayed)');
-      }
-    }, 1000);
-  }
+  // Note: Individual visit functionality is now handled through the combined 
+  // Check In/Notes button in mobile.js and notes overlay functionality
+  console.log('[visit-manager] Individual visit tracking handled through notes interface');
 }
 
 // Mark selected addresses as visited (bulk mode)

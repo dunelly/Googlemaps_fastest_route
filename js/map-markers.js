@@ -313,8 +313,18 @@ function highlightAddressOnMap(address) {
 // Function to update map markers with current visit data
 function updateMapMarkers() {
   console.log('[map-markers] updateMapMarkers called');
-  if (typeof currentlyDisplayedItems !== 'undefined' && currentlyDisplayedItems && typeof displayAddressMarkers === 'function') {
+  
+  // Only display markers if we have actual addresses loaded
+  if (typeof currentlyDisplayedItems !== 'undefined' && 
+      currentlyDisplayedItems && 
+      Array.isArray(currentlyDisplayedItems) && 
+      currentlyDisplayedItems.length > 0 && 
+      typeof displayAddressMarkers === 'function') {
+    
+    console.log('[map-markers] Updating', currentlyDisplayedItems.length, 'markers');
     displayAddressMarkers(currentlyDisplayedItems);
+  } else {
+    console.log('[map-markers] No addresses to display - skipping marker update');
   }
 }
 

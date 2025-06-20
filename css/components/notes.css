@@ -24,9 +24,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 12px 16px;
   border-bottom: 1px solid #E0E0E0;
   background: #f8f9fa;
+}
+
+.customer-info {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333333;
+  flex: 1;
+  margin-right: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#notesCustomerName {
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .notes-header h3 {
@@ -38,16 +54,13 @@
 
 /* Notes Content */
 .notes-content {
-  padding: 24px;
+  padding: 16px;
 }
 
-/* Notes Address Display */
+/* Notes Address Display - Hidden in new layout */
 .notes-address {
-  margin-bottom: 20px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  display: none;
+}
 }
 
 .notes-address strong {
@@ -56,32 +69,46 @@
 
 /* Notes Input Section */
 .notes-input-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  flex: 1;
 }
 
 .notes-input-section label {
   display: block;
-  font-weight: bold;
+  font-weight: 600;
   color: #333333;
-  margin-bottom: 8px;
-  font-size: 1rem;
+  margin-bottom: 6px;
+  font-size: 14px;
 }
 
-/* Notes Metadata */
+#noteTextarea {
+  width: 100%;
+  min-height: 300px;
+  resize: vertical;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Notes Metadata - Hidden to reduce clutter */
 .notes-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  font-size: 0.8rem;
-  color: #999999;
+  display: none;
 }
 
 /* Notes Actions */
 .notes-actions {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.notes-actions button {
+  flex: 1;
+  height: 40px;
 }
 
 .notes-actions button {
@@ -90,35 +117,32 @@
 
 /* Visit Tracking Section */
 .visit-tracking-section {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  margin-bottom: 16px;
+  padding: 8px 0;
 }
 
 .visit-info {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  margin-bottom: 12px;
 }
 
 .visit-stats {
-  font-size: 0.9rem;
+  font-size: 12px;
   color: #666666;
   font-weight: 500;
 }
 
 /* Visit History */
 .visit-history {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .visit-history h4 {
-  margin: 0 0 8px 0;
-  font-size: 0.9rem;
+  margin: 0 0 4px 0;
+  font-size: 12px;
   color: #333333;
+  font-weight: 500;
 }
 
 .visit-history ul {

@@ -701,24 +701,8 @@ class MobileNavigation {
                 // Hide create route button after successful route creation
                 this.hideCreateRouteButton();
                 
-                // Check if route was created and show destination card
-                setTimeout(() => {
-                    if (window.desktopRouteCreator.optimizedRoute && window.desktopRouteCreator.optimizedRoute.length > 0) {
-                        console.log('[Mobile] Route created successfully, showing destination card');
-                        this.handleRouteCreated({
-                            addresses: window.desktopRouteCreator.optimizedRoute,
-                            type: 'mobile'
-                        });
-                    } else {
-                        console.warn('[Mobile] No optimized route found after creation');
-                        // Reset button to original state
-                        if (btn) {
-                            btn.textContent = originalText || '🗺️ Create Route from Files';
-                            btn.disabled = false;
-                            this.showCreateRouteButton();
-                        }
-                    }
-                }, 1000);
+                // Note: Route activation is handled by the polling interval
+                // which detects when desktopRouteCreator.optimizedRoute is populated
                 
             } else {
                 console.error('[Mobile] Desktop route creator not available');
