@@ -219,6 +219,10 @@ class MarkerManager {
                         onblur="window.handleNoteBlur('${stopData.address.replace(/'/g, "\\'")}', '${uniqueId}');"
                         >${currentNote}</textarea>`;
       popupContent += `<div id="${uniqueId}_status" style="font-size: 0.8rem; color: #666; margin-top: 2px; min-height: 16px;"></div>`;
+      popupContent += `<button onclick="window.saveInlineNote('${stopData.address.replace(/'/g, "\\'")}', '${uniqueId}'); return false;"
+                       style="margin-top: 4px; padding: 4px 8px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 500;">
+                       💾 Save Note
+                     </button>`;
       popupContent += `</div>`;
     } else {
       popupContent += `<div style="padding: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; color: #666; text-align: center;">`;

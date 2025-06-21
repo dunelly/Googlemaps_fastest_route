@@ -463,6 +463,37 @@ async function handleNoteBlur(address, textareaId) {
   }
 }
 
+// Save inline note from button click (wrapper for handleNoteBlur)
+async function saveInlineNote(address, textareaId) {
+  console.log('[notes-manager] Save button clicked for:', address);
+  
+  const textarea = document.getElementById(textareaId);
+  const statusDiv = document.getElementById(textareaId + '_status');
+  
+  if (!textarea) {
+    console.error('[notes-manager] Textarea not found:', textareaId);
+    return;
+  }
+  
+  // Show immediate feedback
+  if (statusDiv) {
+    statusDiv.textContent = 'Saving...';
+    statusDiv.style.color = '#007bff';
+  }
+  
+  // Call the existing handleNoteBlur logic
+  try {
+    await handleNoteBlur(address, textareaId);
+    console.log('[notes-manager] Note saved successfully via button');
+  } catch (error) {
+    console.error('[notes-manager] Failed to save note via button:', error);
+    if (statusDiv) {
+      statusDiv.textContent = 'Failed to save';
+      statusDiv.style.color = '#dc3545';
+    }
+  }
+}
+
 // Make functions globally available
 window.openNotesOverlay = openNotesOverlay;
 window.switchNotesToAddress = switchNotesToAddress;
@@ -470,6 +501,7 @@ window.updateNotesOverlayContent = updateNotesOverlayContent;
 window.getNoteForAddress = getNoteForAddress;
 window.saveNoteDirectly = saveNoteDirectly;
 window.handleNoteBlur = handleNoteBlur;
+window.saveInlineNote = saveInlineNote;
 
 // Initialize when DOM is loaded
 if (document.readyState === 'loading') {
